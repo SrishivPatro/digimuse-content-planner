@@ -1673,6 +1673,7 @@ function vExport(plan, ps){
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Client document</h2><p>Strategy plus every post in Markdown. Paste into Google Docs or Notion, or download.</p></div></header><div class="acts"><button class="btn" data-act="md" ${DL ? '' : 'disabled'}>Download .md</button><button class="btn" data-act="copyMd">Copy text</button></div></section>
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c6)"></span>Calendar</h2><p>Tab-separated, ready to paste into Google Sheets.</p></div></header><div class="acts"><button class="btn" data-act="copyCal">Copy for Sheets</button><button class="btn" data-act="csv" ${DL ? '' : 'disabled'}>Download .csv</button></div></section>
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Design briefs</h2><p>Every post's brief in one text file for the design team.</p></div></header><div class="acts"><button class="btn" data-act="briefs" ${DL ? '' : 'disabled'}>Download briefs</button><button class="btn" data-act="copyBriefs">Copy all</button></div></section>
+    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Designer deck</h2><p>One clean slide per post: date, platform, format, pillar, image copy, post copy, design ref and notes. Opens in Google Slides (upload to Drive → Open with Google Slides).</p></div></header><div class="acts"><button class="btn pri" data-act="designerDeck" ${typeof PptxGenJS === 'undefined' || !DL || !ps.length ? 'disabled' : ''}>Download deck</button></div></section>
   </div>
   ${DL ? '' : '<p class="muted sm">Downloads are not available in this view. Use the copy buttons instead.</p>'}
   <p class="muted sm">${ps.length} posts · ${ps.filter(p => p.hasContent).length} written · ${ps.filter(p => group(p.status) === 'done').length} approved</p>`;
@@ -1856,6 +1857,64 @@ async function downloadPptx(Mx, meta={}){
     const out = await pptx.write({outputType:'arraybuffer'});
     await save(meta.file || fname(plan, 'pptx'), out);
   } catch (e){ console.error(e); toast('Could not build the PowerPoint'); }
+}
+
+/* ---------- designer deck: one table slide per post, for writer → designer handoff ---------- */
+function designerRows(p, b){
+  const oi = p.onImage || {}, d = p.design || {}, kit = b.brain?.kit || {};
+  const imageCopy = [oi.headline && 'Headline: ' + oi.headline, oi.subline && 'Subline: ' + oi.subline, oi.cta && 'CTA: ' + oi.cta].filter(Boolean).join('\n');
+  const slides = arr(p.slides).map((x, i) => `Slide ${i + 1}: ${str(x.copy)}${x.visual ? '  [Visual: ' + x.visual + ']' : ''}`).join('\n');
+  const script = arr(p.script).map(x => `${str(x.t)}  ${x.visual ? 'Visual: ' + x.visual + ' · ' : ''}${x.onscreen ? 'On screen: ' + x.onscreen + ' · ' : ''}${x.vo ? 'VO: ' + x.vo : ''}${x.audio ? ' · Audio: ' + x.audio : ''}`).join('\n');
+  const ref = [d.layout && 'Layout: ' + d.layout, d.mood && 'Mood: ' + d.mood, d.palette && 'Palette: ' + d.palette, d.typography && 'Type: ' + d.typography, d.refSearch && 'Look up: ' + d.refSearch]
+    .concat(arr(b.brain?.refs).filter(r => r.tag === 'Design' && r.url).slice(0, 2).map(r => 'Brand ref: ' + r.url)).filter(Boolean).join('\n');
+  const notes = [d.elements && 'Elements: ' + d.elements, d.dos && 'Do: ' + d.dos, d.donts && "Don't: " + d.donts, kit.colors && 'Brand colours: ' + kit.colors, kit.fonts && 'Brand fonts: ' + kit.fonts, kit.logo && 'Logo: ' + kit.logo]
+    .concat(arr(p.comments).filter(c => c.type === 'design' && c.text).slice(-2).map(c => 'Feedback: ' + c.text)).filter(Boolean).join('\n');
+  const due = dues(p).design;
+  return [
+    ['Date', [fmtD(p.date), p.time].filter(Boolean).join(' · ') + (due ? `   (design due ${fmtD(due)})` : '')],
+    ['Platform', p.channel],
+    ['Format', [p.format, sizeFor(p.channel, p.format)].filter(Boolean).join(' · ')],
+    ['Content Pillar', p.pillar],
+    ['Topic', p.topic + (p.topical ? `  (Topical: ${p.topical})` : '')],
+    ['Product', arr(p.products).length ? arr(p.products).join(', ') : p.product],
+    ['Image Copy', imageCopy],
+    ['Carousel Slides', slides],
+    ['Reel / Video Script', script],
+    ['Post Copy', [p.caption, p.hashtags].filter(Boolean).join('\n\n')],
+    ['Design Ref', ref],
+    ['Note To Designer', notes]
+  ].filter(([k, v], i) => i < 5 || i === 6 || i >= 9 || str(v).trim());
+}
+async function downloadDesignerDeck(){
+  const plan = D.plans[ui.planId]; if (!plan) return; const b = D.brands[plan.brandId] || {};
+  const ps = postsOf(ui.planId).filter(p => p.format !== 'Text').slice().sort((a, z) => str(a.date + a.time).localeCompare(str(z.date + z.time)));
+  if (!ps.length){ toast('No design posts in this plan yet'); return; }
+  toast('Building designer deck…');
+  try {
+    const pptx = new PptxGenJS(); pptx.layout = 'LAYOUT_WIDE'; pptx.author = 'Digimuse'; pptx.title = `${b.name} — Designer deck — ${mLabel(plan.month)}`;
+    const F = 'Montserrat', INK = '131A33', GREY = '8B91A7', ACC = hx(deckAccent(b)), LINE = 'A6A6A6';
+    const W = 13.333, X = 0.5, CW = W - 1.0, LW = 2.3;
+    const c = pptx.addSlide(); c.background = {color:'FFFFFF'};
+    c.addShape(pptx.ShapeType.rect, {x:0, y:0, w:W, h:0.12, fill:{color:ACC}, line:{color:ACC}});
+    c.addText('DESIGNER DECK', {x:X, y:2.3, w:CW, h:0.4, fontFace:F, fontSize:13, bold:true, color:ACC, charSpacing:3});
+    c.addText(str(b.name), {x:X, y:2.75, w:CW, h:1.1, fontFace:F, fontSize:44, bold:true, color:INK});
+    c.addText(`${mLabel(plan.month)} · ${ps.length} posts`, {x:X, y:3.85, w:CW, h:0.5, fontFace:F, fontSize:18, color:'444C66'});
+    const idx = [['#','Date','Platform','Format','Pillar','Topic'].map(h => ({text:h, options:{bold:true, fill:{color:'F3F5FB'}}}))].concat(ps.map((p, i) => [String(i + 1), fmtD(p.date), p.channel, p.format, str(p.pillar), str(p.topic)]));
+    chunk(idx.slice(1), 18).forEach((rows, k) => { const sl = pptx.addSlide(); sl.background = {color:'FFFFFF'};
+      sl.addText(`Post index${k ? ' (cont.)' : ''}`, {x:X, y:0.3, w:CW, h:0.5, fontFace:F, fontSize:20, bold:true, color:INK});
+      sl.addTable([idx[0]].concat(rows), {x:X, y:0.95, w:CW, colW:[0.5, 1.4, 1.4, 1.3, 2.3, CW - 6.9], fontFace:F, fontSize:10, color:'252C45', border:{type:'solid', pt:0.75, color:LINE}, margin:0.06, valign:'middle'}); });
+    ps.forEach((p, i) => {
+      const rows = designerRows(p, b); const chars = rows.reduce((n, r) => n + str(r[1]).length + 40, 0);
+      const fs = chars > 2600 ? 7.5 : chars > 1900 ? 8.5 : chars > 1300 ? 9.5 : chars > 800 ? 11 : 13;
+      const sl = pptx.addSlide(); sl.background = {color:'FFFFFF'};
+      sl.addText(`Post ${i + 1} of ${ps.length}`, {x:X, y:0.2, w:6, h:0.35, fontFace:F, fontSize:11, bold:true, color:ACC});
+      sl.addText(`${b.name} · ${mLabel(plan.month)}`, {x:W - X - 6, y:0.2, w:6, h:0.35, fontFace:F, fontSize:9, color:GREY, align:'right'});
+      sl.addTable(rows.map(([k, v]) => [{text:k, options:{fontFace:F, color:INK}}, {text:str(v) || ' ', options:{fontFace:F, color:'252C45'}}]),
+        {x:X, y:0.6, w:CW, colW:[LW, CW - LW], fontFace:F, fontSize:fs, border:{type:'solid', pt:0.75, color:LINE}, margin:[0.08, 0.12, 0.08, 0.12], valign:'top', autoPage:true, autoPageRepeatHeader:false, autoPageSlideStartY:0.6});
+    });
+    const out = await pptx.write({outputType:'arraybuffer'});
+    await save(fname(plan, 'pptx').replace('.pptx', '-designer-deck.pptx'), out);
+  } catch (e){ console.error(e); toast('Could not build the designer deck'); }
 }
 
 /* ---------- tasks, team, go-live ---------- */
@@ -2352,6 +2411,7 @@ const ACT = {
   present: a => startPresent(+(a.dataset.i || 0)),
   pNext: () => movePresent(1), pPrev: () => movePresent(-1), pClose: () => closePresent(),
   pptx: () => downloadPptx(),
+  designerDeck: () => downloadDesignerDeck(),
   pdf: () => printDeck(),
   goBrand: a => { ui.sched = null; ui.planMode = null; ui.view = 'brand'; ui.brandId = a.dataset.id; ui.btab = 'plans'; ui.answer = ''; ui.postId = null; renderAll(); window.scrollTo(0,0); },
   goPlan: a => { ui.view = 'plan'; ui.planId = a.dataset.id; ui.tab = 'present'; ui.f = {ch:'',st:'',pi:''}; renderAll(); window.scrollTo(0,0); },
