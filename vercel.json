@@ -1,8 +1,25 @@
 {
   "functions": {
-    "api/ai.js": { "maxDuration": 300 }
+    "api/ai.js": {
+      "maxDuration": 300
+    },
+    "api/bench.js": {
+      "maxDuration": 300
+    }
   },
   "headers": [
-    { "source": "/(.*)", "headers": [ { "key": "X-Frame-Options", "value": "DENY" }, { "key": "Referrer-Policy", "value": "same-origin" } ] }
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "same-origin"
+        }
+      ]
+    }
   ]
 }

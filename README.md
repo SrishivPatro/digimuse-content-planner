@@ -7,6 +7,8 @@ Internal social media planning tool for the Digimuse team.
 - **Content deck** with brand-coloured previews, hooks, captions, carousel slides and reel scripts
 - **Design briefs** for designers, creative versions, publish checklist
 - **Workflow**: board, due dates, My tasks, client review, feedback routed back to writer or designer
+- **Competitor benchmarking**: track or AI-scout competitors, pull their last 30–90 days of Instagram and LinkedIn posts, compare cadence, formats, pillars and top posts, find gaps and ideas to adapt
+- **Reports**: monthly client reports with KPIs, top posts, pillar and format learnings, competitor watch and next-month actions, downloadable as PowerPoint
 - **Performance**: log results, charts and an AI-written monthly report
 - **Client deck**: research, strategy and post-by-post slides built from each plan. Present in the app, download PowerPoint, or save as PDF. Presets for full plan, research, strategy or content decks.
 - **Exports**: Excel workbook, CSV, Markdown document, design briefs
@@ -22,7 +24,8 @@ Internal social media planning tool for the Digimuse team.
    | `GEMINI_API_KEY` | From aistudio.google.com/apikey |
    | `TEAM_PASSWORD` | The password your team will sign in with |
    | `GEMINI_MODEL` *(optional)* | Leave empty to use Google's latest Flash model. If Google retires a model, the app switches to the replacement automatically. |
-   | `ANTHROPIC_API_KEY` *(optional)* | Use Claude instead of Gemini |
+   | `APIFY_TOKEN` *(optional)* | Real competitor posts for benchmarks (Instagram via apify/instagram-scraper, LinkedIn via harvestapi/linkedin-company-posts). Get it at apify.com → Settings → Integrations. Without it, benchmarks use web research. |
+| `ANTHROPIC_API_KEY` *(optional)* | Use Claude instead of Gemini |
    | `AI_PROVIDER` *(optional)* | `gemini` or `claude` if both keys are set |
    | `CLAUDE_MODEL` *(optional)* | Defaults to `claude-sonnet-5` |
 
@@ -36,6 +39,7 @@ Internal social media planning tool for the Digimuse team.
 - `api/db.js`: saves, updates and deletes records.
 - `api/ai.js`: sends prompts to Gemini or Claude. Keys never reach the browser.
 - `api/login.js`: team password sign-in (30-day cookie).
+- `api/bench.js`: pulls competitors' recent Instagram and LinkedIn posts through Apify.
 - `api/scrape.js`: imports a brand's products from its website (Shopify and WooCommerce stores directly; any other site is read and the AI picks out products and services).
 
 Data lives in Upstash Redis under keys starting with `dcp:`. Clients poll for changes every 30 seconds.

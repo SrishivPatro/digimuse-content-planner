@@ -586,7 +586,7 @@ const statTile = (icon, n, label, col, warn) => `<div class="stat ${warn ? 'warn
 const chBadge = c => `<span class="chb" style="--chc:${CHC[c] || '#555'}">${esc(CHA[c] || c)}</span>`;
 
 /* ---------- state ---------- */
-const D = { brands:{}, team:{}, plans:{}, posts:{} };
+const D = { brands:{}, team:{}, plans:{}, posts:{}, reports:{} };
 let DB = null, S = null, DL = null;
 const HOSTED = !(window.claude && window.claude.use) && /^https?:$/.test(location.protocol);
 const ui = { importBusy:false, view:'home', brandId:null, planId:null, tab:'deck', btab:'plans', postId:null, f:{ch:'', st:'', pi:''}, confirm:null, answer:'', asking:false, ideaBusy:false, replyBusy:false, repBusy:false };
@@ -696,6 +696,8 @@ function promptA(b, plan){
 
 ${brandCtx(b)}
 
+${benchCtx(b, plan.brandId)}
+
 PLAN MONTH: ${mLabel(plan.month)} · Region: ${plan.opts.region} · Language: ${plan.opts.lang}
 ${plan.opts.brief ? 'THIS MONTH\'S BRIEF: ' + plan.opts.brief : ''}
 
@@ -704,6 +706,13 @@ Counts: 2-3 personas; 5 industryTrends; 1-2 platformTrends per active channel; o
 
 Reply with only JSON in exactly this shape:
 ${JSON_A}`;
+}
+function latestBench(bid){ return Object.entries(D.reports).filter(([,r]) => r.type === 'bench' && r.brandId === bid).sort((a, b) => (b[1].at || 0) - (a[1].at || 0))[0]; }
+function benchCtx(b, bid0){
+  const bid = bid0 || Object.keys(D.brands).find(k => D.brands[k] === b) || ui.brandId; const L = latestBench(bid); if (!L) return '';
+  const r = L[1]; if (Date.now() - (r.at || 0) > 75 * 86400000) return '';
+  const a = r.analysis || {};
+  return `COMPETITOR BENCHMARK (${new Date(r.at).toLocaleDateString()}, last ${r.days} days):\n${str(a.summary)}\nWhat competitors do: ${arr(a.competitors).map(c => `${c.name}: ${c.postsPerWeek}/wk, ${c.formatMix}; works: ${c.whatWorks}; weak: ${c.weakness}`).join(' | ')}\nGaps we can own: ${arr(a.gaps).join(' | ')}\nIdeas to adapt: ${arr(a.stealIdeas).map(x => x.idea).join(' | ')}`.slice(0, 3500);
 }
 function promptR(b, plan){
   return `${PRE}
@@ -797,6 +806,8 @@ ${arr(plan.opts.hero).length ? 'HERO PRODUCTS THIS MONTH (feature these most, in
 ${plan.opts.mix && Object.values(plan.opts.mix).some(v => fmtProducts(v).length || arr(v.pillars).length) ? 'FOCUS PER FORMAT (spread each format\'s posts across all the listed products and pillars so each gets at least one post where the count allows; "brand-level" means no product):\n' + Object.entries(plan.opts.mix).filter(([,v]) => +v.n > 0 && (fmtProducts(v).length || arr(v.pillars).length)).map(([f,v]) => `- ${v.n} ${f} posts${fmtProducts(v).length ? ' → products: ' + fmtProducts(v).map(x => x === '__brand' ? 'brand-level' : x).join(', ') : ''}${arr(v.pillars).length ? ' → pillars: ' + v.pillars.join(', ') : ''}`).join('\n') : ''}
 ${plan.creative?.references?.length ? 'CREATIVE REFERENCES TO BORROW FROM: ' + plan.creative.references.slice(0, 10).map(r => `${r.brand}: ${r.piece} → ${r.borrow}`).join(' | ') : ''}
 ${ideas ? 'TEAM IDEAS BANK (use the strong ones):\n' + ideas : ''}
+
+${benchCtx(b, plan.brandId)}
 
 INCLUDED TOPICAL DAYS:
 ${tdays}
@@ -1055,13 +1066,13 @@ function vBrand(){
   const b = D.brands[ui.brandId];
   if (!b) return `<div class="empty"><p>This brand was removed.</p><button class="btn" data-act="go" data-v="home">Back to dashboard</button></div>`;
   const h = health(b).score; const c = brandColors(b);
-  const tabs = [['plans','Monthly plans'],['ideas','Ideas bank',arr(b.ideas).filter(i => !i.used).length],['brain','Brand Brain'],['profile','Profile & team']];
+  const tabs = [['plans','Monthly plans'],['comp','Competitors'],['reports','Reports'],['ideas','Ideas bank',arr(b.ideas).filter(i => !i.used).length],['brain','Brand Brain'],['profile','Profile & team']];
   return `<section class="hero brand" style="--bc:${c.solid || 'var(--c1)'}"><span class="blob" aria-hidden="true"></span><div><div class="crumb"><button data-act="go" data-v="home">Dashboard</button>›<span>Brand</span></div><h1>${esc(b.name)}</h1>
     <div class="chips">${[b.industry, b.type, b.stage, b.price].filter(Boolean).map(x => `<span class="chip">${esc(x)}</span>`).join('')}${activeCh(b).map(x => `<span class="chb" style="--chc:${CHC[x]}">${esc(x)} · ${esc(b.channels[x].perWeek)}/wk</span>`).join('')}</div>
     ${kitColors(b).length ? `<div class="swatches" style="margin-top:10px">${kitColors(b).map(x => `<span class="sw"><i style="background:${x}"></i>${x}</span>`).join('')}</div>` : ''}</div>
     <div style="min-width:180px"><p class="eyebrow">Brand Brain</p><div class="ring"><b>${h}%</b></div><div class="meter" style="margin-top:8px"><i style="width:${h}%"></i></div></div></section>
   <div class="tabs" role="tablist">${tabs.map(([k,l,n]) => `<button role="tab" class="${ui.btab===k?'on':''}" data-act="btab" data-k="${k}">${l}${n ? `<span class="n">${n}</span>` : ''}</button>`).join('')}</div>
-  ${ui.btab === 'brain' ? vBrain(b) : ui.btab === 'profile' ? vProfile(b) : ui.btab === 'ideas' ? vIdeas(b) : vPlans(b)}`;
+  ${ui.btab === 'brain' ? vBrain(b) : ui.btab === 'profile' ? vProfile(b) : ui.btab === 'ideas' ? vIdeas(b) : ui.btab === 'comp' ? vComp(b) : ui.btab === 'reports' ? vReports(b) : vPlans(b)}`;
 }
 function vPlans(b){
   const pls = plansOf(ui.brandId);
@@ -1137,6 +1148,153 @@ function schedHTML(b){
   <div class="week">${WK.map(d => `<div class="dayc"><header><span>${WKL[d]}</span><span class="muted mono">${arr(sc[d]).length}</span></header>${arr(sc[d]).map((sl, i) => slotHTML(b, d, i, sl)).join('')}<button class="btn sm" data-act="scAdd" data-day="${d}">+ Add post</button></div>`).join('')}</div>`;
 }
 function paintSched(){ const box = $('#sched-box'); const b = D.brands[ui.brandId]; if (box && b) box.innerHTML = schedHTML(b); }
+/* ---------- competitors & benchmarking ---------- */
+function getComps(b){
+  if (Array.isArray(b.comps)) return b.comps;
+  return str(b.competitors).split(/[,\n]/).map(x => x.trim()).filter(Boolean).slice(0, 8).map(x => { const h = (x.match(/@([\w.]+)/) || [])[1]; return {name:x.replace(/@[\w.]+/, '').replace(/[()]/g, '').trim() || h || x, instagram:h || '', linkedin:'', website:'', source:'profile', on:true}; });
+}
+function benchStats(results, days){
+  const wk = Math.max(1, (+days || 30) / 7);
+  return arr(results).map(r => {
+    const P = arr(r.posts); const n = P.length || 0; const sum = k => P.reduce((s, p) => s + (+p[k] || 0), 0);
+    const byT = {}; P.forEach(p => byT[p.type] = (byT[p.type] || 0) + 1);
+    const byP = {}; P.forEach(p => byP[p.platform] = (byP[p.platform] || 0) + 1);
+    const score = p => (+p.likes || 0) + 2 * (+p.comments || 0) + 3 * (+p.shares || 0);
+    return {name:r.name, posts:n, perWeek:+(n / wk).toFixed(1), byType:byT, byPlatform:byP, avgLikes:n ? Math.round(sum('likes') / n) : 0, avgComments:n ? Math.round(sum('comments') / n) : 0, avgViews:P.some(p => p.views) ? Math.round(sum('views') / Math.max(1, P.filter(p => p.views).length)) : 0, top:P.slice().sort((a, b) => score(b) - score(a)).slice(0, 5), errors:arr(r.errors)};
+  });
+}
+function promptBench(b, comps, data, stats, days){
+  const real = data.source === 'apify' && stats.some(s => s.posts);
+  const sample = arr(data.results).map(r => ({competitor:r.name, recentPosts:arr(r.posts).slice(0, 14).map(p => ({date:p.date, platform:p.platform, type:p.type, likes:p.likes, comments:p.comments, shares:p.shares, views:p.views, text:str(p.text).slice(0, 220), url:p.url}))}));
+  return `${PRE}
+
+${brandCtx(b, 5000)}
+
+TASK: Competitor benchmark for ${b.name} over the last ${days} days on Instagram and LinkedIn.
+COMPETITORS: ${comps.map(c => `${c.name}${c.instagram ? ' (IG ' + c.instagram + ')' : ''}${c.linkedin ? ' (LI ' + c.linkedin + ')' : ''}${c.website ? ' ' + c.website : ''}`).join('; ')}
+${real ? `REAL POST DATA (scraped, last ${days} days):\nSTATS: ${JSON.stringify(stats.map(s => ({name:s.name, posts:s.posts, perWeek:s.perWeek, byType:s.byType, byPlatform:s.byPlatform, avgLikes:s.avgLikes, avgComments:s.avgComments, avgViews:s.avgViews})))}\nPOSTS: ${JSON.stringify(sample).slice(0, 30000)}\nUse these numbers exactly; do not invent others.` : `No scraped post data is available. ${HOSTED ? 'Use web search to find each competitor\'s social media activity, campaigns and launches from the last ' + days + ' days. Mark estimates with "est."' : 'Work from what you know and mark everything as "est."'}`}
+
+Analyse like a strategist, not a summariser: what content pillars each competitor runs, their format mix and cadence, which themes and hooks get the most engagement and why, their tone, what they do badly, and exactly where ${b.name} can win.
+
+Reply with only JSON:
+{"summary":"4-5 sharp lines","competitors":[{"name":"","postsPerWeek":"","formatMix":"","pillars":"their content pillars","topThemes":"","tone":"","whatWorks":"","weakness":"","engagementNote":""}],"topPosts":[{"competitor":"","platform":"","url":"","what":"what the post was","whyItWorked":""}],"gaps":["specific white space we can own"],"stealIdeas":[{"idea":"a concrete post idea for ${b.name}","basedOn":"which competitor post or pattern","format":"Reel|Carousel|Static|Story|Video|Text"}],"ourPosition":"where ${b.name} stands and where to win"}`;
+}
+async function runBench(){
+  const b = D.brands[ui.brandId]; const comps = getComps(b).filter(c => c.on !== false && c.name);
+  if (!comps.length){ toast('Add at least one competitor to track'); return; }
+  const days = +($('#bn-days')?.value || 30);
+  ui.benchBusy = HOSTED ? `Fetching the last ${days} days of posts…` : 'Researching competitors…'; renderAll();
+  try {
+    let data = {source:'none', results:[]};
+    if (HOSTED){
+      const r = await fetch('/api/bench', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({competitors:comps, days})});
+      if (r.status === 401){ showLogin(); return; }
+      data = await r.json().catch(() => ({source:'none', results:[]}));
+    }
+    const stats = benchStats(data.results, days);
+    ui.benchBusy = data.source === 'apify' ? `Got ${stats.reduce((s, x) => s + x.posts, 0)} posts. Analysing…` : 'Researching on the web and analysing…'; renderAll();
+    const {data:an, sources} = await webJSON(promptBench(b, comps, data, stats, days));
+    const id = uid();
+    await put('reports', id, {type:'bench', brandId:ui.brandId, at:Date.now(), days, source:data.source === 'apify' && stats.some(x => x.posts) ? 'apify' : 'web', note:data.note || '', stats, analysis:an || {}, sources:arr(sources).slice(0, 20), comps:comps.map(c => c.name), by:me});
+    ui.benchId = id; toast('Benchmark ready');
+  } catch (e){ toast(e?.code ? errCopy(e) : 'Benchmark failed: ' + (e?.message || 'try again')); }
+  finally { ui.benchBusy = ''; renderAll(); }
+}
+function vComp(b){
+  const comps = getComps(b);
+  const runs = Object.entries(D.reports).filter(([,r]) => r.type === 'bench' && r.brandId === ui.brandId).sort((a, c) => (c[1].at || 0) - (a[1].at || 0));
+  const cur = (ui.benchId && D.reports[ui.benchId]?.brandId === ui.brandId ? [ui.benchId, D.reports[ui.benchId]] : runs[0]);
+  const inp = (i, k, v, ph) => `<input class="in" data-chg="compF" data-i="${i}" data-k="${k}" id="cf-${i}-${k}" value="${esc(v)}" placeholder="${ph}">`;
+  return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Competitors to track</h2><p>Add Instagram handles and LinkedIn company pages for real post data. Untick to skip one in the next run.</p></div><button class="btn sm pri" data-act="scoutComps" ${aiOff() || ui.scoutBusy ? 'disabled' : ''}>${ui.scoutBusy ? '<span class="spin"></span> Scouting…' : '<span class="spark">✦</span> Scout competitors'}</button></header>
+    <div class="tw"><table><thead><tr><th style="width:40px">Track</th><th>Name</th><th>Instagram</th><th>LinkedIn page</th><th>Website</th><th></th></tr></thead><tbody>${comps.map((c, i) => `<tr><td><input type="checkbox" data-chg="compOn" data-i="${i}" ${c.on !== false ? 'checked' : ''} style="accent-color:var(--accent);width:16px;height:16px" aria-label="Track ${esc(c.name)}"></td><td>${inp(i, 'name', c.name, 'Brand name')}${c.why ? `<div class="muted sm" style="margin-top:4px">${esc(c.why)}</div>` : ''}${c.source === 'scouted' ? '<span class="tag" style="margin-top:4px;display:inline-block">Scouted by AI</span>' : ''}</td><td>${inp(i, 'instagram', c.instagram, '@handle')}</td><td>${inp(i, 'linkedin', c.linkedin, 'linkedin.com/company/…')}</td><td>${inp(i, 'website', c.website, 'brand.com')}</td><td><button class="btn sm ghost" data-act="rmComp" data-i="${i}">Remove</button></td></tr>`).join('') || '<tr><td colspan="6" class="muted">No competitors yet. Add them or press Scout competitors.</td></tr>'}</tbody></table></div>
+    <div><button class="btn sm" data-act="addComp">+ Add competitor</button></div>
+  </section>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Run a benchmark</h2><p>${HOSTED ? 'Pulls recent Instagram and LinkedIn posts (needs the Apify key in Vercel), then the AI compares cadence, formats, pillars, top posts and gaps. Without the key it researches on the web instead.' : 'On the Vercel version this pulls real posts. Here it works from the AI\'s knowledge.'}</p></div></header>
+    <div class="rowline"><label class="f" style="flex:0 0 200px">Period<select class="in" id="bn-days">${opts([['30','Last 30 days'],['60','Last 60 days'],['90','Last 90 days']], '30')}</select></label><button class="btn pri" data-act="runBench" ${aiOff() || ui.benchBusy ? 'disabled' : ''}>${ui.benchBusy ? '<span class="spin"></span> ' + esc(ui.benchBusy) : 'Run benchmark now'}</button>${runs.length > 1 ? `<label class="f" style="flex:0 0 240px">Past runs<select class="in" data-chg="benchPick">${opts(runs.map(([id, r]) => [id, `${new Date(r.at).toLocaleDateString()} · ${r.days} days · ${r.source === 'apify' ? 'real posts' : 'web research'}`]), cur?.[0])}</select></label>` : ''}</div>
+  </section>
+  ${cur ? vBenchResult(b, cur[0], cur[1]) : ''}`;
+}
+function vBenchResult(b, id, r){
+  const a = r.analysis || {}; const st = arr(r.stats);
+  const real = r.source === 'apify';
+  return `<section class="hero"><div><p class="eyebrow">Benchmark · ${new Date(r.at).toLocaleDateString()} · last ${r.days} days · ${real ? 'real Instagram & LinkedIn posts' : 'web research (add the Apify key for real post data)'}</p><h2 style="font-size:24px">Where ${esc(b.name)} stands</h2><p style="margin-top:8px;white-space:pre-wrap">${esc(a.summary)}</p>${a.ourPosition ? `<p style="margin-top:8px"><b>Where to win:</b> ${esc(a.ourPosition)}</p>` : ''}</div><div class="acts"><button class="btn sm hot" data-act="benchPptx" data-id="${id}" ${typeof PptxGenJS === 'undefined' || !DL ? 'disabled' : ''}>Download PowerPoint</button>${confirmBtn('delRep-' + id, 'Delete run', 'delReport', `data-id="${id}"`)}</div></section>
+  ${real && st.some(x => x.posts) ? `<section class="panel"><header><h2><span class="dotc" style="--dc:var(--c3)"></span>The numbers</h2></header>${tbl(['Competitor','Posts','Per week','Formats','Platforms','Avg likes','Avg comments','Avg views'], st.map(x => [`<b>${esc(x.name)}</b>${x.errors.length ? `<div class="flag">${esc(x.errors.join('; ').slice(0, 120))}</div>` : ''}`, `<span class="mono">${x.posts}</span>`, `<span class="mono">${x.perWeek}</span>`, esc(Object.entries(x.byType).map(([k, v]) => k + ' ' + v).join(', ')), esc(Object.entries(x.byPlatform).map(([k, v]) => k + ' ' + v).join(', ')), `<span class="mono">${fmtN(x.avgLikes)}</span>`, `<span class="mono">${fmtN(x.avgComments)}</span>`, `<span class="mono">${x.avgViews ? fmtN(x.avgViews) : '—'}</span>`]))}
+    <h3>Engagement per post (avg likes + comments)</h3>${hbars(st.filter(x => x.posts).map(x => ({l:x.name, v:x.avgLikes + x.avgComments, tip:`${x.name}: ${x.posts} posts`})), v => fmtN(v))}</section>` : ''}
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c5)"></span>Competitor by competitor</h2></header>${tbl(['Competitor','Cadence & formats','Content pillars','Top themes','Tone','What works','Weakness'], arr(a.competitors).map(c => [`<b>${esc(c.name)}</b>`, esc(`${c.postsPerWeek ? c.postsPerWeek + '/wk · ' : ''}${c.formatMix || ''}`), esc(c.pillars), esc(c.topThemes), esc(c.tone), esc(c.whatWorks), esc(c.weakness)]))}</section>
+  <div class="grid2">
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c3)"></span>Top posts to learn from</h2></header><div class="list">${arr(a.topPosts).map(t => `<div class="li"><span class="tx"><b>${esc(t.competitor)} · ${esc(t.platform)}</b><span class="sm">${esc(t.what)}</span><span class="muted sm">${esc(t.whyItWorked)}</span></span>${linkOK(t.url) ? `<a class="btn sm" href="${esc(t.url)}" target="_blank" rel="noopener">Open ↗</a>` : ''}</div>`).join('') || '<p class="muted">None listed.</p>'}${real ? st.flatMap(x => x.top.slice(0, 2).map(p => `<div class="li"><span class="tx"><b>${esc(x.name)} · ${esc(p.platform)} ${esc(p.type)} · ${esc(p.date)}</b><span class="sm">${esc(str(p.text).slice(0, 140))}</span><span class="muted sm mono">${fmtN(p.likes)} likes · ${fmtN(p.comments)} comments${p.views ? ' · ' + fmtN(p.views) + ' views' : ''}</span></span>${linkOK(p.url) ? `<a class="btn sm" href="${esc(p.url)}" target="_blank" rel="noopener">Open ↗</a>` : ''}</div>`)).join('') : ''}</div></section>
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c4)"></span>Gaps we can own</h2></header><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">${arr(a.gaps).map(g => `<li>${esc(g)}</li>`).join('')}</ul></section>
+  </div>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Ideas to adapt</h2><p>Send any of these to the Ideas bank; unused ideas feed next month's calendar.</p></div><button class="btn sm" data-act="benchAllIdeas" data-id="${id}">Add all to Ideas bank</button></header>${tbl(['Idea for us','Based on','Format',''], arr(a.stealIdeas).map((x, i) => [`<b>${esc(x.idea)}</b>`, esc(x.basedOn), esc(x.format), `<button class="btn sm" data-act="benchIdea" data-id="${id}" data-i="${i}">Add to ideas</button>`]))}</section>
+  ${arr(r.sources).length ? `<section class="panel"><header><h2>Sources</h2></header><div class="list">${arr(r.sources).map(x => `<a class="li" href="${esc(x.uri)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="tx"><b>${esc(x.title || x.uri)}</b></span><span class="muted sm">Open ↗</span></a>`).join('')}</div></section>` : ''}`;
+}
+
+/* ---------- monthly reports ---------- */
+function reportStats(planId){
+  const ps = postsOf(planId); const withM = ps.filter(hasMetrics);
+  const sum = k => withM.reduce((s, p) => s + num(p.metrics?.[k]), 0);
+  const reach = sum('reach'), eng = sum('likes') + sum('comments') + sum('saves') + sum('shares');
+  const grp = key => { const g = {}; withM.forEach(p => { const e = er(p); if (e == null) return; (g[p[key] || '—'] = g[p[key] || '—'] || []).push(e); }); return Object.entries(g).map(([l, v]) => ({l, v:+(v.reduce((a, b) => a + b, 0) / v.length).toFixed(2), n:v.length})).sort((a, b) => b.v - a.v); };
+  const top = withM.filter(p => er(p) != null).sort((a, b) => er(b) - er(a)).slice(0, 5).map(p => ({id:p.id, date:p.date, channel:p.channel, format:p.format, pillar:p.pillar, topic:p.topic, hook:p.hook, er:+er(p).toFixed(2), reach:num(p.metrics.reach), url:p.liveUrl || ''}));
+  return {planned:ps.length, published:ps.filter(p => p.status === 'Published').length, approved:ps.filter(p => group(p.status) === 'done').length, measured:withM.length, reach, impressions:sum('impressions'), engagements:eng, er:reach ? +(eng / reach * 100).toFixed(2) : 0, saves:sum('saves'), shares:sum('shares'), clicks:sum('clicks'), views:sum('views'), byPillar:grp('pillar'), byFormat:grp('format'), byChannel:grp('channel'), top};
+}
+function vReports(b){
+  const pls = plansOf(ui.brandId);
+  const reps = Object.entries(D.reports).filter(([,r]) => r.type === 'monthly' && r.brandId === ui.brandId).sort((a, c) => str(c[1].month).localeCompare(str(a[1].month)) || (c[1].at || 0) - (a[1].at || 0));
+  const cur = ui.reportId && D.reports[ui.reportId]?.brandId === ui.brandId ? [ui.reportId, D.reports[ui.reportId]] : reps[0];
+  return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c4)"></span>Monthly report</h2><p>Pulls the month's results from the plan's Performance tab, adds the latest competitor benchmark, and writes a client-ready report with next-month actions.</p></div></header>
+    ${pls.length ? `<div class="rowline"><label class="f" style="flex:0 0 240px">Month<select class="in" id="rp-plan">${opts(pls.map(([id, p]) => [id, mLabel(p.month) + ` · ${reportStats(id).measured} posts with results`]))}</select></label><label class="chk" style="flex:0 0 auto"><input type="checkbox" id="rp-bench" ${latestBench(ui.brandId) ? 'checked' : 'disabled'}> Include competitor benchmark</label><button class="btn pri" data-act="createReport" ${aiOff() || ui.repBusy2 ? 'disabled' : ''}>${ui.repBusy2 ? '<span class="spin"></span> Writing report…' : '<span class="spark">✦</span> Create report'}</button></div><p class="muted sm">Log each post's numbers first: open the plan → Performance tab.</p>` : '<p class="muted">Generate a monthly plan first.</p>'}
+    ${reps.length > 1 ? `<label class="f" style="max-width:280px">Past reports<select class="in" data-chg="repPick">${opts(reps.map(([id, r]) => [id, `${mLabel(r.month)} · ${new Date(r.at).toLocaleDateString()}`]), cur?.[0])}</select></label>` : ''}
+  </section>
+  ${cur ? vReportView(b, cur[0], cur[1]) : ''}`;
+}
+function vReportView(b, id, r){
+  const a = r.data || {}, st = r.stats || {};
+  const pct = v => (+v || 0).toFixed(1) + '%';
+  return `<section class="hero"><div><p class="eyebrow">Monthly report · ${esc(mLabel(r.month))}</p><h2 style="font-size:26px">${esc(a.headline || b.name + ' · ' + mLabel(r.month))}</h2><p style="margin-top:8px;white-space:pre-wrap">${esc(a.summary)}</p></div><div class="acts"><button class="btn sm hot" data-act="reportPptx" data-id="${id}" ${typeof PptxGenJS === 'undefined' || !DL ? 'disabled' : ''}>Download PowerPoint</button><button class="btn sm" data-act="copyRep2" data-id="${id}">Copy text</button>${confirmBtn('delRep-' + id, 'Delete', 'delReport', `data-id="${id}"`)}</div></section>
+  <div class="stats">${statTile('chart', fmtN(st.reach || 0), 'Total reach', '--c1')}${statTile('heart', fmtN(st.engagements || 0), 'Engagements', '--c2')}${statTile('check', pct(st.er), 'Engagement rate', '--c4')}${statTile('cal', `${st.published || 0}/${st.planned || 0}`, 'Posts published / planned', '--c3')}</div>
+  ${arr(a.kpis).length ? `<section class="panel"><header><h2><span class="dotc" style="--dc:var(--c1)"></span>KPIs</h2></header>${tbl(['KPI','Result','Note'], arr(a.kpis).map(k => [`<b>${esc(k.label)}</b>`, `<span class="mono">${esc(k.value)}</span>`, esc(k.note)]))}</section>` : ''}
+  <div class="grid2">
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c4)"></span>What worked</h2></header><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">${arr(a.wins).map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c2)"></span>What didn't</h2></header><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">${arr(a.misses).map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>
+  </div>
+  ${arr(st.byPillar).length || arr(st.byFormat).length ? `<div class="grid2"><section class="panel"><header><h2>Engagement rate by pillar</h2></header>${hbars(arr(st.byPillar).map(x => ({l:x.l, v:x.v, tip:`${x.l}: ${x.n} posts`})), pct)}</section><section class="panel"><header><h2>Engagement rate by format</h2></header>${hbars(arr(st.byFormat).map(x => ({l:x.l, v:x.v, tip:`${x.l}: ${x.n} posts`})), pct)}</section></div>` : ''}
+  ${arr(st.top).length ? `<section class="panel"><header><h2><span class="dotc" style="--dc:var(--c3)"></span>Top posts</h2></header>${tbl(['Post','Format','Pillar','ER','Reach',''], arr(st.top).map(t => [`<b>${esc(t.topic)}</b><div class="muted sm">${fmtD(t.date)}</div>`, `${chBadge(t.channel)} ${esc(t.format)}`, esc(t.pillar), `<span class="mono">${pct(t.er)}</span>`, `<span class="mono">${fmtN(t.reach)}</span>`, linkOK(t.url) ? `<a class="btn sm" href="${esc(t.url)}" target="_blank" rel="noopener">Open ↗</a>` : '']))}</section>` : ''}
+  <div class="grid2">
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c5)"></span>Learnings</h2></header><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">${arr(a.learnings).map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c6)"></span>Competitor watch</h2></header><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">${arr(a.competitorWatch).map(x => `<li>${esc(x)}</li>`).join('') || '<li class="muted">No benchmark included.</li>'}</ul></section>
+  </div>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c1)"></span>Next month</h2></header>${tbl(['Action','Why'], arr(a.nextMonth).map(x => [`<b>${esc(x.action)}</b>`, esc(x.why)]))}</section>`;
+}
+async function createReport(){
+  const b = D.brands[ui.brandId]; const planId = $('#rp-plan')?.value; const plan = D.plans[planId]; if (!plan) return;
+  const st = reportStats(planId); const withBench = $('#rp-bench')?.checked;
+  const bench = withBench ? benchCtx(b) : '';
+  ui.repBusy2 = true; renderAll();
+  try {
+    const a = await ai(`${PRE}
+
+${brandCtx(b, 4000)}
+
+MONTH: ${mLabel(plan.month)} · Theme: ${plan.strategy?.theme?.name || ''}
+OBJECTIVES: ${arr(plan.strategy?.objectives).map(o => `${o.objective} (${o.kpi}, target ${o.target})`).join('; ')}
+RESULTS (use these numbers only): ${JSON.stringify(st)}
+${bench}
+
+TASK: Write the monthly social media report for the client. Be specific and honest: name the posts, pillars and formats that drove results and the ones that did not, explain why, and turn it into next-month actions. ${st.measured ? '' : 'Very few results were logged, so say so plainly and focus on delivery and learnings.'} No filler.
+
+Reply with only JSON:
+{"headline":"one-line takeaway","summary":"4-5 lines with the key numbers","kpis":[{"label":"","value":"","note":""}],"wins":[""],"misses":[""],"learnings":[""],"competitorWatch":[""],"nextMonth":[{"action":"","why":""}]}`);
+    const id = uid();
+    await put('reports', id, {type:'monthly', brandId:ui.brandId, planId, month:plan.month, at:Date.now(), stats:st, data:a || {}, by:me});
+    ui.reportId = id; toast('Report ready');
+  } catch (e){ toast(errCopy(e)); }
+  ui.repBusy2 = false; renderAll();
+}
+function reportText(r){
+  const a = r.data || {}; const st = r.stats || {};
+  return [`${a.headline || ''}`, '', a.summary || '', '', `Reach ${fmtN(st.reach || 0)} · Engagements ${fmtN(st.engagements || 0)} · ER ${(+st.er || 0).toFixed(1)}% · Published ${st.published}/${st.planned}`, '', 'KPIs', ...arr(a.kpis).map(k => `- ${k.label}: ${k.value}${k.note ? ' (' + k.note + ')' : ''}`), '', 'What worked', ...arr(a.wins).map(x => '- ' + x), '', "What didn't", ...arr(a.misses).map(x => '- ' + x), '', 'Learnings', ...arr(a.learnings).map(x => '- ' + x), '', 'Competitor watch', ...arr(a.competitorWatch).map(x => '- ' + x), '', 'Next month', ...arr(a.nextMonth).map(x => `- ${x.action}: ${x.why}`)].join('\n');
+}
 function vPlanPillars(b){
   const P = arr(b.pillars);
   if (!P.length) return `<div style="display:flex;flex-direction:column;gap:6px"><h3>Content pillars</h3><p class="muted sm">No pillars saved for this brand, so the AI will propose them. To choose your own, add pillars in <button class="lnk" data-act="btab" data-k="brain">Brand Brain → Content pillars</button>.</p></div>`;
@@ -1546,26 +1704,27 @@ function printDeck(){
 function hx(c, fb='2F5BEA'){ let h = String(c || '').replace('#', ''); if (/^[0-9a-f]{3}$/i.test(h)) h = h.split('').map(x => x + x).join(''); return /^[0-9a-f]{6}$/i.test(h) ? h.toUpperCase() : fb; }
 function tint(h, t){ const n = [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); return n.map(v => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0')).join('').toUpperCase(); }
 const PALHEX = {'--c1':'2F5BEA','--c2':'FF5A5F','--c3':'FFA41B','--c4':'10B9A0','--c5':'7C5CFF','--c6':'1FA2FF'};
-async function downloadPptx(){
-  const plan = D.plans[ui.planId]; const ps = postsOf(ui.planId); const b = D.brands[plan.brandId] || {};
-  const M = deckModel({...plan, id:ui.planId}, ps); if (!M.length) return;
+async function downloadPptx(Mx, meta={}){
+  const plan = meta.plan || D.plans[ui.planId]; const ps = meta.ps || postsOf(ui.planId); const b = meta.b || D.brands[plan.brandId] || {};
+  const M = Array.isArray(Mx) ? Mx : deckModel({...plan, id:ui.planId}, ps); if (!M.length) return;
+  const LBL = meta.label || mLabel(plan.month);
   toast('Building PowerPoint…');
   try {
     const pptx = new PptxGenJS(); pptx.layout = 'LAYOUT_WIDE'; pptx.author = 'Digimuse'; pptx.company = 'Digimuse'; pptx.title = `${b.name} — ${mLabel(plan.month)}`;
     const F = 'Montserrat', INK = '131A33', GREY = '8B91A7', ACC = hx(deckAccent(b)); const bc = brandColors(b);
     const BG = hx(bc.solid || '#2F5BEA'), FG = hx(bc.fg, 'FFFFFF'), AC = hx(bc.ac, 'FFA41B');
     const W = 13.333, X = 0.65, CW = W - 1.3;
-    const foot = (sl, i, dark) => { sl.addText(`${b.name} · ${mLabel(plan.month)}`, {x:X, y:7.05, w:7, h:0.3, fontFace:F, fontSize:9, color:dark ? '8FA0D6' : GREY}); sl.addText(`digimuse. · ${i + 1}/${M.length}`, {x:W - X - 4, y:7.05, w:4, h:0.3, fontFace:F, fontSize:9, color:dark ? '8FA0D6' : GREY, align:'right'}); };
+    const foot = (sl, i, dark) => { sl.addText(`${b.name} · ${LBL}`, {x:X, y:7.05, w:7, h:0.3, fontFace:F, fontSize:9, color:dark ? '8FA0D6' : GREY}); sl.addText(`digimuse. · ${i + 1}/${M.length}`, {x:W - X - 4, y:7.05, w:4, h:0.3, fontFace:F, fontSize:9, color:dark ? '8FA0D6' : GREY, align:'right'}); };
     const head = (sl, m) => { sl.addShape(pptx.ShapeType.rect, {x:0, y:0, w:W, h:0.09, fill:{color:ACC}, line:{color:ACC}}); sl.addText(str(m.ey).toUpperCase(), {x:X, y:0.35, w:CW, h:0.3, fontFace:F, fontSize:10, bold:true, color:ACC, charSpacing:2}); sl.addText(str(m.title), {x:X, y:0.62, w:CW, h:0.75, fontFace:F, fontSize:26, bold:true, color:INK}); };
     M.forEach((m, i) => {
       const sl = pptx.addSlide();
       if (m.k === 'cover'){
         sl.background = {color:'0F1E4A'};
         ['FF5A5F','FFA41B','10B9A0'].forEach((c, j) => sl.addShape(pptx.ShapeType.ellipse, {x:10.6 + j * 0.62, y:0.8, w:0.42, h:0.42, fill:{color:c}, line:{color:c}}));
-        sl.addText(`SOCIAL MEDIA PLAN · ${mLabel(plan.month).toUpperCase()}`, {x:X, y:2.2, w:CW, h:0.4, fontFace:F, fontSize:12, bold:true, color:'8FA0D6', charSpacing:3});
+        sl.addText(meta.kicker || `SOCIAL MEDIA PLAN · ${mLabel(plan.month).toUpperCase()}`, {x:X, y:2.2, w:CW, h:0.4, fontFace:F, fontSize:12, bold:true, color:'8FA0D6', charSpacing:3});
         sl.addText(str(b.name), {x:X, y:2.65, w:CW, h:1.3, fontFace:F, fontSize:48, bold:true, color:'FFFFFF'});
-        if (plan.strategy?.theme?.name) sl.addText(plan.strategy.theme.name, {x:X, y:3.95, w:CW, h:0.6, fontFace:F, fontSize:22, bold:true, italic:true, color:'FFA41B'});
-        sl.addText('Research · Strategy · Content calendar · Post-by-post content', {x:X, y:4.6, w:CW, h:0.5, fontFace:F, fontSize:15, color:'C9D3F5'});
+        const TH = meta.theme != null ? meta.theme : plan.strategy?.theme?.name; if (TH) sl.addText(TH, {x:X, y:3.95, w:CW, h:0.6, fontFace:F, fontSize:22, bold:true, italic:true, color:'FFA41B'});
+        sl.addText(meta.sub || 'Research · Strategy · Content calendar · Post-by-post content', {x:X, y:4.6, w:CW, h:0.5, fontFace:F, fontSize:15, color:'C9D3F5'});
         sl.addText('Prepared by Digimuse', {x:X, y:7.05, w:6, h:0.3, fontFace:F, fontSize:9, color:'8FA0D6'});
         return;
       }
@@ -1579,7 +1738,7 @@ async function downloadPptx(){
           sl.addShape(pptx.ShapeType.rect, {x, y, w, h, fill:{color:'F7F8FC'}, line:{color:'F7F8FC'}}); sl.addShape(pptx.ShapeType.rect, {x, y, w, h:0.07, fill:{color:col}, line:{color:col}});
           sl.addText([{text:str(l).toUpperCase(), options:{bold:true, fontSize:10, color:col, charSpacing:2, breakLine:true}}, {text:str(t), options:{fontSize:cols === 1 ? 24 : 16, color:'252C45'}}], {x:x + 0.2, y:y + 0.2, w:w - 0.4, h:h - 0.3, fontFace:F, valign:'top', paraSpaceAfter:6}); });
       } else if (m.k === 'cards'){
-        const cols = m.cols, gap = 0.25, w = (CW - gap * (cols - 1)) / cols, h = 4.9;
+        const cols = m.cols, gap = 0.25, w = (CW - gap * (cols - 1)) / cols, h = m.cards.some(c => c.body) ? 4.9 : 2.3;
         m.cards.forEach((c, j) => { const x = X + j * (w + gap), col = PALHEX[c.color] || ACC;
           sl.addShape(pptx.ShapeType.roundRect, {x, y:1.65, w, h, fill:{color:tint(col, .88)}, line:{color:tint(col, .7)}, rectRadius:0.12});
           const parts = []; if (c.big) parts.push({text:str(c.big), options:{bold:true, fontSize:30, color:col, breakLine:true}}); parts.push({text:str(c.title), options:{bold:true, fontSize:cols > 4 ? 15 : 18, color:INK, breakLine:true}}); if (c.body) parts.push({text:str(c.body), options:{fontSize:cols > 4 ? 12 : 14, color:'444C66'}});
@@ -1608,7 +1767,7 @@ async function downloadPptx(){
       }
     });
     const out = await pptx.write({outputType:'arraybuffer'});
-    await save(fname(plan, 'pptx'), out);
+    await save(meta.file || fname(plan, 'pptx'), out);
   } catch (e){ console.error(e); toast('Could not build the PowerPoint'); }
 }
 
@@ -1639,7 +1798,8 @@ function vLive(){
     ['Add the team first','Go to Team and add everyone with their role, then assign people per brand under Profile & team.','--c6'],
     ['AI runs on the agency key','All AI writing uses the Gemini or Claude key set in Vercel. Watch usage in Google AI Studio or the Anthropic console.','--c3'],
     ['Changes sync every 30 seconds','Everyone sees the same brands and posts. If two people edit the same field at once, the last save wins, so split work by post.','--c2'],
-    ['Change the password any time','Update TEAM_PASSWORD in Vercel and redeploy. Everyone signs in again with the new one.','--c4']
+    ['Change the password any time','Update TEAM_PASSWORD in Vercel and redeploy. Everyone signs in again with the new one.','--c4'],
+    ['Real competitor posts','For benchmarks with real Instagram and LinkedIn posts, add APIFY_TOKEN in Vercel (from apify.com → Settings → Integrations) and redeploy. Without it, benchmarks use web research.','--c5']
   ] : [
     ['Share it with your team','Open the Share menu at the top of this page and share it with your organisation, or invite each teammate. Give writers, designers and account managers "Can edit" (Contributor) so they can change posts. Everyone sees the same live data.','--c1'],
     ['Each person picks their name','In the sidebar, "You are" sets whose tasks show up under My tasks. It is remembered on each person\'s own device.','--c2'],
@@ -2130,6 +2290,42 @@ const ACT = {
   scRm: a => { ui.sched = readSched(); ui.sched[a.dataset.day].splice(+a.dataset.i, 1); paintSched(); },
   scCopy: () => { ui.sched = readSched(); ['Tue','Wed','Thu','Fri'].forEach(d => ui.sched[d] = clone(ui.sched.Mon)); paintSched(); toast('Monday copied to Tuesday–Friday'); },
   scClear: () => { ui.sched = {Mon:[],Tue:[],Wed:[],Thu:[],Fri:[],Sat:[],Sun:[]}; paintSched(); },
+  scoutComps: async () => {
+    const b = D.brands[ui.brandId]; ui.scoutBusy = true; renderAll();
+    try {
+      const {data:r} = await webJSON(`${brandCtx(b, 6000)}\n\nTASK: ${HOSTED ? 'Use web search to find' : 'Name'} the 6 most relevant competitors for this brand's social media in its market: 4 direct competitors and 2 aspirational brands it should benchmark against. For each give the Instagram handle and LinkedIn company page URL ${HOSTED ? 'you actually find' : 'if you are sure of them, else leave empty'}. Skip these already tracked: ${getComps(b).map(c => c.name).join(', ') || 'none'}.\n\nReply with only JSON: {"competitors":[{"name":"","instagram":"@handle","linkedin":"https://www.linkedin.com/company/...","website":"","why":"direct or aspirational, one line"}]}`);
+      const add = arr(r?.competitors).filter(x => x && x.name).map(x => ({name:str(x.name), instagram:str(x.instagram), linkedin:str(x.linkedin), website:str(x.website), why:str(x.why), source:'scouted', on:true}));
+      if (!add.length) throw {code:'invalid_json'};
+      await patch('brands', ui.brandId, {comps:getComps(D.brands[ui.brandId]).concat(add)}); toast(`${add.length} competitors added. Check the handles.`);
+    } catch (e){ toast(errCopy(e)); }
+    ui.scoutBusy = false; renderAll();
+  },
+  addComp: () => { const b = D.brands[ui.brandId]; patch('brands', ui.brandId, {comps:getComps(b).concat([{name:'', instagram:'', linkedin:'', website:'', source:'manual', on:true}])}); setTimeout(() => { const l = document.querySelectorAll('[data-k="name"][data-chg="compF"]'); l[l.length - 1]?.focus(); }, 60); },
+  rmComp: a => { const b = D.brands[ui.brandId]; const l = getComps(b).slice(); l.splice(+a.dataset.i, 1); patch('brands', ui.brandId, {comps:l}); },
+  runBench: () => runBench(),
+  benchIdea: a => { const r = D.reports[a.dataset.id]; const x = arr(r?.analysis?.stealIdeas)[+a.dataset.i]; if (!x) return; const b = D.brands[ui.brandId]; patch('brands', ui.brandId, {ideas:arr(b.ideas).concat([{text:x.idea, why:'From benchmark: ' + str(x.basedOn), format:FORMATS.includes(x.format) ? x.format : '', ai:true, at:Date.now(), used:false}])}); toast('Added to Ideas bank'); },
+  benchAllIdeas: a => { const r = D.reports[a.dataset.id]; const b = D.brands[ui.brandId]; const add = arr(r?.analysis?.stealIdeas).map(x => ({text:x.idea, why:'From benchmark: ' + str(x.basedOn), format:FORMATS.includes(x.format) ? x.format : '', ai:true, at:Date.now(), used:false})); patch('brands', ui.brandId, {ideas:arr(b.ideas).concat(add)}); toast(`${add.length} ideas added`); },
+  delReport: a => { ui.confirm = null; del('reports', a.dataset.id); if (ui.benchId === a.dataset.id) ui.benchId = null; if (ui.reportId === a.dataset.id) ui.reportId = null; },
+  createReport: () => createReport(),
+  copyRep2: a => copyText(reportText(D.reports[a.dataset.id])),
+  benchPptx: a => { const r = D.reports[a.dataset.id]; const b = D.brands[r.brandId]; const an = r.analysis || {}; const st = arr(r.stats);
+    const M = [{k:'cover'}, {k:'kv', ey:'Summary', title:'Where we stand', cols:1, items:[['Summary', an.summary, '--c1']]}];
+    if (st.some(x => x.posts)) M.push({k:'table', ey:'The numbers', title:`Last ${r.days} days`, head:['Competitor','Posts','Per week','Formats','Avg likes','Avg comments'], rows:st.map(x => [x.name, x.posts, x.perWeek, Object.entries(x.byType).map(([k, v]) => k + ' ' + v).join(', '), x.avgLikes, x.avgComments])});
+    chunk(arr(an.competitors), 4).forEach((c, i) => M.push({k:'table', ey:'Competitor by competitor', title:i ? 'Competitors (cont.)' : 'What each competitor does', head:['Competitor','Cadence & formats','Pillars','What works','Weakness'], rows:c.map(x => [x.name, `${x.postsPerWeek || ''} ${x.formatMix || ''}`, x.pillars, x.whatWorks, x.weakness])}));
+    if (arr(an.topPosts).length) M.push({k:'table', ey:'Top posts', title:'Posts to learn from', head:['Competitor','What it was','Why it worked'], rows:arr(an.topPosts).slice(0, 6).map(x => [`${x.competitor} · ${x.platform}`, x.what, x.whyItWorked])});
+    if (arr(an.gaps).length) M.push({k:'list', ey:'Opportunities', title:'Gaps we can own', items:arr(an.gaps).slice(0, 6)});
+    if (arr(an.stealIdeas).length) M.push({k:'table', ey:'Ideas', title:'Ideas to adapt', head:['Idea for us','Based on','Format'], rows:arr(an.stealIdeas).slice(0, 7).map(x => [x.idea, x.basedOn, x.format])});
+    downloadPptx(M, {b, plan:{month:'', brandId:r.brandId}, ps:[], kicker:`COMPETITOR BENCHMARK · LAST ${r.days} DAYS`, theme:'', sub:`${arr(r.comps).join(' · ')}`, label:new Date(r.at).toLocaleDateString(), file:`${str(b.name).replace(/[^\w-]+/g, '-')}-competitor-benchmark.pptx`}); },
+  reportPptx: a => { const r = D.reports[a.dataset.id]; const b = D.brands[r.brandId]; const x = r.data || {}; const st = r.stats || {};
+    const M = [{k:'cover'}, {k:'cards', ey:'Results', title:x.headline || 'The month in numbers', cols:4, cards:[{title:'Total reach', big:fmtN(st.reach || 0), body:'', color:'--c1'}, {title:'Engagements', big:fmtN(st.engagements || 0), body:'', color:'--c2'}, {title:'Engagement rate', big:(+st.er || 0).toFixed(1) + '%', body:'', color:'--c4'}, {title:'Published / planned', big:`${st.published || 0}/${st.planned || 0}`, body:'', color:'--c3'}]}, {k:'kv', ey:'Summary', title:'What happened', cols:1, items:[['Summary', x.summary, '--c1']]}];
+    if (arr(x.kpis).length) M.push({k:'table', ey:'KPIs', title:'KPIs', head:['KPI','Result','Note'], rows:arr(x.kpis).map(k => [k.label, k.value, k.note])});
+    if (arr(st.top).length) M.push({k:'table', ey:'Top posts', title:'Best performing posts', head:['Post','Channel & format','Pillar','ER','Reach'], rows:arr(st.top).map(t => [t.topic, `${t.channel} ${t.format}`, t.pillar, t.er + '%', fmtN(t.reach)])});
+    if (arr(st.byPillar).length) M.push({k:'table', ey:'Pillars & formats', title:'What drove engagement', head:['Pillar or format','Avg ER','Posts'], rows:arr(st.byPillar).map(p => ['Pillar: ' + p.l, p.v + '%', p.n]).concat(arr(st.byFormat).map(p => ['Format: ' + p.l, p.v + '%', p.n])).slice(0, 8)});
+    M.push({k:'list', ey:'What worked', title:'Wins', items:arr(x.wins).slice(0, 6)}, {k:'list', ey:'What didn\'t', title:'Misses', items:arr(x.misses).slice(0, 6)});
+    if (arr(x.learnings).length) M.push({k:'list', ey:'Learnings', title:'What we learned', items:arr(x.learnings).slice(0, 6)});
+    if (arr(x.competitorWatch).length) M.push({k:'list', ey:'Competitor watch', title:'What competitors did', items:arr(x.competitorWatch).slice(0, 6)});
+    M.push({k:'table', ey:'Next month', title:'What we will do next', head:['Action','Why'], rows:arr(x.nextMonth).map(n => [n.action, n.why])});
+    downloadPptx(M.filter(m => m.k !== 'list' || arr(m.items).length), {b, plan:{month:r.month, brandId:r.brandId}, ps:[], kicker:`MONTHLY REPORT · ${mLabel(r.month).toUpperCase()}`, theme:'', sub:'Results · Learnings · Competitor watch · Next month', label:mLabel(r.month), file:`${str(b.name).replace(/[^\w-]+/g, '-')}-report-${r.month}.pptx`}); },
   addPillar: () => { const b = D.brands[ui.brandId]; const n = ($('#npi-name')?.value || '').trim(); if (!n){ toast('Name the pillar first'); return; } patch('brands', ui.brandId, {pillars:arr(b.pillars).concat([{name:n, purpose:($('#npi-purpose')?.value || '').trim(), active:true}])}); toast('Pillar added'); },
   rmPillar: a => { const b = D.brands[ui.brandId]; const l = arr(b.pillars).slice(); l.splice(+a.dataset.i, 1); patch('brands', ui.brandId, {pillars:l}); },
   aiPillars: async () => {
@@ -2329,6 +2525,10 @@ const CHG = {
   apFmt: () => { ui.addDraft = apRead(); addPostModal(); },
   planMode: t => { ui.planMode = t.value; $('#mode-sched').hidden = t.value !== 'schedule'; $('#mode-mix').hidden = t.value !== 'mix'; },
   scFmt: () => { ui.sched = readSched(); paintSched(); },
+  compF: t => { const b = D.brands[ui.brandId]; const l = clone(getComps(b)); if (l[+t.dataset.i]){ l[+t.dataset.i][t.dataset.k] = t.value.trim(); patch('brands', ui.brandId, {comps:l}); } },
+  compOn: t => { const b = D.brands[ui.brandId]; const l = clone(getComps(b)); if (l[+t.dataset.i]){ l[+t.dataset.i].on = t.checked; patch('brands', ui.brandId, {comps:l}); } },
+  benchPick: t => { ui.benchId = t.value; renderAll(); },
+  repPick: t => { ui.reportId = t.value; renderAll(); },
   ms: t => { const d = t.closest('.ms'); const sel = [...d.querySelectorAll('input:checked')].map(x => x.value); const sm = d.querySelector('summary'); sm.textContent = msText(d.dataset.kind, sel); sm.classList.toggle('on', sel.length > 0); },
   mxTotal: () => { const t = FORMATS.reduce((s, f) => s + (parseInt($('#mx-' + f)?.value || '0', 10) || 0), 0); const el = $('#mx-total'); if (el) el.textContent = t; },
   dsec: t => { if (!ui.deckSec) ui.deckSec = new Set(DECK_PRESETS.full); if (t.checked) ui.deckSec.add(t.value); else ui.deckSec.delete(t.value); renderAll(); },
@@ -2512,7 +2712,7 @@ renderAll();
   } else return;
   if (db){
     DB = db;
-    for (const col of ['brands','team','plans','posts']){
+    for (const col of ['brands','team','plans','posts','reports']){
       DB.collection(col).limit(1000).onSnapshot(s => {
         const m = {}; s.docs.forEach(d => { if (d.exists) m[d.id] = Object.assign({}, d.data(), col === 'posts' ? {id:d.id} : {}); });
         D[col] = m; sched();

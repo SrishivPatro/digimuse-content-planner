@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 const RURL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const RTOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
-export const COLS = ['brands', 'team', 'plans', 'posts'];
+export const COLS = ['brands', 'team', 'plans', 'posts', 'reports'];
 export const PREFIX = 'dcp:';
 
 function need(){
