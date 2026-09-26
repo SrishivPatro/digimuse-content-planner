@@ -31,6 +31,7 @@ html{color-scheme:light}
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.rtypes{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:4px 0 14px}.rtype{display:flex;flex-direction:column;gap:4px;text-align:left;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font:inherit;color:inherit;border-top:4px solid var(--rc)}.rtype span{font-size:12.5px;color:#6B7290;line-height:1.4}.rtype.on{border-color:var(--rc);background:color-mix(in srgb,var(--rc) 7%,#fff);box-shadow:0 4px 14px color-mix(in srgb,var(--rc) 18%,transparent)}.labrefs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}.labref{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff}.labref img{width:92px;height:115px;object-fit:cover;border-radius:10px;flex:none}.labref p{margin:4px 0}
 .chpick{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:0 0 14px}.chpick .eyebrow{margin:0;flex-basis:100%}.deckside .chpick{margin:0}
 .refgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;margin:6px 0 10px}.refc{display:flex;flex-direction:column;gap:4px;min-width:0}.refc img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block;background:#F3F5FB}.refc .noimg{display:flex;align-items:center;justify-content:center;aspect-ratio:4/5;border-radius:10px;border:1px dashed var(--line-2);font-size:12px;text-align:center;padding:6px;word-break:break-all}.refm{display:flex;justify-content:space-between;align-items:center}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--fb);-webkit-font-smoothing:antialiased}
@@ -704,7 +705,7 @@ function promptA(b, plan){
 
 ${brandCtx(b)}
 
-${benchCtx(b, plan.brandId)}
+${benchCtx(b, plan.brandId)}${labCtx(plan.brandId)}
 
 PLAN MONTH: ${mLabel(plan.month)} · Region: ${plan.opts.region} · Language: ${plan.opts.lang}
 ${plan.opts.brief ? 'THIS MONTH\'S BRIEF: ' + plan.opts.brief : ''}
@@ -815,7 +816,7 @@ ${plan.opts.mix && Object.values(plan.opts.mix).some(v => fmtProducts(v).length 
 ${plan.creative?.references?.length ? 'CREATIVE REFERENCES TO BORROW FROM: ' + plan.creative.references.slice(0, 10).map(r => `${r.brand}: ${r.piece} → ${r.borrow}`).join(' | ') : ''}
 ${ideas ? 'TEAM IDEAS BANK (use the strong ones):\n' + ideas : ''}
 
-${benchCtx(b, plan.brandId)}
+${benchCtx(b, plan.brandId)}${labCtx(plan.brandId)}
 
 INCLUDED TOPICAL DAYS:
 ${tdays}
@@ -1077,13 +1078,13 @@ function vBrand(){
   const b = D.brands[ui.brandId];
   if (!b) return `<div class="empty"><p>This brand was removed.</p><button class="btn" data-act="go" data-v="home">Back to dashboard</button></div>`;
   const h = health(b).score; const c = brandColors(b);
-  const tabs = [['plans','Monthly plans'],['comp','Competitors'],['reports','Reports'],['ideas','Ideas bank',arr(b.ideas).filter(i => !i.used).length],['brain','Brand Brain'],['profile','Profile & team']];
+  const tabs = [['plans','Monthly plans'],['comp','Competitors'],['lab','Research',Object.values(D.reports).filter(r => r.type === 'research' && r.brandId === ui.brandId).length],['reports','Reports'],['ideas','Ideas bank',arr(b.ideas).filter(i => !i.used).length],['brain','Brand Brain'],['profile','Profile & team']];
   return `<section class="hero brand" style="--bc:${c.solid || 'var(--c1)'}"><span class="blob" aria-hidden="true"></span><div><div class="crumb"><button data-act="go" data-v="home">Dashboard</button>›<span>Brand</span></div><h1>${esc(b.name)}</h1>
     <div class="chips">${[b.industry, b.type, b.stage, b.price].filter(Boolean).map(x => `<span class="chip">${esc(x)}</span>`).join('')}${activeCh(b).map(x => `<span class="chb" style="--chc:${CHC[x]}">${esc(x)} · ${esc(b.channels[x].perWeek)}/wk</span>`).join('')}</div>
     ${kitColors(b).length ? `<div class="swatches" style="margin-top:10px">${kitColors(b).map(x => `<span class="sw"><i style="background:${x}"></i>${x}</span>`).join('')}</div>` : ''}</div>
     <div style="min-width:180px"><p class="eyebrow">Brand Brain</p><div class="ring"><b>${h}%</b></div><div class="meter" style="margin-top:8px"><i style="width:${h}%"></i></div></div></section>
   <div class="tabs" role="tablist">${tabs.map(([k,l,n]) => `<button role="tab" class="${ui.btab===k?'on':''}" data-act="btab" data-k="${k}">${l}${n ? `<span class="n">${n}</span>` : ''}</button>`).join('')}</div>
-  ${ui.btab === 'brain' ? vBrain(b) : ui.btab === 'profile' ? vProfile(b) : ui.btab === 'ideas' ? vIdeas(b) : ui.btab === 'comp' ? vComp(b) : ui.btab === 'reports' ? vReports(b) : vPlans(b)}`;
+  ${ui.btab === 'brain' ? vBrain(b) : ui.btab === 'profile' ? vProfile(b) : ui.btab === 'ideas' ? vIdeas(b) : ui.btab === 'comp' ? vComp(b) : ui.btab === 'lab' ? vLab(b) : ui.btab === 'reports' ? vReports(b) : vPlans(b)}`;
 }
 function vPlans(b){
   const pls = plansOf(ui.brandId);
@@ -1256,6 +1257,126 @@ async function runBench(){
     ui.benchId = id; toast('Benchmark ready');
   } catch (e){ toast(e?.code ? errCopy(e) : 'Benchmark failed: ' + (e?.message || 'try again')); }
   finally { ui.benchBusy = ''; renderAll(); }
+}
+/* ---------- Research lab: standalone trend / category / creative / brand research → ideas bank ---------- */
+const RTYPES = [
+  ['trends', 'Trend radar', 'What is trending right now: formats, audio, memes, topics and cultural moments, and which fit the brand.', '--c2'],
+  ['category', 'Category & market', 'Where the category is moving: consumer shifts, launches, pricing, what competitors push, white space.', '--c1'],
+  ['creative', 'Creative research', 'Standout campaigns and posts in and outside the category, why they worked, what to borrow.', '--c5'],
+  ['brand', 'Brand perception', 'What people say about the brand: reviews, Reddit, news, comments. Strengths, complaints, content angles.', '--c4'],
+  ['custom', 'Ask anything', 'Your own research question, e.g. "How are D2C coffee brands using LinkedIn?"', '--c3']
+];
+const rtype = k => RTYPES.find(t => t[0] === k) || RTYPES[0];
+const labReports = bid => Object.entries(D.reports).filter(([, r]) => r.type === 'research' && r.brandId === bid).sort((a, c) => (c[1].at || 0) - (a[1].at || 0));
+function labCtx(bid){
+  const L = labReports(bid).filter(([, r]) => Date.now() - (r.at || 0) < 60 * 86400000).slice(0, 3); if (!L.length) return '';
+  return '\nRECENT RESEARCH BY THE TEAM (use where relevant, do not copy verbatim):\n' + L.map(([, r]) => { const d = r.data || {};
+    return `- ${rtype(r.kind)[1]} (${new Date(r.at).toLocaleDateString()}${r.focus ? ', focus: ' + r.focus : ''}): ${str(d.summary).slice(0, 400)}${arr(d.trends).length ? ' Trends: ' + arr(d.trends).slice(0, 5).map(t => `${t.name} (${t.howToUse})`).join('; ').slice(0, 500) : ''}${arr(d.opportunities).length ? ' Opportunities: ' + arr(d.opportunities).slice(0, 4).join('; ').slice(0, 300) : ''}`; }).join('\n') + '\n';
+}
+function promptLab(b, o){
+  const focusBy = {
+    trends: `Map what is trending on ${o.platform} in ${o.region} over the last ${o.days} days: content formats, reel/video styles, trending audio or memes, conversation topics, cultural and news moments, platform feature changes. For each trend say how ${b.name} could use it without looking forced, and how long it will last. Put the most weight on "trends".`,
+    category: `Research the ${b.industry || 'brand'} category in ${o.region} over the last ${o.days} days: consumer behaviour shifts, new launches and campaigns, pricing and offer patterns, what competitors are pushing on social, regulation or news, and white space ${b.name} can own. Put the most weight on "findings" and "opportunities".`,
+    creative: `Find standout social campaigns and posts from the last ${o.days} days (older only if iconic): 4-5 from inside the ${b.industry || 'same'} category and 4-5 from outside it (other categories and global brands) that ${b.name} could learn from. For each: what they did, the mechanism that made it work, and what exactly to borrow. Put the most weight on "references".`,
+    brand: `Research how people currently talk about ${b.name}${b.website ? ' (' + b.website + ')' : ''}: reviews, Reddit and forum threads, news, social comments, marketplace ratings. Pull out what people love, what they complain about, recurring questions, and the content angles this suggests. Quote short real snippets in "evidence" where you found them. Put the most weight on "findings" and "ideas".`,
+    custom: `Research question from the team: "${o.focus}". Answer it thoroughly for ${b.name}, with evidence.`
+  };
+  return `${PRE}
+
+${brandCtx(b, 6000)}
+
+${benchCtx(b)}
+TASK: ${focusBy[o.kind]}
+${o.focus && o.kind !== 'custom' ? 'Extra focus from the team: ' + o.focus : ''}
+Platform focus: ${o.platform}. Region: ${o.region}. Timeframe: last ${o.days} days (today is ${new Date().toDateString()}).
+${HOSTED ? 'Use web search. Only give a "url" if it appeared in your search results, exactly as found; otherwise leave it empty. Never invent numbers, quotes or links.' : 'You cannot browse, so rely on what you know, leave every "url" empty, and say in the summary that this is based on AI knowledge, not live search.'}
+Then turn the research into ${o.n} original content ideas for ${b.name} that use the findings (not generic ideas), each tied to the finding that inspired it.
+Write like a sharp strategist briefing a creative team. No filler, no clichés.
+
+Reply with only JSON:
+{"headline":"one line","summary":"4-6 lines with the key takeaways","findings":[{"title":"","detail":"2-3 lines","evidence":"source name, number or short quote","url":""}],"trends":[{"name":"","what":"","platform":"","format":"","example":"a real example account or post","url":"","howToUse":"how ${b.name} can use it","shelfLife":"days | weeks | months | evergreen","fit":"High | Medium | Low"}],"references":[{"brand":"","what":"what they did","why":"the mechanism that made it work","borrow":"what we borrow","url":""}],"opportunities":[""],"avoid":[""],"ideas":[{"title":"","format":"Reel | Carousel | Static | Story | Video | Text","channel":"Instagram | LinkedIn | …","pillar":"","hook":"the opening line","why":"which finding it uses and why now","urgency":"This week | This month | Evergreen"}]}`;
+}
+async function runLab(){
+  const b = D.brands[ui.brandId]; if (!b) return;
+  const kind = ui.labKind || 'trends'; const focus = ($('#lab-focus')?.value || '').trim();
+  if (kind === 'custom' && !focus){ toast('Type your research question'); $('#lab-focus')?.focus(); return; }
+  if (aiOff()){ toast('AI is not available in this view'); return; }
+  const o = {kind, focus, days:+($('#lab-days')?.value || 30), platform:$('#lab-pl')?.value || 'Instagram and LinkedIn', region:($('#lab-region')?.value || '').trim() || b.audience?.geo || 'India', n:+($('#lab-n')?.value || 8)};
+  ui.labBusy = `Researching: ${rtype(kind)[1]}…`; renderAll();
+  try {
+    const {data, sources, searched} = await webJSON(promptLab(b, o));
+    if (!data || typeof data !== 'object') throw {code:'invalid_json'};
+    ui.labBusy = 'Checking links…'; renderAll();
+    const items = [...arr(data.references), ...arr(data.trends), ...arr(data.findings)].filter(x => x && linkOK(x.url));
+    if (items.length && HOSTED){
+      try { const res = await ogCheck([...new Set(items.map(x => x.url))].slice(0, 24), false); const m = {}; res.forEach(r => m[r.url] = r);
+        items.forEach(x => { const r = m[x.url]; x.verified = !!(r && r.ok); if (r?.ok){ x.url = r.final || x.url; x.img = r.img || ''; } }); } catch (e){}
+    } else items.forEach(x => x.verified = false);
+    const id = uid();
+    await put('reports', id, {type:'research', kind, brandId:ui.brandId, at:Date.now(), ...o, data, sources:arr(sources).slice(0, 20), searched:searched !== false && HOSTED, by:me || '', saved:[]});
+    ui.labId = id; toast('Research ready');
+  } catch (e){ toast(errCopy(e)); }
+  finally { ui.labBusy = ''; renderAll(); }
+}
+function labIdea(r, i){ const x = arr(r.data?.ideas)[i]; if (!x) return null; const ch = CH.includes(x.channel) ? x.channel : ''; const f = FORMATS.includes(x.format) ? x.format : '';
+  return {text:str(x.title) + (x.hook ? ' — Hook: ' + x.hook : ''), why:`From ${rtype(r.kind)[1].toLowerCase()}: ${str(x.why)}${x.urgency ? ' (' + x.urgency + ')' : ''}`, format:f, channel:ch, pillar:str(x.pillar), ai:true, at:Date.now(), used:false, by:me || ''}; }
+function labModel(r, b){
+  const d = r.data || {}; const M = []; const T = rtype(r.kind)[1];
+  const tables = (title, ey, head, rows) => chunk(rows, 6).forEach((rs, k) => rs.length && M.push({k:'table', ey, title:title + (k ? ' (cont.)' : ''), head, rows:rs}));
+  M.push({k:'cover'});
+  M.push({k:'list', ey:T, title:str(d.headline) || 'Key takeaways', items:str(d.summary).split(/\n+|(?<=\.)\s+(?=[A-Z])/).map(x => x.trim()).filter(Boolean).slice(0, 6)});
+  tables('Trends to use', T, ['Trend', 'What it is', 'How we use it', 'Shelf life'], arr(d.trends).map(t => [t.name, t.what, t.howToUse, t.shelfLife]));
+  tables('What we found', T, ['Finding', 'Detail', 'Evidence'], arr(d.findings).map(f => [f.title, f.detail, f.evidence]));
+  tables('Creative references', T, ['Brand', 'What they did', 'Why it worked', 'What we borrow'], arr(d.references).map(x => [x.brand, x.what, x.why, x.borrow]));
+  if (arr(d.opportunities).length) M.push({k:'list', ey:T, title:'Opportunities', items:arr(d.opportunities).slice(0, 7)});
+  tables('Content ideas', T, ['Idea', 'Format', 'Hook', 'Why now'], arr(d.ideas).map(x => [x.title, [x.channel, x.format].filter(Boolean).join(' '), x.hook, x.why]));
+  return M;
+}
+function labText(r){
+  const d = r.data || {}; const L = [`${rtype(r.kind)[1].toUpperCase()} — ${new Date(r.at).toLocaleDateString()}${r.focus ? ' — ' + r.focus : ''}`, '', str(d.headline), str(d.summary)];
+  if (arr(d.trends).length){ L.push('', 'TRENDS'); arr(d.trends).forEach(t => L.push(`- ${t.name}: ${t.what} → ${t.howToUse} [${t.shelfLife}]${t.url ? ' ' + t.url : ''}`)); }
+  if (arr(d.findings).length){ L.push('', 'FINDINGS'); arr(d.findings).forEach(f => L.push(`- ${f.title}: ${f.detail} (${f.evidence})${f.url ? ' ' + f.url : ''}`)); }
+  if (arr(d.references).length){ L.push('', 'CREATIVE REFERENCES'); arr(d.references).forEach(x => L.push(`- ${x.brand}: ${x.what}. Why: ${x.why}. Borrow: ${x.borrow}${x.url ? ' ' + x.url : ''}`)); }
+  if (arr(d.opportunities).length){ L.push('', 'OPPORTUNITIES'); arr(d.opportunities).forEach(x => L.push('- ' + x)); }
+  if (arr(d.avoid).length){ L.push('', 'AVOID'); arr(d.avoid).forEach(x => L.push('- ' + x)); }
+  if (arr(d.ideas).length){ L.push('', 'CONTENT IDEAS'); arr(d.ideas).forEach((x, i) => L.push(`${i + 1}. [${x.channel} ${x.format}] ${x.title} — Hook: ${x.hook} — ${x.why} (${x.urgency})`)); }
+  return L.join('\n');
+}
+const labLink = x => linkOK(x.url) && x.verified ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">Open ↗</a>` : linkOK(x.url) ? `<span class="flag" style="color:var(--s-client)">Link not verified</span>` : '';
+function vLab(b){
+  const kind = ui.labKind || 'trends'; const reps = labReports(ui.brandId);
+  const cur = ui.labId && D.reports[ui.labId]?.brandId === ui.brandId ? [ui.labId, D.reports[ui.labId]] : reps[0];
+  const ch = activeCh(b);
+  return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Research lab</h2><p>Quick research without building a plan. Every run is saved here, turns into content ideas you can send to the Ideas bank, and feeds the next monthly plan.</p></div></header>
+    <div class="rtypes">${RTYPES.map(([k, l, d, c]) => `<button class="rtype ${kind === k ? 'on' : ''}" style="--rc:var(${c})" data-act="labKind" data-k="${k}"><b>${esc(l)}</b><span>${esc(d)}</span></button>`).join('')}</div>
+    <div class="rowline">
+      <label class="f">${kind === 'custom' ? 'Your research question' : 'Focus'} <span class="hint">${kind === 'custom' ? 'required' : 'optional'}</span><input class="in" id="lab-focus" placeholder="${kind === 'custom' ? 'How are premium coffee brands using LinkedIn in India?' : kind === 'creative' ? 'Festive gifting, product launches, UGC…' : kind === 'brand' ? 'Delivery experience, taste, pricing…' : 'Diwali, office culture, Gen Z, a product…'}"></label>
+      <label class="f" style="flex:0 0 150px">Timeframe<select class="in" id="lab-days">${opts([['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days']], '30')}</select></label>
+      <label class="f" style="flex:0 0 190px">Platforms<select class="in" id="lab-pl">${opts([ch.join(' and ') || 'Instagram and LinkedIn'].concat(CH.filter(c => !ch.includes(c) || ch.length > 1)).concat(['All social platforms']))}</select></label>
+      <label class="f" style="flex:0 0 150px">Region<input class="in" id="lab-region" value="${esc(b.audience?.geo || 'India')}"></label>
+      <label class="f" style="flex:0 0 110px">Ideas<select class="in" id="lab-n">${opts([['6','6'],['8','8'],['12','12']], '8')}</select></label>
+      <button class="btn pri" data-act="runLab" ${ui.labBusy || aiOff() ? 'disabled' : ''}>${ui.labBusy ? `<span class="spin"></span> ${esc(ui.labBusy)}` : '<span class="spark">✦</span> Run research'}</button>
+    </div>
+    ${HOSTED ? '' : '<p class="muted sm">Live web search runs on the hosted version. Here the AI uses what it already knows.</p>'}
+    ${reps.length ? `<div class="rowline"><label class="f" style="max-width:420px">Saved research<select class="in" data-chg="labPick">${opts(reps.map(([id, r]) => [id, `${rtype(r.kind)[1]} · ${new Date(r.at).toLocaleDateString()}${r.focus ? ' · ' + str(r.focus).slice(0, 40) : ''}`]), cur?.[0])}</select></label></div>` : ''}
+    ${aiNote()}
+  </section>
+  ${cur ? vLabView(b, cur[0], cur[1]) : `<div class="empty"><p>Pick a research type and press Run research. Results are saved for the whole team.</p></div>`}`;
+}
+function vLabView(b, id, r){
+  const d = r.data || {}; const saved = new Set(arr(r.saved)); const pls = plansOf(ui.brandId).map(([pid, p]) => [pid, mLabel(p.month)]);
+  const T = rtype(r.kind);
+  return `<section class="hero"><div><p class="eyebrow">${esc(T[1])} · ${new Date(r.at).toLocaleDateString()} · last ${r.days} days · ${esc(r.platform)}${r.focus ? ' · ' + esc(r.focus) : ''}</p><h2 style="font-size:26px">${esc(d.headline || T[1])}</h2><p style="margin-top:8px;white-space:pre-wrap">${esc(d.summary)}</p>
+      <p class="muted sm" style="margin-top:8px">${r.searched ? `Based on live web search · ${arr(r.sources).length} sources` : 'Based on AI knowledge, not live search. Check facts before sharing with a client.'}${r.by ? ' · by ' + esc(mName(r.by)) : ''}</p></div>
+    <div class="acts" style="flex-direction:column;align-items:stretch"><button class="btn pri" data-act="labAllIdeas" data-id="${id}" ${arr(d.ideas).length ? '' : 'disabled'}>Save all ideas to Ideas bank</button><button class="btn" data-act="labPptx" data-id="${id}" ${typeof PptxGenJS === 'undefined' || !DL ? 'disabled' : ''}>Download as slides</button><button class="btn" data-act="labCopy" data-id="${id}">Copy text</button>${ui.confirm === 'lab' + id ? `<button class="btn danger" data-act="labDel" data-id="${id}">Yes, delete</button>` : `<button class="btn ghost" data-act="ask2" data-k="lab${id}">Delete</button>`}</div></section>
+  ${arr(d.ideas).length ? `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Content ideas from this research</h2><p>Save the ones you like to the Ideas bank, or put one straight into a plan.</p></div>${pls.length ? `<label class="f" style="flex:0 0 200px">Plan<select class="in" id="lab-plan">${opts(pls)}</select></label>` : ''}</header>
+    ${tbl(['Idea', 'Format', 'Hook', 'Why now', ''], arr(d.ideas).map((x, i) => [`<b>${esc(x.title)}</b>${x.pillar ? `<br><span class="chip">${esc(x.pillar)}</span>` : ''}`, `${CH.includes(x.channel) ? chBadge(x.channel) : esc(x.channel)} ${esc(x.format)}`, esc(x.hook), `${esc(x.why)}${x.urgency ? `<br><span class="muted sm">${esc(x.urgency)}</span>` : ''}`,
+      `<div class="acts" style="flex-direction:column;align-items:stretch">${saved.has(i) ? '<span class="chip">Saved ✓</span>' : `<button class="btn sm" data-act="labIdea" data-id="${id}" data-i="${i}">Save idea</button>`}${pls.length ? `<button class="btn sm ghost" data-act="labToPlan" data-id="${id}" data-i="${i}">Add to plan</button>` : ''}</div>`]))}</section>` : ''}
+  ${arr(d.trends).length ? `<section class="panel"><header><h2><span class="dotc" style="--dc:var(--c2)"></span>Trends</h2></header>${tbl(['Trend', 'What it is', 'How we use it', 'Fit', 'Shelf life', ''], arr(d.trends).map(t => [`<b>${esc(t.name)}</b>${t.platform || t.format ? `<br><span class="muted sm">${esc([t.platform, t.format].filter(Boolean).join(' · '))}</span>` : ''}`, `${esc(t.what)}${t.example ? `<br><span class="muted sm">e.g. ${esc(t.example)}</span>` : ''}`, esc(t.howToUse), esc(t.fit), esc(t.shelfLife), labLink(t)]))}</section>` : ''}
+  ${arr(d.references).length ? `<section class="panel"><header><h2><span class="dotc" style="--dc:var(--c5)"></span>Creative references</h2></header><div class="labrefs">${arr(d.references).map(x => `<div class="labref">${x.img ? `<a href="${esc(x.url)}" target="_blank" rel="noopener"><img src="${esc(x.img)}" alt="" loading="lazy" referrerpolicy="no-referrer"></a>` : ''}<div><b>${esc(x.brand)}</b><p class="sm">${esc(x.what)}</p><p class="sm"><b>Why it worked:</b> ${esc(x.why)}</p><p class="sm"><b>Borrow:</b> ${esc(x.borrow)}</p>${labLink(x) || `<a class="sm" href="https://www.google.com/search?q=${encodeURIComponent(x.brand + ' ' + str(x.what).split(/\s+/).slice(0, 8).join(' '))}" target="_blank" rel="noopener">Find it on Google ↗</a>`}</div></div>`).join('')}</div></section>` : ''}
+  ${arr(d.findings).length ? `<section class="panel"><header><h2><span class="dotc" style="--dc:var(--c1)"></span>Findings</h2></header>${tbl(['Finding', 'Detail', 'Evidence', ''], arr(d.findings).map(f => [`<b>${esc(f.title)}</b>`, esc(f.detail), `<span class="muted sm">${esc(f.evidence)}</span>`, labLink(f)]))}</section>` : ''}
+  ${arr(d.opportunities).length || arr(d.avoid).length ? `<div class="grid2"><section class="panel"><header><h2><span class="dotc" style="--dc:var(--c4)"></span>Opportunities</h2></header><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">${arr(d.opportunities).map(x => `<li>${esc(x)}</li>`).join('')}</ul></section><section class="panel"><header><h2><span class="dotc" style="--dc:var(--c2)"></span>Avoid</h2></header><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">${arr(d.avoid).map(x => `<li>${esc(x)}</li>`).join('')}</ul></section></div>` : ''}
+  ${arr(r.sources).length ? `<section class="panel"><header><h2>Sources</h2></header><div class="list">${arr(r.sources).map(x => `<a class="li" href="${esc(x.uri)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="tx"><b>${esc(x.title || x.uri)}</b></span><span class="muted sm">Open ↗</span></a>`).join('')}</div></section>` : ''}`;
 }
 function vComp(b){
   const comps = getComps(b);
@@ -2498,6 +2619,22 @@ const ACT = {
   pNext: () => movePresent(1), pPrev: () => movePresent(-1), pClose: () => closePresent(),
   pptx: () => downloadPptx(),
   designerDeck: () => downloadDesignerDeck(),
+  labKind: a => { ui.labKind = a.dataset.k; renderAll(); },
+  runLab: () => runLab(),
+  labIdea: a => { const r = D.reports[a.dataset.id]; const i = +a.dataset.i; const x = labIdea(r, i); if (!x) return; const b = D.brands[r.brandId]; patch('brands', r.brandId, {ideas:arr(b.ideas).concat([x])}); patch('reports', a.dataset.id, {saved:[...new Set(arr(r.saved).concat([i]))]}); toast('Saved to Ideas bank'); },
+  labAllIdeas: a => { const r = D.reports[a.dataset.id]; const saved = new Set(arr(r.saved)); const idx = arr(r.data?.ideas).map((_, i) => i).filter(i => !saved.has(i)); if (!idx.length){ toast('All ideas are already saved'); return; } const b = D.brands[r.brandId]; patch('brands', r.brandId, {ideas:arr(b.ideas).concat(idx.map(i => labIdea(r, i)).filter(Boolean))}); patch('reports', a.dataset.id, {saved:[...saved, ...idx]}); toast(`${idx.length} ideas saved to Ideas bank`); },
+  labToPlan: async a => {
+    const r = D.reports[a.dataset.id]; const i = +a.dataset.i; const x = labIdea(r, i); const pid = $('#lab-plan')?.value; const b = D.brands[r.brandId];
+    if (!x || !pid || !D.plans[pid]){ toast('Create a plan first'); return; }
+    const id = uid(); const plan = D.plans[pid]; const raw = arr(r.data?.ideas)[i] || {};
+    await put('posts', id, newPost(b, pid, {id, brandId:r.brandId, date:plan.month + '-01', channel:x.channel || activeCh(b)[0] || 'Instagram', format:x.format || 'Static', pillar:x.pillar, topic:str(raw.title), hook:str(raw.hook)}));
+    await patch('brands', r.brandId, {ideas:arr(b.ideas).concat([{...x, used:true}])}); await patch('reports', a.dataset.id, {saved:[...new Set(arr(r.saved).concat([i]))]});
+    ui.postId = id; renderDrawer(); toast('Added to ' + mLabel(plan.month) + '. Set the date, then write it.');
+  },
+  labPptx: a => { const r = D.reports[a.dataset.id]; const b = D.brands[r.brandId]; downloadPptx(labModel(r, b), {b, plan:{month:'', brandId:r.brandId}, ps:[], kicker:rtype(r.kind)[1].toUpperCase() + ' · ' + new Date(r.at).toLocaleDateString().toUpperCase(), theme:str(r.data?.headline), sub:r.focus || `Last ${r.days} days · ${r.platform}`, label:new Date(r.at).toLocaleDateString(), file:`${str(b.name).replace(/[^\w-]+/g, '-')}-${r.kind}-research.pptx`}); },
+  labCopy: a => copyText(labText(D.reports[a.dataset.id])),
+  labDel: a => { ui.confirm = null; del('reports', a.dataset.id); if (ui.labId === a.dataset.id) ui.labId = null; },
+  ask2: a => { ui.confirm = a.dataset.k; renderAll(); },
   expAll: () => { ui.expCh = null; renderAll(); },
   refFindAll: () => { if (ui.refJob) return; findRefs(expPosts().filter(p => p.format !== 'Text' && refsOf(p).filter(r => r.img).length < 2)); },
   refFind: () => findRefs([D.posts[ui.postId]]),
@@ -2789,6 +2926,7 @@ const ACT = {
   rmMember: a => { ui.confirm = null; del('team', a.dataset.id); if (me === a.dataset.id){ me = ''; lsSet('mp_me', ''); } }
 };
 const CHG = {
+  labPick: t => { ui.labId = t.value; renderAll(); },
   expCh: t => { const all = planChs(ui.planId); const cur = expSel() ? new Set(expSel()) : new Set(all); if (t.checked) cur.add(t.value); else cur.delete(t.value); if (!cur.size){ t.checked = true; toast('Keep at least one platform'); return; } ui.expCh = {pid:ui.planId, set:cur}; renderAll(); },
   me: t => { me = t.value; lsSet('mp_me', me); renderAll(); },
   fch: t => { ui.f.ch = t.value; renderAll(); },
