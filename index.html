@@ -1,0 +1,1810 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Digimuse Content Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#F4F7FD; --surface:#FFFFFF; --surface-2:#F6F8FD; --ink:#0B1020; --ink-2:#3B4560; --muted:#6B7590;
+  --line:#E2E7F2; --line-2:#CBD4E6;
+  --side:#0B1020; --side-2:#1A2338; --side-ink:#F2F5FC; --side-muted:#8D98B4;
+  --accent:#1F5BFF; --accent-ink:#FFFFFF; --accent-soft:#E8EEFF;
+  --c1:#1F5BFF; --c2:#0B1020; --c3:#4F8BFF; --c4:#8DB4FF; --c5:#0A3BC2; --c6:#0098F0;
+  --c1s:#E8EEFF; --c2s:#ECEEF3; --c3s:#EAF1FF; --c4s:#EEF4FF; --c5s:#E4EBFA; --c6s:#E2F4FE;
+  --s-idea:#7D869E; --s-copy:#1F5BFF; --s-design:#6B47DC; --s-client:#C77A00; --s-changes:#D92D3A; --s-approved:#138A52; --s-live:#0A7F8C;
+  --warn:#D92D3A; --bar:#1F5BFF;
+  --shadow:0 1px 2px rgba(11,16,32,.05),0 10px 30px rgba(11,16,32,.07);
+  --fd:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --fb:'Instrument Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --fm:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#080B14; --surface:#111726; --surface-2:#172033; --ink:#EEF2FA; --ink-2:#BCC6DA; --muted:#8490A8;
+    --line:#212B40; --line-2:#2E3A54;
+    --side:#05070D; --side-2:#161E31; --side-ink:#EEF2FA; --side-muted:#8390AC;
+    --accent:#5C8DFF; --accent-ink:#06091A; --accent-soft:#18264A;
+    --c1:#5C8DFF; --c2:#E6EBF5; --c3:#7FA8FF; --c4:#A9C5FF; --c5:#3D6BE8; --c6:#33B5FF;
+    --c1s:#18264A; --c2s:#1C2335; --c3s:#172845; --c4s:#1A2640; --c5s:#152144; --c6s:#10304A;
+    --s-idea:#9AA3B8; --s-copy:#6E9BFF; --s-design:#A184F5; --s-client:#F0AE3A; --s-changes:#FF6B72; --s-approved:#3CC67F; --s-live:#3BC0C8;
+    --warn:#FF6B72; --bar:#5C8DFF;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 30px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+    color-scheme:dark;
+  --bg:#080B14; --surface:#111726; --surface-2:#172033; --ink:#EEF2FA; --ink-2:#BCC6DA; --muted:#8490A8;
+  --line:#212B40; --line-2:#2E3A54;
+  --side:#05070D; --side-2:#161E31; --side-ink:#EEF2FA; --side-muted:#8390AC;
+  --accent:#5C8DFF; --accent-ink:#06091A; --accent-soft:#18264A;
+  --c1:#5C8DFF; --c2:#E6EBF5; --c3:#7FA8FF; --c4:#A9C5FF; --c5:#3D6BE8; --c6:#33B5FF;
+  --c1s:#18264A; --c2s:#1C2335; --c3s:#172845; --c4s:#1A2640; --c5s:#152144; --c6s:#10304A;
+  --s-idea:#9AA3B8; --s-copy:#6E9BFF; --s-design:#A184F5; --s-client:#F0AE3A; --s-changes:#FF6B72; --s-approved:#3CC67F; --s-live:#3BC0C8;
+  --warn:#FF6B72; --bar:#5C8DFF;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 30px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--fb);-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--fd);letter-spacing:-.015em;margin:0;text-wrap:balance;font-weight:700}
+h1{font-size:30px;line-height:1.1;font-weight:800}
+h2{font-size:18px}
+h3{font-size:15px}
+p{margin:0}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--fm);font-size:12px;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .sm{font-size:12.5px}
+.eyebrow{font-size:11.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700;margin-bottom:4px}
+.spectrum{display:flex;height:5px;border-radius:99px;overflow:hidden}
+.spectrum i{flex:1}
+.spectrum i:nth-child(1){background:#FFFFFF} .spectrum i:nth-child(2){background:var(--c4)} .spectrum i:nth-child(3){background:var(--c3)} .spectrum i:nth-child(4){background:var(--c1)} .spectrum i:nth-child(5){background:var(--c5)} .spectrum i:nth-child(6){background:var(--c6)}
+
+/* layout */
+.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;overflow:auto;background:var(--side);color:var(--side-ink);padding:20px 14px;display:flex;flex-direction:column;gap:20px}
+.logo{display:flex;flex-direction:column;gap:10px;padding:0 6px}
+.logo .wm{font-family:var(--fd);font-weight:800;font-size:25px;letter-spacing:-.03em;line-height:1}
+.logo .wm span{color:var(--c3)}
+.logo small{color:var(--side-muted);font-size:12px;font-weight:600;letter-spacing:.02em}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button,.bitem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;padding:8px 10px;border-radius:9px;cursor:pointer;color:var(--side-muted);font-weight:600}
+.nav button:hover,.bitem:hover{background:var(--side-2);color:var(--side-ink)}
+.nav button.on,.bitem.on{background:var(--side-2);color:var(--side-ink);box-shadow:inset 3px 0 0 var(--c3)}
+.nav .ico{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;flex:none}
+.nav .count{margin-left:auto;font-family:var(--fm);font-size:11px;background:var(--c1);color:#fff;border-radius:99px;padding:0 7px;font-weight:600}
+.slabel{display:flex;justify-content:space-between;align-items:center;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--side-muted);font-weight:700;padding:0 10px 6px}
+.lnk{background:none;border:0;color:var(--c3);cursor:pointer;font-weight:700;font-size:12px;padding:2px 4px;text-transform:none;letter-spacing:0}
+.blist{display:flex;flex-direction:column;gap:1px}
+.bav{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-family:var(--fd);font-weight:800;font-size:11px;flex:none;color:#fff}
+.me{margin-top:auto;padding:12px;display:flex;flex-direction:column;gap:6px;background:var(--side-2);border-radius:12px}
+.me label{font-size:11px;color:var(--side-muted);font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+.me select{background:var(--side);color:var(--side-ink);border-color:var(--side-2)}
+.mode{font-size:12px;color:var(--side-muted);padding:8px 10px;border:1px dashed var(--side-2);border-radius:9px;margin:0 4px}
+main{padding:28px 32px 90px;min-width:0}
+.wrap{max-width:1260px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+
+/* headers */
+.hero{position:relative;border-radius:18px;padding:24px 26px;background:var(--surface);border:1px solid var(--line);overflow:hidden;display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:flex-end}
+.hero::before{content:'';position:absolute;inset:0 0 auto 0;height:6px;background:linear-gradient(90deg,var(--c2),var(--c5),var(--c1),var(--c6),var(--c4))}
+.hero.brand::before{background:var(--bc,var(--c1));height:100%;width:8px;inset:0 auto 0 0}
+.hero .blob{position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:var(--bc,var(--c1));opacity:.09;pointer-events:none}
+.hero > div{position:relative}
+.ph{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.crumb{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin-bottom:8px}
+.crumb button{background:none;border:0;padding:0;color:var(--muted);cursor:pointer;font-weight:600}
+.crumb button:hover{color:var(--accent)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{font-size:12px;padding:3px 10px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);font-weight:500}
+label.chip{cursor:pointer}
+.chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.chb{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:6px;color:#fff;background:var(--chc,#555);white-space:nowrap}
+
+/* controls */
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);background:var(--surface);padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:var(--ink-2)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 35%,transparent)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.hot{background:var(--c2);border-color:var(--c2);color:#fff}
+.btn.sm{padding:5px 11px;font-size:12.5px;border-radius:8px}
+.btn.ghost{background:none;border-color:transparent;color:var(--ink-2)}
+.btn.ghost:hover{background:var(--surface-2);border-color:var(--line)}
+.btn.danger{background:var(--warn);border-color:var(--warn);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.btn .spark{opacity:.85}
+.in{font-weight:400;width:100%;border:1px solid var(--line-2);background:var(--surface);border-radius:9px;padding:8px 11px;min-width:0}
+textarea.in{resize:vertical;line-height:1.5}
+.in:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:var(--ink-2);min-width:0}
+label.f .hint{font-weight:400;color:var(--muted)}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;cursor:pointer}
+.chk input{accent-color:var(--accent);width:15px;height:15px}
+.fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px 14px}
+.fg .span2{grid-column:span 2}
+@media (max-width:560px){.fg .span2{grid-column:auto}}
+
+/* surfaces */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel > header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.panel > header p{color:var(--muted);font-size:13px;margin-top:2px}
+.panel h2 .dotc{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:1px;background:var(--dc,var(--c1))}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px}
+@media (max-width:420px){.grid2{grid-template-columns:1fr}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.stat{border-radius:16px;padding:16px 18px;background:var(--sb,var(--c1s));border:1px solid color-mix(in srgb,var(--sc,var(--c1)) 20%,transparent);display:flex;flex-direction:column;gap:4px}
+.stat b{font-family:var(--fd);font-size:34px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+.stat span{font-size:12.5px;color:var(--ink-2);font-weight:600}
+.stat i{width:28px;height:6px;border-radius:99px;background:var(--sc,var(--c1));margin-bottom:6px}
+.stat.warn b{color:var(--warn)}
+
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font-weight:700;color:var(--ink-2);background:var(--surface-2);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+td,th{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--fm);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
+.tw td .in{padding:5px 8px;font-size:13px}
+
+.pill{--c:var(--s-idea);display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:700;white-space:nowrap;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+.pill::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c)}
+.flag{font-size:11.5px;color:var(--warn);font-weight:700}
+.bar{display:flex;gap:2px;height:9px;border-radius:99px;overflow:hidden;background:var(--surface-2);min-width:130px}
+.bar i{display:block;height:100%}
+.meter{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden;border:1px solid var(--line)}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--c5),var(--c1),var(--c6))}
+
+.tabs{display:flex;gap:4px;overflow-x:auto;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;width:fit-content;max-width:100%}
+.tabs button{background:none;border:0;padding:8px 14px;cursor:pointer;font-weight:700;color:var(--muted);border-radius:9px;white-space:nowrap;font-size:13px}
+.tabs button:hover{color:var(--ink);background:var(--surface-2)}
+.tabs button.on{color:var(--accent-ink);background:var(--accent)}
+.tabs .n{font-family:var(--fm);font-size:11px;opacity:.75;margin-left:4px}
+
+.banner{display:flex;gap:14px;align-items:center;flex-wrap:wrap;border:1px solid var(--line-2);background:var(--surface);border-radius:14px;padding:14px 16px}
+.banner.run{border-color:var(--accent);background:var(--accent-soft)}
+.banner.err{border-color:color-mix(in srgb,var(--warn) 45%,transparent);background:color-mix(in srgb,var(--warn) 6%,var(--surface))}
+.banner .grow{flex:1;min-width:220px;display:flex;flex-direction:column;gap:7px}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--line-2);border-top-color:var(--accent);animation:sp .8s linear infinite;flex:none;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+
+/* deck */
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filters select{width:auto}
+.deck{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.post{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:0;display:flex;flex-direction:column;cursor:pointer;text-align:left;min-width:0;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.post:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+@media (prefers-reduced-motion:reduce){.post{transition:none}.post:hover{transform:none}}
+.post .pb{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.pmeta{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.post .cap{color:var(--ink-2);font-size:13px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line}
+.pfoot{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);margin-top:auto;flex-wrap:wrap;align-items:center}
+.pil{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--ink-2)}
+.pil::before{content:'';width:8px;height:8px;border-radius:3px;background:var(--pc,var(--c1))}
+.unwritten .cv{opacity:.55}
+
+/* creative preview */
+.cv{--cbg:var(--c1);--cfg:#fff;--cac:var(--c4);background:var(--cbg);color:var(--cfg);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding:16px}
+.cv.band{min-height:160px;padding-top:38px}
+.cv .deco{position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:var(--cac);opacity:.9}
+.cv .deco2{position:absolute;right:40px;top:26px;width:34px;height:34px;border-radius:9px;border:3px solid var(--cfg);opacity:.35;transform:rotate(18deg)}
+.cv .hl{font-family:var(--fd);font-weight:800;font-size:21px;line-height:1.05;letter-spacing:-.02em;position:relative;max-width:88%;text-wrap:balance}
+.cv .sl{font-size:12px;opacity:.88;position:relative;max-width:90%}
+.cv .ct{align-self:flex-start;background:var(--cac);color:var(--cbg);font-weight:800;font-size:11.5px;border-radius:99px;padding:3px 11px;position:relative}
+.cv .fm{position:absolute;left:14px;top:12px;font-family:var(--fm);font-size:10.5px;opacity:.8;letter-spacing:.04em}
+.phone{width:min(360px,100%);border:1px solid var(--line);border-radius:18px;background:var(--surface);overflow:hidden;box-shadow:var(--shadow)}
+.phone .ph-h{display:flex;align-items:center;gap:9px;padding:10px 12px;font-weight:700;font-size:13px}
+.phone .ph-h small{display:block;font-weight:500;color:var(--muted);font-size:11px}
+.phone .cv{aspect-ratio:4/5;padding:40px 24px 24px}
+.phone .cv.tall{aspect-ratio:9/14}
+.phone .cv.wide{aspect-ratio:16/9;padding:16px}
+.phone .cv .hl{font-size:28px}
+.phone .ph-c{padding:10px 12px 14px;font-size:13px;white-space:pre-wrap;display:flex;flex-direction:column;gap:6px}
+.phone .ph-c .tags{color:var(--accent);font-size:12.5px}
+.phone .ph-a{display:flex;gap:14px;padding:8px 12px 0;font-size:16px;color:var(--ink-2)}
+
+/* calendar */
+.calw{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(128px,1fr));min-width:900px}
+.cal .hd{padding:9px 10px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.cell{min-height:124px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:7px;display:flex;flex-direction:column;gap:4px}
+.cell:nth-child(7n+7){border-right:0}
+.cell.off{background:var(--surface-2)}
+.cell.we{background:color-mix(in srgb,var(--c4) 5%,var(--surface))}
+.cell.today .dn span{background:var(--accent);color:var(--accent-ink);border-radius:6px;padding:0 6px}
+.dn{font-family:var(--fm);font-size:12px;color:var(--ink-2);display:flex;justify-content:space-between;align-items:center;font-weight:500}
+.dn button{visibility:hidden;background:var(--accent-soft);border:0;cursor:pointer;color:var(--accent);font-weight:800;font-size:14px;line-height:1;padding:2px 6px;border-radius:6px}
+.cell:hover .dn button,.dn button:focus-visible{visibility:visible}
+.tday{font-size:11px;font-weight:700;line-height:1.25;color:var(--ink);background:var(--c4s);border-radius:5px;padding:2px 6px}
+.pc{--c:var(--s-idea);display:flex;gap:6px;width:100%;text-align:left;border:0;background:color-mix(in srgb,var(--chc,#666) 10%,var(--surface));border-radius:7px;padding:4px 6px;font-size:11.5px;line-height:1.3;cursor:grab;color:var(--ink);box-shadow:inset 3px 0 0 var(--chc,#666)}
+.pc:hover{background:color-mix(in srgb,var(--chc,#666) 18%,var(--surface))}
+.pc b{font-family:var(--fm);font-size:10px;font-weight:600;color:var(--ink-2);flex:none}
+.pc i{width:7px;height:7px;border-radius:50%;background:var(--c);flex:none;margin-top:4px;margin-left:auto}
+.drop-on{background:var(--accent-soft)!important;outline:2px dashed var(--accent);outline-offset:-2px}
+
+/* board */
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(240px,1fr);gap:12px;overflow-x:auto;padding-bottom:8px}
+.col{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:240px;border-top:4px solid var(--c)}
+.col > header{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:700;padding:2px 2px 4px}
+.kc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 11px;display:flex;flex-direction:column;gap:6px;cursor:grab;text-align:left}
+.kc:hover{border-color:var(--line-2);box-shadow:var(--shadow)}
+.kc b{font-size:13px;line-height:1.3}
+.kc .row{display:flex;justify-content:space-between;gap:6px;font-size:11.5px;color:var(--muted);flex-wrap:wrap;align-items:center}
+
+/* drawer */
+#drawer{position:fixed;inset:0;z-index:30;display:flex;justify-content:flex-end}
+#drawer .scrim{position:absolute;inset:0;background:rgba(15,8,32,.45)}
+.dw{position:relative;width:min(1000px,100%);height:100%;background:var(--bg);display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.2)}
+.dw-h{padding:calc(14px + env(safe-area-inset-top,0px)) 22px 12px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px;position:relative}
+.dw-h::before{content:'';position:absolute;left:0;right:0;top:0;height:4px;background:var(--chc,var(--c1))}
+.dw-h .top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.dw-b{flex:1;overflow:auto;padding:18px 22px calc(40px + env(safe-area-inset-bottom,0px))}
+.dw-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
+.dw-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.dw-side{position:sticky;top:0;display:flex;flex-direction:column;gap:14px}
+@media (max-width:900px){.dw-grid{grid-template-columns:1fr}.dw-side{position:static;order:-1;align-items:center}}
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 17px;display:flex;flex-direction:column;gap:11px}
+.sec > h3{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.sec > h3 small{font-family:var(--fb);font-weight:500;font-size:12px;color:var(--muted)}
+.sec.ai{background:linear-gradient(135deg,var(--c1s),var(--c2s));border-color:color-mix(in srgb,var(--c1) 25%,transparent)}
+.hooks{display:flex;flex-direction:column;gap:5px}
+.hooks button{text-align:left;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:7px 11px;cursor:pointer;font-size:13px}
+.hooks button:hover{border-color:var(--accent)}
+.hooks button.on{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.aitools{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.var{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;white-space:pre-wrap;font-size:13px}
+.swatches{display:flex;gap:6px;flex-wrap:wrap}
+.sw{display:inline-flex;align-items:center;gap:6px;font-family:var(--fm);font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:2px 8px 2px 3px;background:var(--surface)}
+.sw i{width:18px;height:18px;border-radius:5px;border:1px solid var(--line)}
+.built{display:flex;flex-wrap:wrap;gap:6px}
+.built span{font-size:12px;background:var(--c5s);color:var(--ink);border-radius:7px;padding:3px 9px;font-weight:500}
+.cmt{border-left:3px solid var(--line-2);padding:4px 0 4px 11px;display:flex;flex-direction:column;gap:3px}
+.cmt.client{border-left-color:var(--accent)}
+.cmt .who{font-size:12px;color:var(--muted)}
+.dl{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:13px}
+.dl dt{color:var(--muted)} .dl dd{margin:0}
+.late{color:var(--warn);font-weight:700}
+.rowline{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.rowline > *{flex:1;min-width:140px}
+.rowline > .btn{flex:none}
+.list{display:flex;flex-direction:column;gap:7px}
+.li{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;border:1px solid var(--line);border-radius:11px;padding:9px 12px;background:var(--surface)}
+.li .tx{min-width:0;display:flex;flex-direction:column;gap:3px;overflow-wrap:anywhere}
+.tag{font-size:11px;font-weight:700;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:0 7px;white-space:nowrap}
+.tag.fb{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+.empty{border:2px dashed var(--line-2);border-radius:16px;padding:32px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center;color:var(--ink-2);background:var(--surface)}
+.answer{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;white-space:pre-wrap;font-size:13px}
+.ring{display:flex;align-items:center;gap:14px}
+.ring b{font-family:var(--fd);font-size:40px;line-height:1;font-weight:800}
+.checks{display:flex;flex-direction:column;gap:6px}
+.checks label{display:flex;gap:9px;align-items:center;font-size:13px;cursor:pointer;padding:6px 9px;border-radius:8px;background:var(--surface-2)}
+.checks label.done{color:var(--muted);text-decoration:line-through}
+.checks input{accent-color:var(--s-approved);width:16px;height:16px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+
+/* review */
+.rv{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+.rvc{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;align-items:center}
+.rvc .phone{box-shadow:none}
+.rvc .acts{width:100%;justify-content:center}
+
+/* charts */
+.hbars{display:flex;flex-direction:column;gap:9px}
+.hb{display:grid;grid-template-columns:minmax(90px,200px) 1fr 58px;gap:10px;align-items:center;font-size:12.5px}
+.hb .lb{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb .tr{height:14px;position:relative}
+.hb .tr i{position:absolute;left:0;top:0;bottom:0;background:var(--bar);border-radius:0 4px 4px 0;min-width:2px}
+.hb .tr:hover i{filter:brightness(1.12)}
+.hb .v{font-family:var(--fm);font-size:12px;color:var(--ink);text-align:right}
+.hb.top .v{font-weight:700}
+.grid-x{position:relative}
+#tip{position:fixed;z-index:70;background:var(--ink);color:var(--bg);font-size:12px;padding:6px 9px;border-radius:8px;pointer-events:none;max-width:260px;box-shadow:var(--shadow)}
+.report{white-space:pre-wrap;font-size:13.5px;line-height:1.6;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+
+#login{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:var(--side);padding:16px}
+#login .box{background:var(--surface);border-radius:20px;padding:30px 28px;width:min(400px,100%);display:flex;flex-direction:column;gap:14px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+#login .wm{font-family:var(--fd);font-weight:800;font-size:30px;letter-spacing:-.03em;line-height:1}
+#login .wm span{color:var(--accent)}
+#login .err{color:var(--warn);font-size:13px;font-weight:600}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:11px;font-weight:700;font-size:13px;z-index:80;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px)}
+#toast.on{opacity:1}
+#copybox{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(15,8,32,.45);padding:16px}
+#copybox .box{background:var(--surface);border-radius:14px;padding:18px;width:min(640px,100%);display:flex;flex-direction:column;gap:10px}
+.range{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-weight:600}
+.range input{flex:1;accent-color:var(--accent)}
+.sp{flex:1}
+.idea{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;border:1px solid var(--line);border-radius:13px;padding:12px 14px;background:var(--surface);border-left:4px solid var(--pc,var(--c3))}
+.idea .tx{display:flex;flex-direction:column;gap:4px;min-width:0}
+.idea.used{opacity:.55}
+.lineup{display:flex;flex-direction:column;gap:8px}
+.lu{display:grid;grid-template-columns:62px 1fr auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:9px 12px;background:var(--surface);cursor:pointer;text-align:left}
+.lu:hover{border-color:var(--line-2)}
+.lu .d{font-family:var(--fd);font-weight:800;font-size:20px;line-height:1;text-align:center}
+.lu .d small{display:block;font-family:var(--fb);font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;padding:16px;gap:12px}
+  .nav{flex-direction:row;flex-wrap:wrap}
+  .nav button{width:auto}
+  .blist{flex-direction:row;flex-wrap:wrap;gap:4px}
+  .bitem{width:auto}
+  .me{margin-top:0;flex-direction:row;align-items:center}
+  .me select{max-width:220px}
+  main{padding:18px 16px 90px}
+  h1{font-size:25px}
+  .hero{padding:20px 18px}
+  .rv{grid-template-columns:1fr}
+}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side"></aside>
+  <main id="main"></main>
+</div>
+<div id="drawer" hidden></div>
+<div id="copybox" hidden></div>
+<div id="tip" hidden></div>
+<div id="login" hidden><form class="box" id="loginForm"><div><div class="wm">digimuse<span>.</span></div><p class="muted" style="margin-top:6px;font-weight:600">Content Planner</p></div><label class="f">Team password<input class="in" type="password" id="lg-pw" autocomplete="current-password" required></label><p class="err" id="lg-err" hidden></p><button class="btn pri" type="submit" style="justify-content:center">Sign in</button></form></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- constants ---------- */
+const CH = ['Instagram','Facebook','LinkedIn','YouTube','X','Threads','Pinterest','WhatsApp'];
+const CHA = {Instagram:'IG',Facebook:'FB',LinkedIn:'LI',YouTube:'YT',X:'X',Threads:'TH',Pinterest:'PIN',WhatsApp:'WA'};
+const CHC = {Instagram:'#E1306C',Facebook:'#1877F2',LinkedIn:'#0A66C2',YouTube:'#E62117',X:'#2B2B2B',Threads:'#3A3A3A',Pinterest:'#E60023',WhatsApp:'#1DA851'};
+const FORMATS = ['Static','Carousel','Reel','Story','Video','Text'];
+const STAT = ['Idea','Copy in progress','Copy review','Design in progress','Design review','Sent to client','Changes requested','Approved','Scheduled','Published'];
+const STC = {'Idea':'--s-idea','Copy in progress':'--s-copy','Copy review':'--s-copy','Design in progress':'--s-design','Design review':'--s-design','Sent to client':'--s-client','Changes requested':'--s-changes','Approved':'--s-approved','Scheduled':'--s-live','Published':'--s-live'};
+const PAL = ['--c1','--c2','--c3','--c5','--c6','--c4'];
+const INDUSTRIES = ['D2C Beauty & Personal care','D2C Fashion & Apparel','Footwear','Food & Beverage','QSR & Restaurants','Cafe & Coffee','FMCG','Fintech','Banking & NBFC','Insurance','Wealth & Investing','Real Estate','Home & Interiors','Healthtech','Hospitals & Clinics','Wellness & Fitness','Edtech','Higher education','SaaS / B2B tech','IT services','Manufacturing & Industrial','Automotive','Two-wheelers & EV','Travel & Tourism','Hospitality & Hotels','Luxury','Jewellery','Consumer electronics','Retail & Omnichannel','E-commerce marketplace','Media & Entertainment','Gaming','Sports','NGO & Social impact','Government & Public sector','Pharma','Agritech','Logistics','Legal & Professional services','Pet care','Kids & Parenting','Events & Weddings','Personal brand / Founder'];
+const BTYPES = ['B2C','D2C','B2B','Local business','Personal brand','Startup','Enterprise'];
+const STAGES = ['Launch','Growth','Mature','Relaunch'];
+const PRICE = ['Mass','Mid-market','Premium','Luxury'];
+const TIERS = ['Pan-India','Metro','Tier 1','Tier 2','Tier 3','Global','Specific cities'];
+const OBJ = ['Awareness','Engagement','Followers','Leads','Website traffic','Sales','App installs','Launch','Hiring / employer brand','Thought leadership','Community','Festive push'];
+const RULE_TYPES = ['Banned word','Must use','Disclaimer','Style','Hashtag set','CTA'];
+const REF_TAGS = ['Copy','Design','Format','Hook'];
+const ROLES = ['Admin','Account manager','Strategist','Copywriter','Designer','Video editor'];
+const LANGS = ['English','Hinglish','English + Hindi mix','Hindi','English + regional'];
+const REGIONS = ['India (pan-India)','India — North','India — South','India — West','India — East','Global','UAE / GCC','UK / Europe','USA'];
+const CHECKS = [['proof','Copy proofread, no typos'],['brand','Brand colours, fonts and logo right'],['disc','Disclaimer added where needed'],['tags','Hashtags, tags and handles checked'],['cta','Link and CTA work'],['alt','Alt text added'],['appr','Client approved'],['sched','Scheduled in the publishing tool']];
+const METRICS = [['reach','Reach'],['impressions','Impressions'],['likes','Likes'],['comments','Comments'],['saves','Saves'],['shares','Shares'],['clicks','Link clicks'],['views','Video views']];
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const pad = n => String(n).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const today = () => iso(new Date());
+const pdate = s => { const [y,m,d] = String(s).split('-').map(Number); return new Date(y, (m||1)-1, d||1); };
+const validD = s => /^\d{4}-\d{2}-\d{2}$/.test(String(s||''));
+const addDays = (s, n) => { const d = pdate(s); d.setDate(d.getDate()+n); return iso(d); };
+const fmtD = s => { if (!validD(s)) return '—'; const d = pdate(s); return `${d.getDate()} ${MON[d.getMonth()]} · ${DOW[d.getDay()]}`; };
+const shortD = s => { if (!validD(s)) return '—'; const d = pdate(s); return `${d.getDate()} ${MON[d.getMonth()]}`; };
+const mLabel = ym => { const [y,m] = String(ym).split('-').map(Number); return m ? `${MONL[m-1]} ${y}` : ym; };
+const monthDays = ym => { const [y,m] = ym.split('-').map(Number); const n = new Date(y, m, 0).getDate(); return Array.from({length:n}, (_, i) => `${ym}-${pad(i+1)}`); };
+const nextMonth = () => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth()+1); return iso(d).slice(0,7); };
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : (Math.random().toString(36).slice(2) + Date.now().toString(36))).replace(/-/g,'').slice(0,16);
+const clone = o => JSON.parse(JSON.stringify(o ?? null));
+const arr = v => Array.isArray(v) ? v : [];
+const str = v => (v == null ? '' : typeof v === 'string' ? v : Array.isArray(v) ? v.join(', ') : String(v));
+const num = v => { const n = Number(String(v ?? '').replace(/,/g,'')); return isFinite(n) ? n : 0; };
+const fmtN = n => n >= 100000 ? (n/100000).toFixed(1).replace(/\.0$/,'') + 'L' : n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/,'') + 'k' : String(Math.round(n));
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const opts = (list, sel, blank) => (blank != null ? `<option value="">${esc(blank)}</option>` : '') + list.map(o => { const [v,l] = Array.isArray(o) ? o : [o,o]; return `<option value="${esc(v)}"${String(v)===String(sel??'')?' selected':''}>${esc(l)}</option>`; }).join('');
+const byDate = (a, b) => (a.date||'').localeCompare(b.date||'') || (a.time||'').localeCompare(b.time||'') || (a.channel||'').localeCompare(b.channel||'');
+function setPath(o, path, v){ const k = path.split('.'); let t = o; for (let i=0;i<k.length-1;i++){ const key = /^\d+$/.test(k[i]) ? +k[i] : k[i]; if (t[key] == null || typeof t[key] !== 'object') t[key] = /^\d+$/.test(k[i+1]) ? [] : {}; t = t[key]; } const last = /^\d+$/.test(k[k.length-1]) ? +k[k.length-1] : k[k.length-1]; t[last] = v; return o; }
+function getPath(o, path){ return path.split('.').reduce((t,k) => t == null ? undefined : t[/^\d+$/.test(k) ? +k : k], o); }
+function merge(t, s){ for (const k in s){ const v = s[k]; if (v && typeof v === 'object' && !Array.isArray(v) && t[k] && typeof t[k] === 'object' && !Array.isArray(t[k])) merge(t[k], v); else t[k] = v; } return t; }
+const kitColors = b => (str(b?.brain?.kit?.colors).match(/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/g) || []).slice(0, 8);
+const safeColor = (c, fb='var(--c1)') => /^#[0-9a-fA-F]{3,8}$/.test(c||'') ? c : fb;
+const linkOK = u => /^https?:\/\//i.test(u||'');
+function lum(hex){ let h = hex.replace('#',''); if (h.length === 3) h = h.split('').map(x => x+x).join(''); const [r,g,b] = [0,2,4].map(i => parseInt(h.substr(i,2),16)/255).map(c => c <= .03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4)); return .2126*r + .7152*g + .0722*b; }
+function brandColors(b){
+  const k = kitColors(b);
+  if (!k.length) return {bg:'#1F5BFF', fg:'#FFFFFF', ac:'#0B1020', solid:null};
+  const sorted = k.slice().sort((x,y) => lum(x) - lum(y));
+  const bg = k[0], L = lum(bg);
+  const fg = L > .45 ? (sorted[0] !== bg ? sorted[0] : '#1A1033') : (sorted[sorted.length-1] !== bg && lum(sorted[sorted.length-1]) > .6 ? sorted[sorted.length-1] : '#FFFFFF');
+  const ac = k.find(c => c !== bg && c !== fg && Math.abs(lum(c) - L) > .15) || (L > .45 ? '#1A1033' : '#FFC43D');
+  return {bg, fg, ac, solid:bg};
+}
+const initials = n => str(n).replace(/\(.*?\)/g,'').trim().split(/\s+/).slice(0,2).map(w => w[0] || '').join('').toUpperCase() || '·';
+const chBadge = c => `<span class="chb" style="--chc:${CHC[c] || '#555'}">${esc(CHA[c] || c)}</span>`;
+
+/* ---------- state ---------- */
+const D = { brands:{}, team:{}, plans:{}, posts:{} };
+let DB = null, S = null, DL = null;
+const HOSTED = !(window.claude && window.claude.use) && /^https?:$/.test(location.protocol);
+const ui = { view:'home', brandId:null, planId:null, tab:'deck', btab:'plans', postId:null, f:{ch:'', st:'', pi:''}, confirm:null, answer:'', asking:false, ideaBusy:false, replyBusy:false, repBusy:false };
+let me = lsGet('mp_me') || '';
+const gen = {}, busy = {}, variants = {}, undo = {};
+
+/* ---------- store ---------- */
+const qq = {};
+function queue(key, fn){ const p = (qq[key] || Promise.resolve()).then(fn, fn); qq[key] = p.catch(() => {}); return p; }
+function dbErr(e){ const m = {quota_exceeded:'Storage is full. Delete old plans to make room.', invalid_argument:'You do not have edit access to this planner.', revoked:'Access to shared data was removed.'}; toast(m[e?.code] || 'Could not save. Try again.'); }
+async function put(col, id, obj){ D[col][id] = obj; sched(); if (DB) return queue(col+'/'+id, () => DB.doc(col+'/'+id).set(obj)).catch(dbErr); }
+async function patch(col, id, part){ const cur = D[col][id]; if (!cur) return; D[col][id] = merge(clone(cur), part); sched(); if (DB) return queue(col+'/'+id, () => DB.doc(col+'/'+id).update(part)).catch(dbErr); }
+async function del(col, id){ delete D[col][id]; sched(); if (DB) return queue(col+'/'+id, () => DB.doc(col+'/'+id).delete()).catch(dbErr); }
+
+/* ---------- AI ---------- */
+async function ai(prompt, {tier='default', json=true, signal}={}){
+  if (!S) throw {code:'not_granted', message:'AI unavailable'};
+  const o = {modelTier:tier, cache:false}; if (signal) o.signal = signal;
+  if (json) return await S.json(prompt, o);
+  return (await S(prompt, o)).text;
+}
+const ERR = {
+  not_granted:'AI access was not allowed for this page. Reload and choose Allow to use the AI features.',
+  rate_limited:'Claude usage limit reached for now. Try again in a little while.',
+  invalid_json:'The AI reply came back incomplete. Press Continue to try that step again.',
+  prompt_too_large:'The Brand Brain is too large for one request. Trim past posts or references and try again.',
+  refused:'Claude declined this request. Adjust the brief and try again.',
+  session_expired:'Your session expired. Sign in again and reload.',
+  sampling_disabled:'Claude is not available for this account.',
+  empty_completion:'The AI returned nothing. Try again with a shorter brief.',
+  cancelled:'Stopped.'
+};
+const errCopy = e => ERR[e?.code] || ('Something went wrong' + (e?.message ? ': ' + e.message : '') + '.');
+
+const PRE = `You are the lead social media strategist and senior copywriter at a top Indian digital marketing agency. Your work goes straight to clients, so it must be specific and brand-true.
+Rules:
+- Ground everything in the BRAND PROFILE and BRAND BRAIN below: real products, offers, audience, voice, rules and saved references. Mirror the structure and style of saved references; never copy them.
+- Never invent statistics, prices, awards, customer counts or claims that are not in the brand brain.
+- Respect every banned word, must-use phrase and mandatory disclaimer.
+- No generic filler or AI clichés (elevate, unlock, game-changer, delve, seamless, "in today's fast-paced world", "look no further").
+- Vary hooks and openers; each post must feel different.
+- Use Indian cultural context where it fits. Be sensitive with solemn days.`;
+
+function activeCh(b){ return CH.filter(c => b?.channels?.[c]?.on); }
+function brandCtx(b, max=14000){
+  const a = b.audience || {}, v = b.voice || {}, br = b.brain || {}, k = br.kit || {};
+  const L = [];
+  L.push('=== BRAND PROFILE ===');
+  L.push(`Brand: ${b.name}`);
+  L.push(`Industry: ${b.industry || 'n/a'}${b.sub ? ' / ' + b.sub : ''} · Type: ${b.type} · Stage: ${b.stage} · Positioning: ${b.price}`);
+  if (b.website) L.push(`Website: ${b.website}`);
+  if (b.desc) L.push(`About: ${b.desc}`);
+  if (b.offerings) L.push(`Products/services summary: ${b.offerings}`);
+  L.push(`Audience: age ${a.age||'n/a'}, ${a.gender||'all genders'}, ${a.geo||''} ${a.tier||''}; languages ${a.languages||'English'}; interests: ${a.interests||'n/a'}; pain points: ${a.pains||'n/a'}; buying triggers: ${a.triggers||'n/a'}`);
+  L.push(`Channels: ${activeCh(b).map(c => `${c} (${b.channels[c].perWeek}/week; formats: ${b.channels[c].formats || 'any'})`).join('; ') || 'none set'}`);
+  L.push(`Objectives: primary = ${b.objectives?.primary || 'n/a'}; others = ${arr(b.objectives?.list).join(', ')}`);
+  L.push(`Voice: formal→casual ${v.formal||3}/5, serious→witty ${v.witty||3}/5, friendly→premium ${v.premium||3}/5; adjectives: ${v.adjectives||'n/a'}; avoid: ${v.avoid||'n/a'}; compliance: ${v.compliance||'none'}`);
+  if (b.competitors) L.push(`Competitors: ${b.competitors}`);
+  if (b.loved) L.push(`Brands we admire: ${b.loved}`);
+  L.push('=== BRAND BRAIN ===');
+  const P = arr(br.products);
+  L.push('Products / services:' + (P.length ? '' : ' none added'));
+  P.forEach(p => L.push(`- ${p.name}: ${p.what||''} | Benefits: ${p.benefits||''} | Price: ${p.price||'n/a'} | Offer: ${p.offer||'none'}`));
+  const R = arr(br.rules);
+  L.push('Brand rules:' + (R.length ? '' : ' none added'));
+  R.forEach(r => L.push(`- [${r.type}${r.source==='feedback' ? ', learned from client feedback' : ''}] ${r.text}`));
+  const F = arr(br.refs);
+  L.push('Saved references:' + (F.length ? '' : ' none added'));
+  F.forEach(r => L.push(`- [${r.tag} reference] ${r.url||''} ${r.notes ? '— ' + r.notes : ''}`));
+  if (str(br.pastPosts).trim()) L.push('Past best-performing posts:\n' + str(br.pastPosts).trim());
+  L.push(`Brand kit: colours ${k.colors||'n/a'}; fonts ${k.fonts||'n/a'}; logo rule ${k.logo||'n/a'}`);
+  if (str(br.brief).trim()) L.push('Current campaign brief / focus:\n' + str(br.brief).trim());
+  let s = L.join('\n');
+  if (s.length > max) s = s.slice(0, max) + '\n[brand brain truncated]';
+  return s;
+}
+
+const JSON_A = `{"snapshot":{"positioning":"one sentence","usp":"","voice":"2-3 sentences on how the brand should sound","personas":[{"name":"","who":"age, city, life stage","pains":"","triggers":"","platforms":""}],"swot":{"strengths":"","weaknesses":"","opportunities":"","threats":""}},"research":{"industryTrends":[{"trend":"","soWhat":"what it means for this brand's content"}],"platformTrends":[{"channel":"","trend":"","howToUse":""}],"competitors":[{"name":"","pillars":"","formats":"","whatWorks":"","gap":"opportunity for us"}],"audienceInsights":[{"insight":"","angle":"content angle"}],"searchQueries":["what people search"],"opportunities":[{"angle":"","why":""}],"hashtags":{"branded":["#"],"niche":["#"],"broad":["#"]}}}`;
+const JSON_B = `{"strategy":{"objectives":[{"objective":"","kpi":"","target":"directional target or 'Set with client'","measure":""}],"pillars":[{"name":"","mix":25,"purpose":"","examples":["",""],"framework":"PAS"}],"channels":[{"channel":"","role":"","formats":"","frequency":"","bestTimes":""}],"formatMix":[{"format":"Reels","pct":40}],"theme":{"name":"","bigIdea":"","series":[{"name":"","cadence":"e.g. every Monday","format":"","description":""}]},"engagement":["tactic"],"paid":[{"what":"","audience":"","budgetSplit":""}],"influencer":[{"tier":"","count":"","angle":""}]},"topicalDays":[{"date":"YYYY-MM-DD","occasion":"","type":"Festival","relevance":"High","idea":"post idea for this brand","sensitive":false}]}`;
+
+function promptA(b, plan){
+  return `${PRE}
+
+${brandCtx(b)}
+
+PLAN MONTH: ${mLabel(plan.month)} · Region: ${plan.opts.region} · Language: ${plan.opts.lang}
+${plan.opts.brief ? 'THIS MONTH\'S BRIEF: ' + plan.opts.brief : ''}
+
+TASK: Write the brand snapshot and the creative research for this month's social media plan. You cannot browse the web, so base trends on what you know and add "(verify)" to anything time-sensitive.
+Counts: 2-3 personas; 5 industryTrends; 1-2 platformTrends per active channel; one competitors entry per competitor listed (or the 3 most likely competitors if none are listed); 5 audienceInsights; 8 searchQueries; 5 opportunities (white-space angles competitors miss); 5-8 hashtags per hashtag group.
+
+Reply with only JSON in exactly this shape:
+${JSON_A}`;
+}
+function promptB(b, plan){
+  const o = plan.opts;
+  const snap = JSON.stringify({positioning:plan.snapshot?.positioning, usp:plan.snapshot?.usp, personas:arr(plan.snapshot?.personas).map(p=>p.name+': '+p.who), opportunities:arr(plan.research?.opportunities).map(x=>x.angle), insights:arr(plan.research?.audienceInsights).map(x=>x.insight)});
+  const lastRep = plansOf(plan.brandId).map(x => x[1]).find(x => x.month < plan.month && x.report?.text)?.report?.text;
+  return `${PRE}
+
+${brandCtx(b)}
+
+RESEARCH SUMMARY: ${snap}
+${lastRep ? 'LEARNINGS FROM LAST MONTH\'S PERFORMANCE REPORT:\n' + str(lastRep).slice(0, 2500) : ''}
+
+PLAN MONTH: ${mLabel(plan.month)} (${plan.month}) · Region: ${o.region} · Language: ${o.lang}
+${o.brief ? 'THIS MONTH\'S BRIEF: ' + o.brief : ''}
+
+TASK: Build this month's social media strategy and list the topical days.
+- objectives: 3-4 rows tied to the brand's objectives; targets are directional, write "Set with client" when unsure.
+- pillars: 4-5 pillars whose mix adds up to 100; framework is one of AIDA, PAS, Hook-Story-Offer, Before/After, Myth vs Fact, Listicle, POV, UGC-style, Founder voice, Meme format.
+- channels: one row per active channel.
+- formatMix: percentages adding to 100${o.reels ? '' : '; keep Reels and video low'}.
+- theme: a monthly big idea plus 1-2 recurring series with a fixed cadence.
+- engagement: 4-6 concrete community/engagement tactics.
+- paid: ${o.paid ? '3 boost suggestions' : 'return []'}.
+- influencer: ${o.inf ? '2-3 creator suggestions' : 'return []'}.
+- topicalDays: ${o.topical ? `10-18 festivals, national/international days, awareness days, industry days, sports and cultural moments falling inside ${mLabel(plan.month)} for ${o.region}. Exact dates in YYYY-MM-DD within the month. For lunar-calendar festivals append " (verify date)" to occasion. relevance = High/Medium/Low for this brand. Set sensitive = true for solemn or tragic days and give a respectful idea or "Skip".` : 'return []'}
+
+Reply with only JSON in exactly this shape:
+${JSON_B}`;
+}
+function splitCounts(b, ym){
+  const days = monthDays(ym).length, wk = days / 7;
+  const c = {}; activeCh(b).forEach(ch => { c[ch] = Math.max(1, Math.round((+b.channels[ch].perWeek || 0) * wk)); });
+  let total = Object.values(c).reduce((s,n) => s+n, 0);
+  if (total > 40){ const f = 40 / total; for (const k in c) c[k] = Math.max(1, Math.round(c[k]*f)); total = Object.values(c).reduce((s,n)=>s+n,0); }
+  return {c, total};
+}
+function promptC(b, plan){
+  const {c, total} = splitCounts(b, plan.month);
+  const st = plan.strategy || {};
+  const dates = monthDays(plan.month).map(d => `${d} ${DOW[pdate(d).getDay()]}`).join(', ');
+  const tdays = arr(plan.topical).filter(t => t.include).map(t => `${t.date}: ${t.occasion} — ${t.idea}`).join('\n') || 'none';
+  const products = arr(b.brain?.products).map(p => p.name).join(', ') || 'none listed';
+  const ideas = arr(b.ideas).filter(i => !i.used).slice(0, 15).map(i => '- ' + i.text).join('\n');
+  return `${PRE}
+
+${brandCtx(b, 6000)}
+
+STRATEGY:
+Theme: ${st.theme?.name || ''} — ${st.theme?.bigIdea || ''}
+Pillars: ${arr(st.pillars).map(p => `${p.name} (${p.mix}%, ${p.framework}): ${p.purpose}`).join(' | ')}
+Series: ${arr(st.theme?.series).map(s => `${s.name} — ${s.cadence}, ${s.format}: ${s.description}`).join(' | ') || 'none'}
+Channel roles: ${arr(st.channels).map(x => `${x.channel}: ${x.role}; best times ${x.bestTimes}`).join(' | ')}
+Format mix: ${arr(st.formatMix).map(f => `${f.format} ${f.pct}%`).join(', ')}
+Products to feature: ${products}
+${ideas ? 'TEAM IDEAS BANK (use the strong ones):\n' + ideas : ''}
+
+INCLUDED TOPICAL DAYS:
+${tdays}
+
+DATES IN ${mLabel(plan.month).toUpperCase()}: ${dates}
+
+TASK: Build the content calendar. Create exactly ${total} posts with this split by channel: ${Object.entries(c).map(([k,v]) => `${k} ${v}`).join(', ')}.
+Rules: spread posts evenly across the month; honour each channel's format preferences and the format mix${plan.opts.reels ? '' : '; avoid Reels and video'}; run each series on its cadence; put a post on each included topical day on the best-fit channel (these count within the split); rotate pillars by their mix; feature real products across the month ("product" field, empty for brand-level posts); no repeated topics or hooks; post times in IST, 24h.
+format must be one of: Static, Carousel, Reel, Story, Video, Text. channel must be one of: ${Object.keys(c).join(', ')}.
+
+Reply with only a JSON array of ${total} objects in this shape:
+[{"date":"YYYY-MM-DD","channel":"Instagram","format":"Reel","pillar":"","topic":"specific post title","hook":"opening line","topical":"occasion name or empty","objective":"","time":"19:00","product":""}]`;
+}
+function promptD(b, plan, posts, instr){
+  const st = plan?.strategy || {};
+  const used = Object.values(D.posts).filter(p => p.planId === plan?.id && p.hook && !posts.some(x => x.id === p.id)).map(p => p.hook).slice(0, 40);
+  const slots = posts.map(p => ({id:p.id, date:p.date, day:validD(p.date) ? DOW[pdate(p.date).getDay()] : '', channel:p.channel, format:p.format, pillar:p.pillar, topic:p.topic, hook:p.hook, topical:p.topical, objective:p.objective, product:p.product}));
+  return `${PRE}
+
+${brandCtx(b, 9000)}
+
+STRATEGY FOR ${plan ? mLabel(plan.month).toUpperCase() : 'THIS MONTH'}:
+Theme: ${st.theme?.name || ''} — ${st.theme?.bigIdea || ''}
+Pillars: ${arr(st.pillars).map(p => `${p.name} (${p.framework}): ${p.purpose}`).join(' | ') || 'n/a'}
+Series: ${arr(st.theme?.series).map(s => `${s.name}: ${s.description}`).join(' | ') || 'none'}
+Brand hashtags: ${arr(plan?.research?.hashtags?.branded).join(' ')}
+Language: ${plan?.opts?.lang || 'English'}
+Hooks already used this month (do not repeat): ${used.join(' / ') || 'none'}
+
+TASK: Write complete, client-ready content for each post below.${instr ? `\nExtra instruction from the team: ${instr}` : ''}
+
+POSTS:
+${JSON.stringify(slots)}
+
+Writing rules:
+- On-image headline max 8 words, subline max 14 words, CTA max 4 words.
+- Caption length: Instagram/Facebook/Threads 60-150 words with line breaks; LinkedIn 120-220 words with a strong first line and no hashtag wall; X max 260 characters; YouTube description 50-120 words; Pinterest 30-60 words; WhatsApp 30-70 words.
+- Hashtags: Instagram 5-10, LinkedIn 3-5, X 1-2, others 0-5.
+- "slides" only for Carousel (5-8 slides, slide 1 = hook, last = CTA), else [].
+- "script" only for Reel, Video or Story (15-45 seconds, 5-8 timed rows), else [].
+- hooks: 5 different opening lines (question, bold claim, relatable, curiosity, specific/number); "hook" = the strongest.
+- The on-image copy, caption, slides/script and CTA must tell one connected story.
+- design: direction for the designer using the brand kit colours and fonts; refSearch = 3-5 keywords to search Pinterest/Behance for visual references.
+- builtFrom: list exactly what shaped this post, each item prefixed "Product: ", "Rule: ", "Ref: ", "Past post: " or "Insight: ".
+- compliance: the mandatory disclaimer text if the category or brand rules need one, else "".
+
+Reply with only a JSON array, one object per post, in this shape:
+[{"id":"same id as given","concept":"1-2 lines","hooks":["","","","",""],"hook":"","onImage":{"headline":"","subline":"","cta":""},"slides":[{"n":1,"visual":"","copy":""}],"script":[{"t":"0-3s","visual":"","onscreen":"","vo":"","audio":""}],"caption":"","hashtags":["#tag"],"altText":"","design":{"layout":"","typography":"","palette":"","mood":"","elements":"","dos":"","donts":"","refSearch":""},"builtFrom":[""],"compliance":""}]`;
+}
+
+/* ---------- derived ---------- */
+function sortedBrands(){ return Object.entries(D.brands).sort((a,b) => str(a[1].name).localeCompare(str(b[1].name))); }
+function postsOf(planId){ return Object.values(D.posts).filter(p => p.planId === planId).sort(byDate); }
+function plansOf(brandId){ return Object.entries(D.plans).filter(([,p]) => p.brandId === brandId).sort((a,b) => str(b[1].month).localeCompare(str(a[1].month))); }
+function mName(id){ return D.team[id]?.name || ''; }
+function group(s){ if (['Idea','Copy in progress','Copy review'].includes(s)) return 'copy'; if (['Design in progress','Design review'].includes(s)) return 'design'; if (['Sent to client','Changes requested'].includes(s)) return 'client'; return 'done'; }
+function sla(p){ const b = D.brands[p.brandId]; return {copy:+(b?.sla?.copy ?? 5), design:+(b?.sla?.design ?? 3), client:+(b?.sla?.client ?? 2)}; }
+function dues(p){ if (!validD(p.date)) return {}; const s = sla(p); return {copy:addDays(p.date, -s.copy), design:addDays(p.date, -s.design), client:addDays(p.date, -s.client)}; }
+function curDue(p){ const g = group(p.status); if (g === 'done') return null; return dues(p)[g] || null; }
+function owner(p){ const g = group(p.status); if (g === 'copy') return p.writer; if (g === 'design') return p.designer; if (g === 'client') return p.am || D.brands[p.brandId]?.team?.am; return ''; }
+function isLate(p){ const d = curDue(p); return !!d && d < today(); }
+function pillarColor(plan, name){ const i = arr(plan?.strategy?.pillars).findIndex(x => x.name === name); return `var(${PAL[(i < 0 ? 5 : i) % PAL.length]})`; }
+function sizeFor(ch, f){
+  if (f === 'Text') return 'No creative needed (text post)';
+  if (f === 'Reel' || f === 'Story') return '1080 × 1920 (9:16)';
+  if (ch === 'YouTube') return f === 'Video' ? '1920 × 1080 (16:9) + thumbnail 1280 × 720' : '1080 × 1920 (9:16)';
+  if (ch === 'X') return '1600 × 900 (16:9)';
+  if (ch === 'Pinterest') return '1000 × 1500 (2:3)';
+  if (ch === 'WhatsApp') return '1080 × 1080 (1:1)';
+  if (ch === 'LinkedIn' && f === 'Carousel') return '1080 × 1350 PDF carousel';
+  if (f === 'Video') return '1080 × 1350 (4:5) or 1080 × 1920';
+  return '1080 × 1350 (4:5)';
+}
+function flags(p){
+  const f = []; if (!p.hasContent) return f;
+  const b = D.brands[p.brandId]; if (!b) return f;
+  const txt = [p.caption, p.onImage?.headline, p.onImage?.subline, p.onImage?.cta, p.hook].map(str).join(' ').toLowerCase();
+  arr(b.brain?.rules).filter(r => r.type === 'Banned word').flatMap(r => str(r.text).split(/[,;\n]/)).map(s => s.trim().toLowerCase()).filter(Boolean).forEach(w => { if (new RegExp('(^|[^a-z])' + escRe(w) + '([^a-z]|$)').test(txt)) f.push(`Uses banned word "${w}"`); });
+  const disc = arr(b.brain?.rules).filter(r => r.type === 'Disclaimer');
+  if (disc.length && !str(p.compliance).trim() && !disc.some(r => txt.includes(str(r.text).toLowerCase().slice(0, 24)))) f.push('Disclaimer missing');
+  if (str(p.onImage?.headline).split(/\s+/).filter(Boolean).length > 9) f.push('Headline over 8 words');
+  if (p.channel === 'X' && str(p.caption).length > 280) f.push('Over 280 characters for X');
+  return f;
+}
+function health(b){
+  const br = b.brain || {};
+  const items = [
+    ['Products or services added', arr(br.products).length > 0, 20],
+    ['At least 3 brand rules', arr(br.rules).length >= 3, 15],
+    ['At least 2 saved references', arr(br.refs).length >= 2, 15],
+    ['Past winning posts pasted', str(br.pastPosts).trim().length > 40, 15],
+    ['Brand colours set', kitColors(b).length > 0, 10],
+    ['Voice adjectives set', !!str(b.voice?.adjectives).trim(), 10],
+    ["This month's campaign brief", str(br.brief).trim().length > 10, 10],
+    ['Competitors listed', !!str(b.competitors).trim(), 5]
+  ];
+  return {score: items.reduce((s,i) => s + (i[1] ? i[2] : 0), 0), items};
+}
+function er(p){ const m = p.metrics || {}; const r = num(m.reach) || num(m.impressions); if (!r) return null; return (num(m.likes) + num(m.comments) + num(m.saves) + num(m.shares)) / r * 100; }
+function hasMetrics(p){ const m = p.metrics || {}; return METRICS.some(([k]) => num(m[k]) > 0); }
+
+/* ---------- visual pieces ---------- */
+function creative(p, cls='band'){
+  const b = D.brands[p.brandId] || {};
+  const c = brandColors(b);
+  const hl = p.onImage?.headline || p.topic || 'Untitled post';
+  return `<div class="cv ${cls}" style="--cbg:${c.bg};--cfg:${c.fg};--cac:${c.ac}"><span class="deco" aria-hidden="true"></span><span class="deco2" aria-hidden="true"></span><span class="fm">${esc(CHA[p.channel] || p.channel)} · ${esc(str(p.format).toUpperCase())}</span><div class="hl">${esc(hl)}</div>${p.onImage?.subline ? `<div class="sl">${esc(p.onImage.subline)}</div>` : ''}${p.onImage?.cta ? `<span class="ct">${esc(p.onImage.cta)}</span>` : ''}</div>`;
+}
+function phone(p){
+  const b = D.brands[p.brandId] || {};
+  const c = brandColors(b);
+  const shape = ['Reel','Story'].includes(p.format) ? 'tall' : (p.channel === 'X' || (p.channel === 'YouTube' && p.format === 'Video')) ? 'wide' : '';
+  const handle = str(b.name).replace(/\(.*?\)/g,'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'');
+  return `<div class="phone"><div class="ph-h"><span class="bav" style="background:${c.solid || 'var(--c1)'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name))}</span><div>${esc(handle || 'brand')}<small>${esc(p.channel)} · ${fmtD(p.date)}</small></div></div>
+    ${p.format === 'Text' ? '' : creative(p, shape)}
+    ${p.format === 'Text' ? '' : `<div class="ph-a" aria-hidden="true">♡ <span>💬</span> <span>↗</span><span class="sp"></span>🔖</div>`}
+    <div class="ph-c"><span>${esc(p.caption || 'Caption will appear here once written.')}</span>${p.hashtags ? `<span class="tags">${esc(p.hashtags)}</span>` : ''}${p.compliance ? `<span class="muted sm">${esc(p.compliance)}</span>` : ''}</div></div>`;
+}
+
+/* ---------- render plumbing ---------- */
+let rq = false, pendingR = false;
+function isEditing(){ const a = document.activeElement; if (!a || !a.closest || !a.closest('#main,#drawer')) return false; return a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !['checkbox','radio','button','range','month','date','file'].includes(a.type)); }
+function sched(){ if (rq) return; rq = true; requestAnimationFrame(() => { rq = false; if (isEditing()){ pendingR = true; return; } renderAll(); }); }
+document.addEventListener('focusout', () => { if (pendingR) setTimeout(() => { if (!isEditing() && pendingR){ pendingR = false; renderAll(); } }, 30); });
+function renderAll(){
+  $('#side').innerHTML = vSide();
+  const v = ui.view;
+  $('#main').innerHTML = `<div class="wrap">${v === 'brand' ? vBrand() : v === 'plan' ? vPlan() : v === 'tasks' ? vTasks() : v === 'team' ? vTeam() : v === 'live' ? vLive() : vHome()}</div>`;
+  renderDrawer();
+}
+let tT;
+function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tT); tT = setTimeout(() => t.classList.remove('on'), 2800); }
+function copyText(txt){
+  let p;
+  try { p = navigator.clipboard.writeText(txt); } catch (e) { p = Promise.reject(e); }
+  p.then(() => toast('Copied'), () => {
+    const box = $('#copybox'); box.hidden = false;
+    box.innerHTML = `<div class="box"><h3>Copy this text</h3><p class="muted sm">Your browser blocked automatic copying. The text is selected; press Ctrl+C or ⌘C.</p><textarea class="in" id="cbx" rows="12">${esc(txt)}</textarea><div class="acts"><button class="btn" data-act="closeCopy">Done</button></div></div>`;
+    const ta = $('#cbx'); ta.focus(); ta.select();
+  });
+}
+const stPill = s => `<span class="pill" style="--c:var(${STC[s] || '--s-idea'})">${esc(s)}</span>`;
+function tbl(head, rows, cls=''){ return `<div class="tw"><table class="${cls}"><thead><tr>${head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${head.length}" class="muted">Nothing here yet.</td></tr>`}</tbody></table></div>`; }
+function progressBar(ps){
+  const n = ps.length || 1;
+  const g = {copy:0, design:0, client:0, done:0}; ps.forEach(p => g[group(p.status)]++);
+  const seg = [['copy','--s-copy','Copy'],['design','--s-design','Design'],['client','--s-client','With client'],['done','--s-approved','Approved']];
+  return `<div class="bar" data-tip="Copy ${g.copy} · Design ${g.design} · With client ${g.client} · Approved ${g.done}">${seg.map(([k,c]) => g[k] ? `<i style="width:${g[k]/n*100}%;background:var(${c})"></i>` : '').join('')}</div>`;
+}
+function confirmBtn(key, label, act, attrs=''){ return ui.confirm === key ? `<button class="btn sm danger" data-act="${act}" ${attrs}>Confirm: ${esc(label.toLowerCase())}</button>` : `<button class="btn sm ghost" data-act="askConfirm" data-key="${esc(key)}">${esc(label)}</button>`; }
+const aiOff = () => !S;
+const aiNote = () => S ? '' : `<p class="muted sm">AI writing isn't available in this view. You can still edit everything by hand.</p>`;
+const spec = '<div class="spectrum" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>';
+
+/* ---------- sidebar ---------- */
+function myTasks(){ if (!me) return []; return Object.values(D.posts).filter(p => owner(p) === me && group(p.status) !== 'done'); }
+function vSide(){
+  const nb = (v, l, ico, col, c) => `<button class="${ui.view===v?'on':''}" data-act="go" data-v="${v}"><span class="ico" style="background:var(${col})">${ico}</span>${esc(l)}${c ? `<span class="count">${c}</span>` : ''}</button>`;
+  const team = Object.entries(D.team).sort((a,b) => str(a[1].name).localeCompare(str(b[1].name))).map(([id,m]) => [id, `${m.name} · ${m.role}`]);
+  return `<div class="logo"><div class="wm">digimuse<span>.</span></div><small>Content Planner</small>${spec}</div>
+  <nav class="nav" aria-label="Main">${nb('home','Dashboard','◆','--c1')}${nb('tasks','My tasks','✓','--c5', me ? myTasks().length : 0)}${nb('team','Team','●','--c6')}${nb('live','Go live guide','↗','--c3')}</nav>
+  <div><div class="slabel">Brands <button class="lnk" data-act="newBrand">+ New brand</button></div>
+    <div class="blist">${sortedBrands().map(([id,b]) => { const c = brandColors(b); return `<button class="bitem ${ui.brandId===id && (ui.view==='brand'||ui.view==='plan') ? 'on' : ''}" data-act="goBrand" data-id="${id}"><span class="bav" style="background:${c.solid || '#1F5BFF'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name))}</span>${esc(b.name)}</button>`; }).join('') || '<p class="sm" style="padding:0 10px;color:var(--side-muted)">No brands yet</p>'}</div></div>
+  <div class="me"><label for="meSel">You are</label><select id="meSel" class="in" data-chg="me">${opts(team, me, 'Pick your name')}</select></div>
+  ${DB ? '' : `<p class="mode">${HOSTED ? 'Connecting…' : 'Shared saving is off in this view, so changes stay in this tab only.'}</p>`}`;
+}
+
+/* ---------- dashboard ---------- */
+function vHome(){
+  const td = today(), ym = td.slice(0,7), wk = addDays(td, 7);
+  const all = Object.values(D.posts);
+  const month = all.filter(p => str(p.date).startsWith(ym));
+  const late = all.filter(isLate);
+  const client = all.filter(p => p.status === 'Sent to client');
+  const appr = month.length ? Math.round(month.filter(p => group(p.status) === 'done').length / month.length * 100) : 0;
+  const brands = sortedBrands();
+  const hr = new Date().getHours();
+  const hi = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  const meName = mName(me);
+  const hero = `<section class="hero"><div><p class="eyebrow">${esc(mLabel(ym))} · Studio overview</p><h1>${hi}${meName ? ', ' + esc(meName.replace(/\s*\(.*\)/,'')) : ''}.</h1><p class="muted" style="margin-top:6px">Plan the month, write it with the Brand Brain, and move every post from idea to published in one place.</p></div><div class="acts"><button class="btn pri" data-act="newBrand">+ New brand</button></div></section>`;
+  if (!brands.length) return hero + `<div class="empty"><h2>Add your first brand</h2><p>Set up the brand profile, feed its Brand Brain, then generate a full month of research, strategy, calendar and content.</p><button class="btn pri" data-act="newBrand">New brand</button></div>`;
+  const brandRows = brands.map(([id,b]) => {
+    const pl = plansOf(id)[0]; const ps = pl ? postsOf(pl[0]) : [];
+    const lt = ps.filter(isLate).length;
+    const nd = ps.filter(p => curDue(p)).map(curDue).sort()[0];
+    const h = health(b).score; const c = brandColors(b);
+    return `<tr class="click" data-act="goBrand" data-id="${id}"><td><div style="display:flex;gap:10px;align-items:center"><span class="bav" style="width:30px;height:30px;border-radius:9px;background:${c.solid || '#1F5BFF'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name))}</span><div><b>${esc(b.name)}</b><div class="muted sm">${esc(b.industry || '')}</div></div></div></td><td>${pl ? esc(mLabel(pl[1].month)) + `<div class="muted sm">${ps.length} posts</div>` : '<span class="muted">No plan yet</span>'}</td><td>${ps.length ? progressBar(ps) : ''}</td><td class="num ${lt ? 'late' : ''}">${lt}</td><td class="num">${nd ? shortD(nd) : '—'}</td><td style="min-width:110px"><div class="meter"><i style="width:${h}%"></i></div><span class="muted sm">${h}%</span></td></tr>`;
+  });
+  const team = Object.entries(D.team);
+  const teamRows = team.map(([id,m]) => { const open = all.filter(p => owner(p) === id && group(p.status) !== 'done'); return [`<b>${esc(m.name)}</b>`, esc(m.role), `<span class="mono">${open.length}</span>`, `<span class="mono ${open.filter(isLate).length ? 'late' : ''}">${open.filter(isLate).length}</span>`, `<span class="mono">${open.filter(p => { const d = curDue(p); return d && d >= td && d <= wk; }).length}</span>`]; });
+  const lineup = all.filter(p => p.date >= td && p.date <= wk).sort(byDate).slice(0, 10);
+  return hero + `
+  <div class="stats">
+    <div class="stat" style="--sb:var(--c1s);--sc:var(--c1)"><i></i><b>${month.length}</b><span>Posts planned this month</span></div>
+    <div class="stat" style="--sb:var(--c3s);--sc:var(--c3)"><i></i><b>${client.length}</b><span>Waiting on client approval</span></div>
+    <div class="stat ${late.length ? 'warn' : ''}" style="--sb:var(--c2s);--sc:var(--c2)"><i></i><b>${late.length}</b><span>Overdue tasks</span></div>
+    <div class="stat" style="--sb:var(--c5s);--sc:var(--c5)"><i></i><b>${appr}%</b><span>Of this month approved</span></div>
+  </div>
+  <div class="grid2">
+    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Going live this week</h2><p>Every brand, next 7 days</p></div></header>${lineup.length ? `<div class="lineup">${lineup.map(p => `<button class="lu" data-act="open" data-id="${p.id}"><span class="d">${pdate(p.date).getDate()}<small>${DOW[pdate(p.date).getDay()]}</small></span><span style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.topic || 'Untitled')}</b><span class="muted sm">${esc(D.brands[p.brandId]?.name || '')} · ${esc(p.format)}</span></span><span class="acts">${chBadge(p.channel)}${stPill(p.status)}</span></button>`).join('')}</div>` : '<p class="muted">Nothing scheduled in the next 7 days.</p>'}</section>
+    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Waiting on client</h2><p>Chase these in your next client call</p></div></header>${client.length ? `<div class="lineup">${client.sort(byDate).slice(0,10).map(p => `<button class="lu" data-act="open" data-id="${p.id}"><span class="d">${pdate(p.date).getDate()}<small>${MON[pdate(p.date).getMonth()]}</small></span><span style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.topic || 'Untitled')}</b><span class="muted sm">${esc(D.brands[p.brandId]?.name || '')}</span></span><span class="acts">${chBadge(p.channel)}<span class="chip">Round ${p.round || 0}</span></span></button>`).join('')}</div>` : '<p class="muted">Nothing is waiting on a client.</p>'}</section>
+  </div>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Brands</h2><p>Progress: copy · design · with client · approved</p></div></header>
+    <div class="tw"><table><thead><tr><th>Brand</th><th>Latest plan</th><th>Progress</th><th>Overdue</th><th>Next due</th><th>Brand Brain</th></tr></thead><tbody>${brandRows.join('')}</tbody></table></div></section>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c6)"></span>Team workload</h2><button class="btn sm" data-act="go" data-v="team">Manage team</button></header>${tbl(['Member','Role','Open','Overdue','Due in 7 days'], teamRows)}</section>`;
+}
+
+/* ---------- brand ---------- */
+function vBrand(){
+  const b = D.brands[ui.brandId];
+  if (!b) return `<div class="empty"><p>This brand was removed.</p><button class="btn" data-act="go" data-v="home">Back to dashboard</button></div>`;
+  const h = health(b).score; const c = brandColors(b);
+  const tabs = [['plans','Monthly plans'],['ideas','Ideas bank',arr(b.ideas).filter(i => !i.used).length],['brain','Brand Brain'],['profile','Profile & team']];
+  return `<section class="hero brand" style="--bc:${c.solid || 'var(--c1)'}"><span class="blob" aria-hidden="true"></span><div><div class="crumb"><button data-act="go" data-v="home">Dashboard</button>›<span>Brand</span></div><h1>${esc(b.name)}</h1>
+    <div class="chips">${[b.industry, b.type, b.stage, b.price].filter(Boolean).map(x => `<span class="chip">${esc(x)}</span>`).join('')}${activeCh(b).map(x => `<span class="chb" style="--chc:${CHC[x]}">${esc(x)} · ${esc(b.channels[x].perWeek)}/wk</span>`).join('')}</div>
+    ${kitColors(b).length ? `<div class="swatches" style="margin-top:10px">${kitColors(b).map(x => `<span class="sw"><i style="background:${x}"></i>${x}</span>`).join('')}</div>` : ''}</div>
+    <div style="min-width:180px"><p class="eyebrow">Brand Brain</p><div class="ring"><b>${h}%</b></div><div class="meter" style="margin-top:8px"><i style="width:${h}%"></i></div></div></section>
+  <div class="tabs" role="tablist">${tabs.map(([k,l,n]) => `<button role="tab" class="${ui.btab===k?'on':''}" data-act="btab" data-k="${k}">${l}${n ? `<span class="n">${n}</span>` : ''}</button>`).join('')}</div>
+  ${ui.btab === 'brain' ? vBrain(b) : ui.btab === 'profile' ? vProfile(b) : ui.btab === 'ideas' ? vIdeas(b) : vPlans(b)}`;
+}
+function vPlans(b){
+  const pls = plansOf(ui.brandId);
+  const rows = pls.map(([id,p]) => { const ps = postsOf(id); const ap = ps.filter(x => group(x.status) === 'done').length;
+    return `<tr class="click" data-act="goPlan" data-id="${id}"><td><b>${esc(mLabel(p.month))}</b>${p.strategy?.theme?.name ? `<div class="muted sm">${esc(p.strategy.theme.name)}</div>` : ''}</td><td>${p.status === 'ready' ? '<span class="pill" style="--c:var(--s-approved)">Ready</span>' : gen[id]?.running ? '<span class="pill" style="--c:var(--accent)">Generating</span>' : `<span class="pill" style="--c:var(--s-client)">${p.status === 'generating' ? 'Interrupted' : 'Paused'}</span>`}</td><td class="num">${ps.length}</td><td>${ps.length ? progressBar(ps) : ''}</td><td class="num">${ps.length ? Math.round(ap/ps.length*100) : 0}%</td></tr>`; });
+  const prev = pls[0];
+  const hasCh = activeCh(b).length > 0;
+  return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Generate a monthly plan</h2><p>Research, strategy, topical days, calendar and a written content deck, built from this brand's profile, Brand Brain and ideas bank.</p></div></header>
+    ${hasCh ? '' : `<p class="flag">Turn on at least one channel in Profile & team first.</p>`}
+    <div class="fg">
+      <label class="f">Month<input class="in" type="month" id="npl-month" value="${nextMonth()}"></label>
+      <label class="f">Region for topical days<select class="in" id="npl-region">${opts(REGIONS, 'India (pan-India)')}</select></label>
+      <label class="f">Language<select class="in" id="npl-lang">${opts(LANGS, b.audience?.languages && LANGS.includes(b.audience.languages) ? b.audience.languages : 'English')}</select></label>
+      <label class="f span2">Focus for this month <span class="hint">Launches, offers, campaigns, client asks</span><textarea class="in" id="npl-brief" rows="2">${esc(b.brain?.brief || '')}</textarea></label>
+    </div>
+    <div class="acts">
+      <label class="chk"><input type="checkbox" id="npl-top" checked> Topical days</label>
+      <label class="chk"><input type="checkbox" id="npl-reels" checked> Reel scripts</label>
+      <label class="chk"><input type="checkbox" id="npl-paid"> Paid boost ideas</label>
+      <label class="chk"><input type="checkbox" id="npl-inf"> Influencer / UGC ideas</label>
+      ${prev && prev[1].research ? `<label class="chk"><input type="checkbox" id="npl-reuse"> Reuse research from ${esc(mLabel(prev[1].month))}</label>` : ''}
+    </div>
+    <div class="acts"><button class="btn pri" data-act="createPlan" ${hasCh && !aiOff() ? '' : 'disabled'}><span class="spark">✦</span> Generate plan</button><span class="muted sm">Takes about 3–6 minutes. Keep this tab open while it writes.</span></div>
+    ${aiNote()}
+  </section>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c1)"></span>Plans</h2></header>
+    <div class="tw"><table><thead><tr><th>Month</th><th>Status</th><th>Posts</th><th>Progress</th><th>Approved</th></tr></thead><tbody>${rows.join('') || '<tr><td colspan="5" class="muted">No plans yet.</td></tr>'}</tbody></table></div></section>`;
+}
+function vIdeas(b){
+  const ideas = arr(b.ideas).map((x,i) => ({...x, i})).sort((a,b2) => (a.used?1:0) - (b2.used?1:0) || (b2.at||0) - (a.at||0));
+  const pls = plansOf(ui.brandId).map(([id,p]) => [id, mLabel(p.month)]);
+  return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Ideas bank</h2><p>Capture ideas any time. Unused ideas feed the next calendar, or drop one straight into a plan.</p></div></header>
+    <div class="rowline"><label class="f">New idea<input class="in" id="ni-text" placeholder="Reel: customers' desk setups with the bottle"></label><label class="f" style="flex:0 0 150px">Channel<select class="in" id="ni-ch">${opts(activeCh(b).length ? activeCh(b) : CH)}</select></label><button class="btn" data-act="addIdea">Add idea</button></div>
+    <div class="rowline"><label class="f">Ask AI for ideas about <span class="hint">optional</span><input class="in" id="ni-focus" placeholder="Diwali gifting, the new flavour, office teams…"></label><button class="btn pri" data-act="aiIdeas" ${aiOff() || ui.ideaBusy ? 'disabled' : ''}>${ui.ideaBusy ? '<span class="spin"></span> Thinking…' : '<span class="spark">✦</span> Get 8 ideas'}</button></div>
+    ${pls.length ? `<div class="rowline"><label class="f" style="flex:0 0 220px">Add ideas into plan<select class="in" id="ni-plan">${opts(pls)}</select></label></div>` : ''}
+    <div class="list">${ideas.map(x => `<div class="idea ${x.used ? 'used' : ''}" style="--pc:${CHC[x.channel] || 'var(--c3)'}"><div class="tx"><b>${esc(x.text)}</b>${x.why ? `<span class="muted sm">${esc(x.why)}</span>` : ''}<span class="acts">${x.channel ? chBadge(x.channel) : ''}${x.format ? `<span class="chip">${esc(x.format)}</span>` : ''}${x.pillar ? `<span class="chip">${esc(x.pillar)}</span>` : ''}${x.used ? '<span class="chip">Used</span>' : ''}<span class="muted sm">${esc(mName(x.by) || (x.ai ? 'AI' : ''))}</span></span></div><div class="acts">${!x.used && pls.length ? `<button class="btn sm" data-act="ideaToPlan" data-i="${x.i}">Add to plan</button>` : ''}<button class="btn sm ghost" data-act="rmIdea" data-i="${x.i}">Remove</button></div></div>`).join('') || '<p class="muted">No ideas yet. Add one or ask AI for a batch.</p>'}</div>
+    ${aiNote()}
+  </section>`;
+}
+function vBrain(b){
+  const br = b.brain || {}, H = health(b);
+  const prod = arr(br.products), rules = arr(br.rules), refs = arr(br.refs), reps = arr(br.replies);
+  return `<div class="grid2">
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c5)"></span>Brain health</h2></header>
+      <div class="ring"><b>${H.score}%</b><div style="flex:1"><div class="meter"><i style="width:${H.score}%"></i></div><p class="muted sm" style="margin-top:6px">The more this holds, the more specific every caption gets.</p></div></div>
+      <div class="list">${H.items.map(i => `<div class="li" style="padding:7px 11px"><span class="tx">${esc(i[0])}</span><span class="sm" style="font-weight:700;color:${i[1] ? 'var(--s-approved)' : 'var(--muted)'}">${i[1] ? '✓ Done' : '+' + i[2]}</span></div>`).join('')}</div>
+    </section>
+    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Ask the Brand Brain</h2><p>Quick answers from what's saved here.</p></div></header>
+      <div class="rowline"><input class="in" id="ask-q" placeholder="What offer is running? Which products suit a Diwali post?" aria-label="Question"><button class="btn pri" data-act="ask" ${aiOff() ? 'disabled' : ''}>${ui.asking ? '<span class="spin"></span> Thinking…' : 'Ask'}</button></div>
+      ${ui.answer ? `<div class="answer">${esc(ui.answer)}</div>` : ''}${aiNote()}
+    </section>
+  </div>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Products & services</h2><p>Every post is anchored to one of these. Paste a catalogue in bulk: one per line, "Name | what it is | benefits | price | offer" (tabs from Excel work too).</p></div></header>
+    ${tbl(['Name','What it is','Benefits','Price','Offer',''], prod.map((p,i) => [`<b>${esc(p.name)}</b>`, esc(p.what), esc(p.benefits), esc(p.price), esc(p.offer), `<button class="btn sm ghost" data-act="rmItem" data-k="products" data-i="${i}">Remove</button>`]))}
+    <div class="fg">
+      <label class="f">Name<input class="in" id="np-name"></label>
+      <label class="f">What it is<input class="in" id="np-what"></label>
+      <label class="f">Key benefits<input class="in" id="np-ben"></label>
+      <label class="f">Price<input class="in" id="np-price"></label>
+      <label class="f">Current offer<input class="in" id="np-offer"></label>
+    </div>
+    <div class="acts"><button class="btn" data-act="addProduct">Add product</button></div>
+    <details><summary class="sm" style="cursor:pointer;font-weight:700">Bulk paste catalogue</summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px"><textarea class="in" id="np-bulk" rows="5" placeholder="Cold Brew Classic | 250ml bottle | 12h steeped, no sugar | ₹120 | 2 for ₹199"></textarea><div><button class="btn" data-act="bulkProducts">Add all</button></div></div></details>
+  </section>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Brand rules</h2><p>Hard rules the AI must follow. Client feedback you save lands here too.</p></div></header>
+    <div class="list">${rules.map((r,i) => `<div class="li"><span class="tx"><span><span class="tag ${r.source==='feedback'?'fb':''}">${esc(r.type)}${r.source==='feedback' ? ' · from feedback' : ''}</span></span><span>${esc(r.text)}</span></span><button class="btn sm ghost" data-act="rmItem" data-k="rules" data-i="${i}">Remove</button></div>`).join('') || '<p class="muted">No rules yet. Add banned words, disclaimers, spellings and CTA lines.</p>'}</div>
+    <div class="rowline"><label class="f" style="flex:0 0 170px">Type<select class="in" id="nr-type">${opts(RULE_TYPES)}</select></label><label class="f">Rule<input class="in" id="nr-text" placeholder="Never say 'cheap', say 'great value'"></label><button class="btn" data-act="addRule">Add rule</button></div>
+  </section>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c6)"></span>Reference bank</h2><p>Save posts you want the team to learn from. Copy and hook refs guide writing; design refs show up on every design brief.</p></div></header>
+    <div class="list">${refs.map((r,i) => `<div class="li"><span class="tx"><span><span class="tag">${esc(r.tag)}</span></span>${linkOK(r.url) ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>` : esc(r.url)}<span class="muted sm">${esc(r.notes)}</span></span><button class="btn sm ghost" data-act="rmItem" data-k="refs" data-i="${i}">Remove</button></div>`).join('') || '<p class="muted">No references saved yet.</p>'}</div>
+    <div class="rowline"><label class="f" style="flex:0 0 130px">Tag<select class="in" id="nf-tag">${opts(REF_TAGS)}</select></label><label class="f">Link or description<input class="in" id="nf-url" placeholder="https://www.instagram.com/p/…"></label><label class="f">Why it works<input class="in" id="nf-notes" placeholder="Bold one-line hook, product in hand, 3 slides"></label><button class="btn" data-act="addRef">Save</button></div>
+  </section>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c5)"></span>Community reply bank</h2><p>Approved answers for common comments and DMs, so anyone on the team replies in the brand's voice.</p></div><button class="btn sm pri" data-act="aiReplies" ${aiOff() || ui.replyBusy ? 'disabled' : ''}>${ui.replyBusy ? '<span class="spin"></span> Writing…' : '<span class="spark">✦</span> Draft 8 replies'}</button></header>
+    <div class="list">${reps.map((r,i) => `<div class="li"><span class="tx"><span class="muted sm">When someone says</span><b>${esc(r.comment)}</b><span>${esc(r.reply)}</span></span><span class="acts"><button class="btn sm" data-act="copyReply" data-i="${i}">Copy</button><button class="btn sm ghost" data-act="rmItem" data-k="replies" data-i="${i}">Remove</button></span></div>`).join('') || '<p class="muted">No replies saved yet.</p>'}</div>
+    <div class="rowline"><label class="f">Comment or question<input class="in" id="nrp-c" placeholder="Is this available in Delhi?"></label><label class="f">Reply<input class="in" id="nrp-r" placeholder="Not yet! We deliver in Bengaluru, Mumbai and Pune…"></label><button class="btn" data-act="addReply">Add</button></div>
+  </section>
+  <div class="grid2">
+    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c4)"></span>Past winning posts</h2><p>Paste captions and hooks that performed well. The monthly report can add top posts here.</p></div></header><textarea class="in" rows="9" data-bf="brain.pastPosts" id="bf-past">${esc(br.pastPosts)}</textarea></section>
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c2)"></span>Brand kit</h2></header>
+      <label class="f">Colours <span class="hint">Hex codes, first one is the main colour. Used in previews too.</span><input class="in" data-bf="brain.kit.colors" id="bf-col" value="${esc(br.kit?.colors)}"></label>
+      ${kitColors(b).length ? `<div class="swatches">${kitColors(b).map(c => `<span class="sw"><i style="background:${c}"></i>${c}</span>`).join('')}</div>` : ''}
+      <label class="f">Fonts<input class="in" data-bf="brain.kit.fonts" id="bf-fonts" value="${esc(br.kit?.fonts)}"></label>
+      <label class="f">Logo & layout rules<textarea class="in" rows="2" data-bf="brain.kit.logo" id="bf-logo">${esc(br.kit?.logo)}</textarea></label>
+      <label class="f">Standing campaign brief<textarea class="in" rows="3" data-bf="brain.brief" id="bf-brief">${esc(br.brief)}</textarea></label>
+    </section>
+  </div>`;
+}
+function vProfile(b){
+  const a = b.audience || {}, v = b.voice || {}, t = b.team || {}, s = b.sla || {};
+  const teamOpts = Object.entries(D.team).map(([id,m]) => [id, `${m.name} · ${m.role}`]);
+  const f = (label, path, val, type='text', extra='') => `<label class="f">${label}<input class="in" type="${type}" data-bf="${path}" id="bf-${path.replace(/\./g,'-')}" value="${esc(val)}" ${extra}></label>`;
+  const sel = (label, path, list, val, blank) => `<label class="f">${label}<select class="in" data-bf="${path}" id="bf-${path.replace(/\./g,'-')}">${opts(list, val, blank)}</select></label>`;
+  const ta = (label, path, val, rows=2, cls='') => `<label class="f ${cls}">${label}<textarea class="in" rows="${rows}" data-bf="${path}" id="bf-${path.replace(/\./g,'-')}">${esc(val)}</textarea></label>`;
+  const rng = (path, l, r, val) => `<div class="range"><span>${l}</span><input type="range" min="1" max="5" step="1" data-bf="${path}" id="bf-${path.replace(/\./g,'-')}" value="${esc(val || 3)}" aria-label="${l} to ${r}"><span>${r}</span></div>`;
+  return `<section class="panel"><header><h2><span class="dotc" style="--dc:var(--c1)"></span>Brand basics</h2></header><div class="fg">
+      ${f('Brand name','name',b.name)}${f('Website','website',b.website,'url')}
+      ${sel('Industry','industry',INDUSTRIES,b.industry,'Choose industry')}${f('Sub-category','sub',b.sub)}
+      ${sel('Brand type','type',BTYPES,b.type)}${sel('Stage','stage',STAGES,b.stage)}${sel('Price positioning','price',PRICE,b.price)}
+      ${ta('One-line description','desc',b.desc,2,'span2')}${ta('Products / services summary','offerings',b.offerings,2,'span2')}
+    </div></section>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c2)"></span>Audience</h2></header><div class="fg">
+      ${f('Age range','audience.age',a.age)}${sel('Gender','audience.gender',['All','Mostly women','Mostly men'],a.gender)}
+      ${f('Geography','audience.geo',a.geo)}${sel('City tier','audience.tier',TIERS,a.tier)}${f('Languages','audience.languages',a.languages)}
+      ${ta('Interests','audience.interests',a.interests)}${ta('Pain points','audience.pains',a.pains)}${ta('Buying triggers','audience.triggers',a.triggers)}
+    </div></section>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Channels</h2><p>Posts per week decides how many posts each month gets.</p></div></header>
+    <div class="tw"><table><thead><tr><th>On</th><th>Channel</th><th>Posts / week</th><th>Preferred formats</th></tr></thead><tbody>
+    ${CH.map(c => { const x = b.channels?.[c] || {}; return `<tr><td><input type="checkbox" data-bf="channels.${c}.on" id="bf-ch-${c}" ${x.on ? 'checked' : ''} aria-label="${c} on" style="accent-color:var(--accent);width:16px;height:16px"></td><td>${chBadge(c)} <b style="margin-left:6px">${c}</b></td><td style="width:120px"><input class="in" type="number" min="0" max="21" data-bf="channels.${c}.perWeek" id="bf-chw-${c}" value="${esc(x.perWeek ?? 3)}"></td><td><input class="in" data-bf="channels.${c}.formats" id="bf-chf-${c}" value="${esc(x.formats)}" placeholder="Reels, Carousels, Statics"></td></tr>`; }).join('')}
+    </tbody></table></div></section>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c5)"></span>Objectives</h2></header>
+    <div class="chips">${OBJ.map(o => `<label class="chk chip ${arr(b.objectives?.list).includes(o) ? 'on' : ''}"><input type="checkbox" data-chg="obj" value="${esc(o)}" ${arr(b.objectives?.list).includes(o) ? 'checked' : ''}> ${esc(o)}</label>`).join('')}</div>
+    <div class="fg">${sel('Primary objective','objectives.primary',arr(b.objectives?.list),b.objectives?.primary,'Choose one')}</div></section>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c6)"></span>Brand voice</h2></header>
+    <div class="fg"><div>${rng('voice.formal','Formal','Casual',v.formal)}</div><div>${rng('voice.witty','Serious','Witty',v.witty)}</div><div>${rng('voice.premium','Friendly','Premium',v.premium)}</div></div>
+    <div class="fg">${f('Three adjectives','voice.adjectives',v.adjectives)}${f('Words to avoid','voice.avoid',v.avoid)}${ta('Compliance notes','voice.compliance',v.compliance,2,'span2')}</div></section>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c4)"></span>Competitors & inspiration</h2></header><div class="fg">${ta('Competitors (handles or names)','competitors',b.competitors,3)}${ta('Brands we admire','loved',b.loved,3)}</div></section>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Team & turnaround</h2><p>New posts are assigned to these people. Due dates count back from the post date.</p></div></header><div class="fg">
+      ${sel('Account manager','team.am',teamOpts,t.am,'Unassigned')}${sel('Strategist','team.strategist',teamOpts,t.strategist,'Unassigned')}
+      ${sel('Copywriter','team.writer',teamOpts,t.writer,'Unassigned')}${sel('Designer','team.designer',teamOpts,t.designer,'Unassigned')}
+      ${f('Copy due (days before post)','sla.copy',s.copy ?? 5,'number','min="0" max="30"')}${f('Design due (days before)','sla.design',s.design ?? 3,'number','min="0" max="30"')}${f('Client approval due (days before)','sla.client',s.client ?? 2,'number','min="0" max="30"')}
+    </div>
+    <div class="acts"><button class="btn sm" data-act="applyTeam">Apply team to all open posts</button></div></section>
+  <section class="panel"><header><div><h2>Delete brand</h2><p>Removes the brand. Plans and posts stay stored but hidden.</p></div></header><div>${confirmBtn('delBrand','Delete brand','delBrand')}</div></section>`;
+}
+
+/* ---------- plan ---------- */
+function vPlan(){
+  const plan = D.plans[ui.planId];
+  if (!plan) return `<div class="empty"><p>This plan was removed.</p><button class="btn" data-act="go" data-v="home">Back to dashboard</button></div>`;
+  const b = D.brands[plan.brandId] || {name:'Brand'};
+  const ps = postsOf(ui.planId);
+  const c = brandColors(b);
+  const rvN = ps.filter(p => p.status === 'Sent to client').length;
+  const tabs = [['deck','Content deck'],['calendar','Calendar'],['board','Board'],['review','Client review',rvN],['report','Performance'],['strategy','Strategy'],['research','Research'],['topical','Topical days'],['export','Export']];
+  let body = '';
+  switch (ui.tab){
+    case 'calendar': body = vCal(plan, ps); break;
+    case 'board': body = vBoard(ps); break;
+    case 'review': body = vReview(plan, ps); break;
+    case 'report': body = vReport(plan, ps); break;
+    case 'strategy': body = vStrategy(plan); break;
+    case 'research': body = vResearch(plan); break;
+    case 'topical': body = vTopical(plan); break;
+    case 'export': body = vExport(plan, ps); break;
+    default: body = vDeck(plan, ps);
+  }
+  return `<section class="hero brand" style="--bc:${c.solid || 'var(--c1)'}"><span class="blob" aria-hidden="true"></span><div><div class="crumb"><button data-act="go" data-v="home">Dashboard</button>›<button data-act="goBrand" data-id="${plan.brandId}">${esc(b.name)}</button>›<span>Plan</span></div><h1>${esc(mLabel(plan.month))}${plan.strategy?.theme?.name ? ` · <span style="color:var(--accent)">${esc(plan.strategy.theme.name)}</span>` : ''}</h1>
+    <div class="chips"><span class="chip"><b>${esc(b.name)}</b></span><span class="chip">${ps.length} posts</span><span class="chip">${esc(plan.opts?.region || '')}</span><span class="chip">${esc(plan.opts?.lang || '')}</span></div></div>
+    <div class="acts" style="flex-direction:column;align-items:flex-end">${ps.length ? progressBar(ps) : ''}<button class="btn pri" data-act="addPost">+ Add post</button></div></section>
+  ${banner(plan, ps)}
+  <div class="tabs" role="tablist">${tabs.map(([k,l,n]) => `<button role="tab" class="${ui.tab===k?'on':''}" data-act="tab" data-k="${k}">${l}${n ? `<span class="n">${n}</span>` : ''}</button>`).join('')}</div>
+  ${body}`;
+}
+function banner(plan, ps){
+  const g = gen[ui.planId];
+  if (g?.running) return `<div class="banner run"><span class="spin" aria-hidden="true"></span><div class="grow"><b>${esc(g.label)}</b>${g.total ? `<div class="meter"><i style="width:${Math.round(g.done/g.total*100)}%"></i></div>` : ''}</div><button class="btn sm" data-act="stopGen">Stop</button></div>`;
+  const unwritten = ps.filter(p => !p.hasContent).length;
+  if (plan.status !== 'ready'){
+    const msg = plan.error ? esc(plan.error) : plan.status === 'generating' ? 'Generation was interrupted, or is running in a teammate’s browser.' : 'This plan is not finished yet.';
+    return `<div class="banner err"><div class="grow"><b>${msg}</b><span class="muted sm">Continue picks up from the last finished step.</span></div><button class="btn pri sm" data-act="runPlan" ${aiOff() ? 'disabled' : ''}>Continue</button></div>`;
+  }
+  if (unwritten) return `<div class="banner"><div class="grow"><b>${unwritten} post${unwritten > 1 ? 's' : ''} not written yet</b></div><button class="btn sm pri" data-act="runPlan" ${aiOff() ? 'disabled' : ''}><span class="spark">✦</span> Write them</button></div>`;
+  return '';
+}
+function vDeck(plan, ps){
+  const f = ui.f;
+  const pillars = [...new Set(ps.map(p => p.pillar).filter(Boolean))];
+  const chs = [...new Set(ps.map(p => p.channel).filter(Boolean))];
+  const list = ps.filter(p => (!f.ch || p.channel === f.ch) && (!f.st || p.status === f.st) && (!f.pi || p.pillar === f.pi));
+  if (!ps.length) return `<div class="empty"><p>No posts yet. ${gen[ui.planId]?.running ? 'The calendar is being planned.' : 'Continue the plan or add a post.'}</p></div>`;
+  return `<div class="filters"><select class="in" data-chg="fch" aria-label="Channel">${opts(chs, f.ch, 'All channels')}</select><select class="in" data-chg="fst" aria-label="Status">${opts(STAT, f.st, 'All statuses')}</select><select class="in" data-chg="fpi" aria-label="Pillar">${opts(pillars, f.pi, 'All pillars')}</select><span class="muted sm">${list.length} of ${ps.length}</span></div>
+  <div class="deck">${list.map(p => { const fl = flags(p); return `<button class="post ${p.hasContent ? '' : 'unwritten'}" data-act="open" data-id="${p.id}">
+    ${creative(p)}
+    <div class="pb"><div class="pmeta"><span class="mono">${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</span>${stPill(p.status)}</div>
+    <div class="pmeta" style="justify-content:flex-start">${chBadge(p.channel)}<span class="chip">${esc(p.format)}</span>${p.topical ? `<span class="tday">${esc(p.topical)}</span>` : ''}</div>
+    <b style="font-size:14px;line-height:1.3">${esc(p.topic || 'Untitled post')}</b>
+    <p class="cap">${p.hasContent ? esc(p.caption) : busy[p.id] ? 'Writing…' : 'Not written yet'}</p>
+    <div class="pfoot"><span class="pil" style="--pc:${pillarColor(plan, p.pillar)}">${esc(p.pillar || 'No pillar')}</span><span>${fl.length ? `<span class="flag">${fl.length} check${fl.length > 1 ? 's' : ''}</span>` : ''}${p.round ? ` · R${p.round}` : ''}${owner(p) ? ' · ' + esc(mName(owner(p))) : ''}</span></div></div></button>`; }).join('')}</div>`;
+}
+function vCal(plan, ps){
+  const days = monthDays(plan.month);
+  const first = pdate(days[0]).getDay();
+  const lead = (first + 6) % 7;
+  const tmap = {}; arr(plan.topical).filter(t => t.include).forEach(t => { (tmap[t.date] = tmap[t.date] || []).push(t.occasion); });
+  const pmap = {}; ps.forEach(p => { (pmap[p.date] = pmap[p.date] || []).push(p); });
+  const td = today();
+  let cells = '';
+  for (let i = 0; i < lead; i++) cells += `<div class="cell off"></div>`;
+  days.forEach(d => { const dw = pdate(d).getDay(); cells += `<div class="cell ${d === td ? 'today' : ''} ${dw === 0 || dw === 6 ? 'we' : ''}" data-drop-date="${d}"><div class="dn"><span>${pdate(d).getDate()}</span><button data-act="addPost" data-date="${d}" aria-label="Add post on ${d}" title="Add post">+</button></div>${(tmap[d] || []).map(t => `<div class="tday">${esc(t)}</div>`).join('')}${(pmap[d] || []).map(p => `<button class="pc" draggable="true" data-drag="${p.id}" data-act="open" data-id="${p.id}" style="--chc:${CHC[p.channel] || '#666'};--c:var(${STC[p.status]})" data-tip="${esc(p.status)} · ${esc(p.channel)} ${esc(p.format)}"><b>${CHA[p.channel] || esc(p.channel)}</b><span>${esc(p.topic || 'Untitled')}</span><i aria-hidden="true"></i></button>`).join('')}</div>`; });
+  const tail = (7 - (lead + days.length) % 7) % 7;
+  for (let i = 0; i < tail; i++) cells += `<div class="cell off"></div>`;
+  const rows = ps.map(p => [`<span class="mono">${fmtD(p.date)}</span>`, esc(p.time), chBadge(p.channel), esc(p.format), `<span class="pil" style="--pc:${pillarColor(plan, p.pillar)}">${esc(p.pillar)}</span>`, `<b>${esc(p.topic)}</b>`, esc(p.hook), esc(p.topical), stPill(p.status)]);
+  return `<p class="muted sm">Drag a post to another day to reschedule it. Due dates move with it. The dot on each post shows its status.</p>
+  <div class="calw"><div class="cal">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="hd">${d}</div>`).join('')}${cells}</div></div>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c6)"></span>Calendar table</h2><button class="btn sm" data-act="copyCal">Copy for Google Sheets</button></header>${tbl(['Date','Time','Channel','Format','Pillar','Topic','Hook','Topical day','Status'], rows)}</section>`;
+}
+function vBoard(ps){
+  return `<p class="muted sm">Drag cards between columns to move them through the workflow. Each card shows who owns the next step.</p>
+  <div class="board">${STAT.map(s => { const items = ps.filter(p => p.status === s); return `<div class="col" data-drop-status="${esc(s)}" style="--c:var(${STC[s]})"><header>${stPill(s)}<span class="mono">${items.length}</span></header>${items.map(p => { const d = curDue(p); return `<button class="kc" draggable="true" data-drag="${p.id}" data-act="open" data-id="${p.id}"><span class="row">${chBadge(p.channel)}<span>${esc(p.format)} · ${shortD(p.date)}</span></span><b>${esc(p.topic || 'Untitled post')}</b><span class="row"><span>${esc(mName(owner(p)) || 'Unassigned')}</span><span class="${isLate(p) ? 'late' : ''}">${d ? 'due ' + shortD(d) : ''}${p.round ? ' · R' + p.round : ''}</span></span></button>`; }).join('')}</div>`; }).join('')}</div>`;
+}
+function vReview(plan, ps){
+  const list = ps.filter(p => p.status === 'Sent to client');
+  const head = `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Client review</h2><p>Walk the client through these in a call or share this page with them. Approve, or log their feedback and it goes straight back to the writer or designer.</p></div></header></section>`;
+  if (!list.length) return head + `<div class="empty"><p>Nothing is waiting for client review. Move posts to "Sent to client" when they're ready.</p></div>`;
+  return head + `<div class="rv">${list.map(p => `<div class="rvc">${phone(p)}
+    <div style="width:100%;display:flex;flex-direction:column;gap:8px">
+      <div class="pmeta"><span class="mono">${fmtD(p.date)}</span><span class="chip">Round ${p.round || 0}</span></div>
+      <textarea class="in" rows="2" id="rvfb-${p.id}" placeholder="Client feedback (optional)" aria-label="Client feedback"></textarea>
+      <div class="acts"><button class="btn pri sm" data-act="rvApprove" data-id="${p.id}">✓ Approve</button><button class="btn sm" data-act="rvChange" data-id="${p.id}" data-t="copy">Change copy</button><button class="btn sm" data-act="rvChange" data-id="${p.id}" data-t="design">Change design</button><button class="btn sm ghost" data-act="open" data-id="${p.id}">Open</button></div>
+    </div></div>`).join('')}</div>`;
+}
+function hbars(rows, fmt){
+  const max = Math.max(...rows.map(r => r.v), 0) || 1;
+  const topV = Math.max(...rows.map(r => r.v));
+  return `<div class="hbars">${rows.map(r => `<div class="hb ${r.v === topV ? 'top' : ''}" data-tip="${esc(r.tip || r.l)}"><span class="lb">${esc(r.l)}</span><span class="tr"><i style="width:${Math.max(0.5, r.v / max * 100)}%"></i></span><span class="v">${fmt(r.v)}</span></div>`).join('')}</div>`;
+}
+function vReport(plan, ps){
+  const live = ps.filter(p => ['Published','Scheduled','Approved'].includes(p.status) || hasMetrics(p));
+  const withM = ps.filter(hasMetrics);
+  const sum = k => withM.reduce((s,p) => s + num(p.metrics?.[k]), 0);
+  const reach = sum('reach'), eng = sum('likes') + sum('comments') + sum('saves') + sum('shares');
+  const avgEr = reach ? eng / reach * 100 : 0;
+  const ranked = withM.filter(p => er(p) != null).sort((a,b) => er(b) - er(a));
+  const byPillar = {}; withM.forEach(p => { const e = er(p); if (e == null) return; const k = p.pillar || 'No pillar'; (byPillar[k] = byPillar[k] || []).push(e); });
+  const pRows = Object.entries(byPillar).map(([l,v]) => ({l, v:v.reduce((s,x)=>s+x,0)/v.length, tip:`${l}: ${v.length} posts`})).sort((a,b) => b.v - a.v);
+  const byFmt = {}; withM.forEach(p => { const e = er(p); if (e == null) return; (byFmt[p.format] = byFmt[p.format] || []).push(e); });
+  const fRows = Object.entries(byFmt).map(([l,v]) => ({l, v:v.reduce((s,x)=>s+x,0)/v.length, tip:`${l}: ${v.length} posts`})).sort((a,b) => b.v - a.v);
+  const pct = v => v.toFixed(1) + '%';
+  const entry = `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c5)"></span>Log results</h2><p>Enter each post's numbers from Instagram or LinkedIn insights. Engagement rate = (likes + comments + saves + shares) ÷ reach.</p></div></header>
+    ${live.length ? `<div class="tw"><table style="min-width:900px"><thead><tr><th>Post</th>${METRICS.map(([,l]) => `<th>${l}</th>`).join('')}<th>ER</th></tr></thead><tbody>${live.map(p => `<tr><td style="min-width:200px"><b>${esc(p.topic || 'Untitled')}</b><div class="muted sm">${shortD(p.date)} · ${esc(p.channel)} ${esc(p.format)}</div></td>${METRICS.map(([k]) => `<td style="min-width:86px"><input class="in" type="number" min="0" data-mf="${k}" data-id="${p.id}" id="m-${p.id}-${k}" value="${esc(p.metrics?.[k] ?? '')}" aria-label="${k}"></td>`).join('')}<td class="num">${er(p) != null ? pct(er(p)) : '—'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Posts appear here once they are approved, scheduled or published.</p>'}
+  </section>`;
+  if (!withM.length) return entry;
+  return `<div class="stats">
+    <div class="stat" style="--sb:var(--c1s);--sc:var(--c1)"><i></i><b>${fmtN(reach)}</b><span>Total reach · ${withM.length} posts</span></div>
+    <div class="stat" style="--sb:var(--c2s);--sc:var(--c2)"><i></i><b>${fmtN(eng)}</b><span>Engagements</span></div>
+    <div class="stat" style="--sb:var(--c5s);--sc:var(--c5)"><i></i><b>${pct(avgEr)}</b><span>Engagement rate</span></div>
+    <div class="stat" style="--sb:var(--c3s);--sc:var(--c3)"><i></i><b>${fmtN(sum('saves'))}</b><span>Saves · ${fmtN(sum('shares'))} shares</span></div>
+  </div>
+  <div class="grid2">
+    <section class="panel"><header><h2>Engagement rate by post</h2></header>${hbars(ranked.slice(0,10).map(p => ({l:p.topic || 'Untitled', v:er(p), tip:`${p.topic} · reach ${fmtN(num(p.metrics.reach))}`})), pct)}</section>
+    <section class="panel"><header><h2>Average engagement rate by pillar</h2></header>${hbars(pRows, pct)}<h3 style="margin-top:8px">By format</h3>${hbars(fRows, pct)}</section>
+  </div>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Monthly report</h2><p>AI reads the numbers and writes the client summary, what worked, and what to change next month. Next month's strategy reads it too.</p></div><div class="acts"><button class="btn sm pri" data-act="aiReport" ${aiOff() || ui.repBusy ? 'disabled' : ''}>${ui.repBusy ? '<span class="spin"></span> Writing…' : `<span class="spark">✦</span> ${plan.report?.text ? 'Rewrite report' : 'Write report'}`}</button>${plan.report?.text ? '<button class="btn sm" data-act="copyReport">Copy</button>' : ''}${ranked.length ? '<button class="btn sm" data-act="saveWinners">Add top 3 to Brand Brain</button>' : ''}</div></header>
+    ${plan.report?.text ? `<div class="report">${esc(plan.report.text)}</div>` : '<p class="muted">No report yet.</p>'}${aiNote()}</section>
+  ${entry}`;
+}
+function vStrategy(plan){
+  const s = plan.strategy;
+  if (!s) return `<div class="empty"><p>Strategy hasn't been written yet.</p></div>`;
+  const fm = arr(s.formatMix);
+  return `<section class="panel" style="background:linear-gradient(135deg,var(--c1s),var(--c2s))"><header><div><p class="eyebrow">Monthly theme</p><h2 style="font-size:24px">${esc(s.theme?.name || '')}</h2></div></header><p style="font-size:15px">${esc(s.theme?.bigIdea || '')}</p>
+    ${arr(s.theme?.series).length ? tbl(['Series','Cadence','Format','What it is'], arr(s.theme.series).map(x => [`<b>${esc(x.name)}</b>`, esc(x.cadence), esc(x.format), esc(x.description)])) : ''}</section>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c2)"></span>Objectives</h2></header>${tbl(['Objective','KPI','Target','How we measure'], arr(s.objectives).map(o => [`<b>${esc(o.objective)}</b>`, esc(o.kpi), esc(o.target), esc(o.measure)]))}</section>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c3)"></span>Content pillars</h2></header>${tbl(['Pillar','Mix','Purpose','Framework','Example topics'], arr(s.pillars).map((p,i) => [`<span class="pil" style="--pc:var(${PAL[i % PAL.length]})"><b>${esc(p.name)}</b></span>`, `<span class="mono">${esc(p.mix)}%</span>`, esc(p.purpose), esc(p.framework), esc(arr(p.examples).join(' · '))]))}</section>
+  <div class="grid2">
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c6)"></span>Channel roles</h2></header>${tbl(['Channel','Role','Formats','Frequency','Best times'], arr(s.channels).map(c => [chBadge(c.channel), esc(c.role), esc(c.formats), esc(c.frequency), esc(c.bestTimes)]))}</section>
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c5)"></span>Format mix</h2></header>${hbars(fm.map(f => ({l:f.format, v:+f.pct || 0})), v => v + '%')}</section>
+  </div>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c4)"></span>Engagement plan</h2></header><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px">${arr(s.engagement).map(e => `<li>${esc(e)}</li>`).join('')}</ul></section>
+  ${arr(s.paid).length ? `<section class="panel"><header><h2>Paid boost</h2></header>${tbl(['What to boost','Audience','Budget split'], arr(s.paid).map(p => [esc(p.what), esc(p.audience), esc(p.budgetSplit)]))}</section>` : ''}
+  ${arr(s.influencer).length ? `<section class="panel"><header><h2>Influencer & UGC</h2></header>${tbl(['Creator tier','How many','Angle'], arr(s.influencer).map(p => [esc(p.tier), esc(p.count), esc(p.angle)]))}</section>` : ''}`;
+}
+function vResearch(plan){
+  const sn = plan.snapshot, r = plan.research;
+  if (!sn) return `<div class="empty"><p>Research hasn't been written yet.</p></div>`;
+  return `<p class="muted sm">Written from Claude's knowledge, not a live web search. Check anything marked "(verify)" before it goes to a client.</p>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c1)"></span>Brand snapshot</h2></header>
+    <dl class="dl"><dt>Positioning</dt><dd>${esc(sn.positioning)}</dd><dt>USP</dt><dd>${esc(sn.usp)}</dd><dt>Voice</dt><dd>${esc(sn.voice)}</dd></dl>
+    ${tbl(['Persona','Who','Pain points','Triggers','Platforms'], arr(sn.personas).map(p => [`<b>${esc(p.name)}</b>`, esc(p.who), esc(p.pains), esc(p.triggers), esc(p.platforms)]))}
+    ${sn.swot ? tbl(['Strengths','Weaknesses','Opportunities','Threats'], [[esc(sn.swot.strengths), esc(sn.swot.weaknesses), esc(sn.swot.opportunities), esc(sn.swot.threats)]]) : ''}</section>
+  <div class="grid2">
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c2)"></span>Industry trends</h2></header>${tbl(['Trend','What it means for us'], arr(r?.industryTrends).map(t => [`<b>${esc(t.trend)}</b>`, esc(t.soWhat)]))}</section>
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c3)"></span>Platform trends</h2></header>${tbl(['Channel','Trend','How to use it'], arr(r?.platformTrends).map(t => [esc(t.channel), `<b>${esc(t.trend)}</b>`, esc(t.howToUse)]))}</section>
+  </div>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c6)"></span>Competitor audit</h2></header>${tbl(['Competitor','Pillars','Formats','What works','Gap for us'], arr(r?.competitors).map(c => [`<b>${esc(c.name)}</b>`, esc(c.pillars), esc(c.formats), esc(c.whatWorks), esc(c.gap)]))}</section>
+  <div class="grid2">
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c5)"></span>Audience insights</h2></header>${tbl(['Insight','Content angle'], arr(r?.audienceInsights).map(i => [esc(i.insight), esc(i.angle)]))}</section>
+    <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c4)"></span>White-space opportunities</h2></header>${tbl(['Angle','Why'], arr(r?.opportunities).map(o => [`<b>${esc(o.angle)}</b>`, esc(o.why)]))}</section>
+  </div>
+  <div class="grid2">
+    <section class="panel"><header><h2>What people search</h2></header><div class="chips">${arr(r?.searchQueries).map(q => `<span class="chip">${esc(q)}</span>`).join('')}</div></section>
+    <section class="panel"><header><h2>Hashtags</h2><button class="btn sm" data-act="copyTags">Copy all</button></header>${['branded','niche','broad'].map(k => `<div><p class="eyebrow">${k}</p><p class="sm" style="color:var(--accent)">${esc(arr(r?.hashtags?.[k]).join(' '))}</p></div>`).join('')}</section>
+  </div>`;
+}
+function vTopical(plan){
+  const t = arr(plan.topical).map((x,i) => ({...x, i})).sort((a,b) => str(a.date).localeCompare(str(b.date)));
+  if (!t.length) return `<div class="empty"><p>No topical days for this plan.</p></div>`;
+  const rc = {High:'--c5', Medium:'--c3', Low:'--s-idea'};
+  return `<p class="muted sm">Ticked days are used when the calendar is planned. Create a post straight from any row.</p>
+  ${tbl(['Use','Date','Occasion','Type','Relevance','Post idea',''], t.map(x => [`<input type="checkbox" data-chg="topInc" data-i="${x.i}" ${x.include ? 'checked' : ''} aria-label="Include ${esc(x.occasion)}" style="accent-color:var(--accent);width:16px;height:16px">`, `<span class="mono">${fmtD(x.date)}</span>`, `<b>${esc(x.occasion)}</b>${x.sensitive ? ' <span class="tag fb">Sensitive</span>' : ''}`, esc(x.type), `<span class="pill" style="--c:var(${rc[x.relevance] || '--s-idea'})">${esc(x.relevance)}</span>`, esc(x.idea), `<button class="btn sm" data-act="topPost" data-i="${x.i}">Create post</button>`]))}`;
+}
+function vExport(plan, ps){
+  return `<div class="grid2">
+    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c5)"></span>Full workbook</h2><p>Excel file with calendar, content deck, design briefs, results, topical days and pillars on separate sheets. Opens in Google Sheets too.</p></div></header><div><button class="btn pri" data-act="xlsx" ${typeof XLSX === 'undefined' || !DL ? 'disabled' : ''}>Download .xlsx</button></div></section>
+    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Client document</h2><p>Strategy plus every post in Markdown. Paste into Google Docs or Notion, or download.</p></div></header><div class="acts"><button class="btn" data-act="md" ${DL ? '' : 'disabled'}>Download .md</button><button class="btn" data-act="copyMd">Copy text</button></div></section>
+    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c6)"></span>Calendar</h2><p>Tab-separated, ready to paste into Google Sheets.</p></div></header><div class="acts"><button class="btn" data-act="copyCal">Copy for Sheets</button><button class="btn" data-act="csv" ${DL ? '' : 'disabled'}>Download .csv</button></div></section>
+    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Design briefs</h2><p>Every post's brief in one text file for the design team.</p></div></header><div class="acts"><button class="btn" data-act="briefs" ${DL ? '' : 'disabled'}>Download briefs</button><button class="btn" data-act="copyBriefs">Copy all</button></div></section>
+  </div>
+  ${DL ? '' : '<p class="muted sm">Downloads are not available in this view. Use the copy buttons instead.</p>'}
+  <p class="muted sm">${ps.length} posts · ${ps.filter(p => p.hasContent).length} written · ${ps.filter(p => group(p.status) === 'done').length} approved</p>`;
+}
+
+/* ---------- tasks, team, go-live ---------- */
+function vTasks(){
+  const team = Object.entries(D.team).map(([id,m]) => [id, `${m.name} · ${m.role}`]);
+  const head = `<section class="hero"><div><p class="eyebrow">Across every brand</p><h1>My tasks</h1></div><div class="acts"><select class="in" data-chg="me" aria-label="You are">${opts(team, me, 'Pick your name')}</select></div></section>`;
+  if (!me) return head + `<div class="empty"><p>Pick your name to see the posts waiting on you.</p>${team.length ? '' : '<button class="btn" data-act="go" data-v="team">Add team members</button>'}</div>`;
+  const td = today(), wk = addDays(td, 7);
+  const t = myTasks().map(p => ({p, d:curDue(p) || p.date})).sort((a,b) => str(a.d).localeCompare(str(b.d)));
+  const grp = [['Overdue', x => x.d < td, '--c2'], ['Due today', x => x.d === td, '--c3'], ['Next 7 days', x => x.d > td && x.d <= wk, '--c1'], ['Later', x => x.d > wk, '--c6']];
+  const row = ({p,d}) => [`<span class="mono ${d < td ? 'late' : ''}">${shortD(d)}</span>`, esc(D.brands[p.brandId]?.name || ''), `<b>${esc(p.topic || 'Untitled')}</b>`, `${chBadge(p.channel)} ${esc(p.format)}`, stPill(p.status), `<span class="mono">${shortD(p.date)}</span>`, `<button class="btn sm" data-act="open" data-id="${p.id}">Open</button>`];
+  return head + (t.length ? grp.map(([l,fn,c]) => { const r = t.filter(fn); return r.length ? `<section class="panel"><header><h2><span class="dotc" style="--dc:var(${c})"></span>${l} <span class="muted mono">${r.length}</span></h2></header>${tbl(['Due','Brand','Post','Format','Stage','Goes live',''], r.map(row))}</section>` : ''; }).join('') : `<div class="empty"><p>Nothing is waiting on you right now.</p></div>`);
+}
+function vTeam(){
+  const m = Object.entries(D.team).sort((a,b) => str(a[1].name).localeCompare(str(b[1].name)));
+  const all = Object.values(D.posts);
+  return `<section class="hero"><div><p class="eyebrow">People</p><h1>Team</h1><p class="muted" style="margin-top:6px">Assign people per brand in each brand's Profile & team tab.</p></div></section>
+  <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c6)"></span>Members</h2></header>
+    ${tbl(['Name','Role','Open tasks','Overdue',''], m.map(([id,x]) => { const open = all.filter(p => owner(p) === id && group(p.status) !== 'done'); return [`<b>${esc(x.name)}</b>`, `<select class="in" data-chg="role" data-id="${id}" aria-label="Role">${opts(ROLES, x.role)}</select>`, `<span class="mono">${open.length}</span>`, `<span class="mono ${open.filter(isLate).length ? 'late' : ''}">${open.filter(isLate).length}</span>`, confirmBtn('rmm-' + id, 'Remove', 'rmMember', `data-id="${id}"`)]; }))}
+    <div class="rowline"><label class="f">Name<input class="in" id="nm-name" placeholder="Full name"></label><label class="f" style="flex:0 0 190px">Role<select class="in" id="nm-role">${opts(ROLES, 'Copywriter')}</select></label><button class="btn pri" data-act="addMember">Add member</button></div>
+  </section>`;
+}
+function vLive(){
+  const steps = HOSTED ? [
+    ['Share the link and password','Send your team this page\'s address and the team password. It works in any browser, on laptop or phone. Bookmark it.','--c1'],
+    ['Each person picks their name','In the sidebar, "You are" sets whose tasks show up under My tasks. It is remembered on each person\'s own device.','--c5'],
+    ['Add the team first','Go to Team and add everyone with their role, then assign people per brand under Profile & team.','--c6'],
+    ['AI runs on the agency key','All AI writing uses the Gemini or Claude key set in Vercel. Watch usage in Google AI Studio or the Anthropic console.','--c3'],
+    ['Changes sync every 30 seconds','Everyone sees the same brands and posts. If two people edit the same field at once, the last save wins, so split work by post.','--c2'],
+    ['Change the password any time','Update TEAM_PASSWORD in Vercel and redeploy. Everyone signs in again with the new one.','--c4']
+  ] : [
+    ['Share it with your team','Open the Share menu at the top of this page and share it with your organisation, or invite each teammate. Give writers, designers and account managers "Can edit" (Contributor) so they can change posts. Everyone sees the same live data.','--c1'],
+    ['Each person picks their name','In the sidebar, "You are" sets whose tasks show up under My tasks. It is remembered on each person\'s own device.','--c2'],
+    ['AI runs on each person\'s Claude account','The first time someone presses an AI button, Claude asks them to allow it. The writing uses that person\'s own Claude usage, so there are no API keys to manage.','--c3'],
+    ['Pin it for daily use','Pin it in the Claude sidebar so the team opens it like any other tool. The link stays the same when the planner is updated.','--c5'],
+    ['Clients','Shared data keeps this planner inside your organisation, so clients cannot log in directly. Run approvals in the Client review tab on a call, or send them the exported deck or workbook.','--c6'],
+    ['When you outgrow it','For client logins, Meta and LinkedIn auto-posting and live analytics, use the production build prompt (Next.js + Supabase + Gemini) to turn this into your own SaaS.','--c4']
+  ];
+  return `<section class="hero"><div><p class="eyebrow">Rollout</p><h1>Go live with the team</h1><p class="muted" style="margin-top:6px">${HOSTED ? 'This planner is live on your own web address. Here\'s how to roll it out.' : 'This planner is already live at its link. Here\'s how to roll it out.'}</p></div></section>
+  <div class="grid2">${steps.map(([t,d,c],i) => `<section class="panel" style="border-top:5px solid var(${c})"><p class="eyebrow">Step ${i+1}</p><h2>${esc(t)}</h2><p style="color:var(--ink-2)">${esc(d)}</p></section>`).join('')}</div>`;
+}
+
+/* ---------- post drawer ---------- */
+function renderDrawer(){
+  const dw = $('#drawer');
+  const p = ui.postId && D.posts[ui.postId];
+  if (!p){ if (!dw.hidden){ dw.hidden = true; dw.innerHTML = ''; } return; }
+  const prev = dw.querySelector('.dw-b')?.scrollTop || 0;
+  dw.hidden = false;
+  dw.innerHTML = vDrawer(p);
+  const body = dw.querySelector('.dw-b'); if (body) body.scrollTop = prev;
+}
+function vDrawer(p){
+  const b = D.brands[p.brandId] || {};
+  const plan = D.plans[p.planId];
+  const teamOpts = Object.entries(D.team).map(([id,m]) => [id, m.name]);
+  const du = dues(p), td = today();
+  const fl = flags(p);
+  const pillars = arr(plan?.strategy?.pillars).map(x => x.name);
+  const inp = (label, path, val, extra='') => `<label class="f">${label}<input class="in" data-pf="${path}" id="pf-${path.replace(/\./g,'-')}" value="${esc(val)}" ${extra}></label>`;
+  const ta = (label, path, val, rows=3) => `<label class="f">${label}<textarea class="in" rows="${rows}" data-pf="${path}" id="pf-${path.replace(/\./g,'-')}">${esc(val)}</textarea></label>`;
+  const bz = busy[p.id];
+  const v = variants[p.id];
+  const showSlides = p.format === 'Carousel' || arr(p.slides).length;
+  const showScript = ['Reel','Video','Story'].includes(p.format) || arr(p.script).length;
+  const designRefs = arr(b.brain?.refs).filter(r => r.tag === 'Design');
+  const rs = str(p.design?.refSearch || p.topic);
+  const next = nextStatus(p);
+  const words = s => str(s).split(/\s+/).filter(Boolean).length;
+  const ck = p.checklist || {};
+  const ckDone = CHECKS.filter(([k]) => ck[k]).length;
+  const showRes = ['Approved','Scheduled','Published'].includes(p.status) || hasMetrics(p);
+  return `<div class="scrim" data-act="close"></div>
+  <div class="dw" role="dialog" aria-modal="true" aria-label="Post details">
+    <div class="dw-h" style="--chc:${CHC[p.channel] || 'var(--c1)'}"><div class="top"><div><p class="eyebrow">${esc(b.name || '')} · ${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</p><h2 style="font-size:21px">${esc(p.topic || 'Untitled post')}</h2></div><button class="btn sm ghost" data-act="close" aria-label="Close">Close ✕</button></div>
+      <div class="acts">${chBadge(p.channel)}<span class="chip">${esc(p.format)}</span>${stPill(p.status)}${p.round ? `<span class="chip">Round ${p.round}</span>` : ''}${owner(p) ? `<span class="chip">With ${esc(mName(owner(p)))}</span>` : ''}${fl.map(f => `<span class="flag">⚠ ${esc(f)}</span>`).join(' ')}<span class="sp"></span>${next ? `<button class="btn sm pri" data-act="nextStage">Move to ${esc(next)} →</button>` : ''}${p.status === 'Sent to client' ? `<button class="btn sm" data-act="setStatus" data-s="Approved">✓ Client approved</button>` : ''}</div>
+    </div>
+    <div class="dw-b"><div class="dw-grid">
+     <div class="dw-col">
+      ${!p.hasContent ? `<div class="banner"><div class="grow"><b>${bz ? esc(bz) : 'This post has not been written yet.'}</b><span class="muted sm">Set the topic, channel and format, then let AI write it from the Brand Brain.</span></div><button class="btn pri sm" data-act="regen" ${bz || aiOff() ? 'disabled' : ''}>${bz ? '<span class="spin"></span>' : '<span class="spark">✦</span>'} Write with AI</button></div>` : ''}
+      <section class="sec"><h3>Brief & workflow</h3>
+        <div class="fg">
+          <label class="f">Post date<input class="in" type="date" data-pf="date" id="pf-date" value="${esc(p.date)}"></label>
+          ${inp('Time','time',p.time)}
+          <label class="f">Channel<select class="in" data-pf="channel" id="pf-channel">${opts(CH, p.channel)}</select></label>
+          <label class="f">Format<select class="in" data-pf="format" id="pf-format">${opts(FORMATS, p.format)}</select></label>
+          <label class="f">Pillar<input class="in" list="pl-list" data-pf="pillar" id="pf-pillar" value="${esc(p.pillar)}"><datalist id="pl-list">${pillars.map(x => `<option value="${esc(x)}">`).join('')}</datalist></label>
+          <label class="f">Status<select class="in" data-pf="status" id="pf-status">${opts(STAT, p.status)}</select></label>
+          <label class="f">Copywriter<select class="in" data-pf="writer" id="pf-writer">${opts(teamOpts, p.writer, 'Unassigned')}</select></label>
+          <label class="f">Designer<select class="in" data-pf="designer" id="pf-designer">${opts(teamOpts, p.designer, 'Unassigned')}</select></label>
+          <label class="f">Account manager<select class="in" data-pf="am" id="pf-am">${opts(teamOpts, p.am, 'Unassigned')}</select></label>
+        </div>
+        <dl class="dl"><dt>Copy due</dt><dd class="mono ${group(p.status)==='copy' && du.copy < td ? 'late' : ''}">${fmtD(du.copy)}</dd><dt>Design due</dt><dd class="mono ${group(p.status)==='design' && du.design < td ? 'late' : ''}">${fmtD(du.design)}</dd><dt>Client approval due</dt><dd class="mono ${group(p.status)==='client' && du.client < td ? 'late' : ''}">${fmtD(du.client)}</dd></dl>
+        ${inp('Topic','topic',p.topic)}
+        <div class="fg">${inp('Objective','objective',p.objective)}${inp('Product featured','product',p.product)}${inp('Topical day','topical',p.topical)}</div>
+        ${p.concept ? `<p class="sm"><b>Concept:</b> ${esc(p.concept)}</p>` : ''}
+      </section>
+
+      <section class="sec"><h3>Hook <small>Pick one or write your own</small></h3>
+        ${inp('Opening hook','hook',p.hook)}
+        ${arr(p.hooks).length ? `<div class="hooks">${arr(p.hooks).map((h,i) => `<button class="${h === p.hook ? 'on' : ''}" data-act="useHook" data-i="${i}">${esc(h)}</button>`).join('')}</div>` : ''}
+      </section>
+
+      <section class="sec"><h3>On-image copy <small>Headline ${words(p.onImage?.headline)}/8 words · subline ${words(p.onImage?.subline)}/14</small></h3>
+        ${inp('Headline','onImage.headline',p.onImage?.headline)}${inp('Subline','onImage.subline',p.onImage?.subline)}${inp('CTA','onImage.cta',p.onImage?.cta)}
+      </section>
+
+      ${showSlides ? `<section class="sec"><h3>Carousel slides <button class="btn sm" data-act="addRow" data-k="slides">+ Add slide</button></h3>
+        <div class="tw"><table><thead><tr><th>#</th><th>Visual</th><th>On-slide copy</th><th></th></tr></thead><tbody>${arr(p.slides).map((s,i) => `<tr><td class="num">${i+1}</td><td><textarea class="in" rows="2" data-pf="slides.${i}.visual" id="pf-sv-${i}">${esc(s.visual)}</textarea></td><td><textarea class="in" rows="2" data-pf="slides.${i}.copy" id="pf-sc-${i}">${esc(s.copy)}</textarea></td><td><button class="btn sm ghost" data-act="rmRow" data-k="slides" data-i="${i}" aria-label="Remove slide">×</button></td></tr>`).join('')}</tbody></table></div></section>` : ''}
+
+      ${showScript ? `<section class="sec"><h3>Video script <button class="btn sm" data-act="addRow" data-k="script">+ Add row</button></h3>
+        <div class="tw"><table style="min-width:640px"><thead><tr><th>Time</th><th>Visual / shot</th><th>On-screen text</th><th>Voiceover</th><th>Audio</th><th></th></tr></thead><tbody>${arr(p.script).map((s,i) => `<tr><td style="width:80px"><input class="in" data-pf="script.${i}.t" id="pf-st-${i}" value="${esc(s.t)}"></td><td><textarea class="in" rows="2" data-pf="script.${i}.visual" id="pf-sv2-${i}">${esc(s.visual)}</textarea></td><td><textarea class="in" rows="2" data-pf="script.${i}.onscreen" id="pf-so-${i}">${esc(s.onscreen)}</textarea></td><td><textarea class="in" rows="2" data-pf="script.${i}.vo" id="pf-vo-${i}">${esc(s.vo)}</textarea></td><td><input class="in" data-pf="script.${i}.audio" id="pf-au-${i}" value="${esc(s.audio)}"></td><td><button class="btn sm ghost" data-act="rmRow" data-k="script" data-i="${i}" aria-label="Remove row">×</button></td></tr>`).join('')}</tbody></table></div></section>` : ''}
+
+      <section class="sec"><h3>Caption <small>${str(p.caption).length} characters · ${words(p.caption)} words</small></h3>
+        ${ta('Post caption','caption',p.caption,9)}
+        ${inp('Hashtags','hashtags',p.hashtags)}
+        ${ta('Alt text','altText',p.altText,2)}
+        ${ta('Compliance / disclaimer','compliance',p.compliance,2)}
+        <div class="acts"><button class="btn sm" data-act="copyCaption">Copy caption + hashtags</button></div>
+      </section>
+
+      <section class="sec ai"><h3><span><span class="spark" style="color:var(--accent)">✦</span> AI writing tools</span></h3>
+        <div class="rowline"><label class="f" style="flex:0 0 200px">Apply to<select class="in" id="ai-field">${opts([['caption','Caption'],['hook','Hook'],['onImage.headline','Headline'],['onImage.subline','Subline'],['onImage.cta','CTA']], lsGet('mp_aifield') || 'caption')}</select></label></div>
+        <div class="aitools">${[['punchier','Punchier'],['shorter','Shorter'],['premium','More premium'],['hinglish','Hinglish'],['emoji','Add emoji'],['noemoji','Remove emoji'],['ref','Match our references'],['variants','3 variants']].map(([k,l]) => `<button class="btn sm" data-act="aiTool" data-k="${k}" ${bz || aiOff() ? 'disabled' : ''}>${l}</button>`).join('')}</div>
+        <div class="rowline"><label class="f">Your own instruction<input class="in" id="ai-custom" placeholder="Mention the launch offer and end with a question"></label><button class="btn sm" data-act="aiTool" data-k="custom" ${bz || aiOff() ? 'disabled' : ''}>Rewrite</button></div>
+        ${bz && p.hasContent ? `<p class="sm"><span class="spin" style="vertical-align:middle;margin-right:6px"></span>${esc(bz)}</p>` : ''}
+        ${undo[p.id] ? `<div><button class="btn sm ghost" data-act="undo">↶ Undo last AI change</button></div>` : ''}
+        ${v ? `<div class="list">${v.options.map((o,i) => `<div class="var">${esc(o)}<div><button class="btn sm" data-act="useVar" data-i="${i}">Use this</button></div></div>`).join('')}</div>` : ''}
+        <div class="rowline"><label class="f">Rewrite the whole post<input class="in" id="regen-instr" placeholder="Optional: make it a myth-buster, focus on one product"></label><button class="btn sm" data-act="regen" ${bz || aiOff() ? 'disabled' : ''}>Regenerate post</button></div>
+        <div class="rowline"><label class="f" style="flex:0 0 150px">Repurpose for<select class="in" id="rp-ch">${opts(CH, p.channel === 'LinkedIn' ? 'Instagram' : 'LinkedIn')}</select></label><label class="f" style="flex:0 0 140px">Format<select class="in" id="rp-f">${opts(FORMATS, p.format === 'Reel' ? 'Carousel' : 'Reel')}</select></label><button class="btn sm" data-act="repurpose" ${bz || aiOff() || !p.hasContent ? 'disabled' : ''}>Create adapted post</button></div>
+        ${aiNote()}
+      </section>
+
+      <section class="sec"><h3>Design brief <button class="btn sm" data-act="copyBrief">Copy brief</button></h3>
+        <dl class="dl"><dt>Size</dt><dd>${esc(sizeFor(p.channel, p.format))}</dd><dt>Due</dt><dd class="mono">${fmtD(du.design)}</dd><dt>Fonts</dt><dd>${esc(b.brain?.kit?.fonts || '—')}</dd><dt>Logo rule</dt><dd>${esc(b.brain?.kit?.logo || '—')}</dd></dl>
+        ${kitColors(b).length ? `<div class="swatches">${kitColors(b).map(c => `<span class="sw"><i style="background:${c}"></i>${c}</span>`).join('')}</div>` : ''}
+        <div class="fg">${ta('Layout','design.layout',p.design?.layout)}${ta('Typography','design.typography',p.design?.typography)}${ta('Palette use','design.palette',p.design?.palette)}${ta('Mood','design.mood',p.design?.mood)}${ta('Elements','design.elements',p.design?.elements)}${ta('Do','design.dos',p.design?.dos)}${ta("Don't",'design.donts',p.design?.donts)}${inp('Reference search words','design.refSearch',p.design?.refSearch)}</div>
+        <div><p class="eyebrow">References</p><div class="list">
+          ${designRefs.map(r => `<div class="li"><span class="tx">${linkOK(r.url) ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>` : esc(r.url)}<span class="muted sm">${esc(r.notes)}</span></span><span class="tag">Brand ref</span></div>`).join('')}
+          <div class="acts"><a class="btn sm" href="https://www.pinterest.com/search/pins/?q=${encodeURIComponent(rs)}" target="_blank" rel="noopener">Search Pinterest ↗</a><a class="btn sm" href="https://www.behance.net/search/projects?search=${encodeURIComponent(rs)}" target="_blank" rel="noopener">Search Behance ↗</a><a class="btn sm" href="https://unsplash.com/s/photos/${encodeURIComponent(rs)}" target="_blank" rel="noopener">Search Unsplash ↗</a></div>
+        </div></div>
+        <div><p class="eyebrow">Creative versions</p><div class="list">${arr(p.creatives).map(c => `<div class="li"><span class="tx"><b>v${c.v}</b>${linkOK(c.url) ? `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url)}</a>` : esc(c.url)}<span class="muted sm">${esc(mName(c.by) || 'Someone')} · ${new Date(c.at).toLocaleDateString()}</span></span></div>`).join('') || '<p class="muted sm">No creative uploaded yet.</p>'}</div>
+          <div class="rowline" style="margin-top:8px"><label class="f">Link to creative <span class="hint">Figma, Canva or Drive</span><input class="in" id="cv-url" placeholder="https://www.figma.com/file/…"></label><button class="btn sm" data-act="addCreative">Add version</button></div></div>
+      </section>
+
+      ${arr(p.builtFrom).length ? `<section class="sec"><h3>Built from <small>What the AI used from the Brand Brain</small></h3><div class="built">${arr(p.builtFrom).map(x => `<span>${esc(x)}</span>`).join('')}</div></section>` : ''}
+
+      <section class="sec"><h3>Feedback & notes</h3>
+        <div class="list">${arr(p.comments).map((c,i) => `<div class="cmt ${c.type !== 'note' ? 'client' : ''}"><span class="who">${c.type === 'copy' ? 'Client feedback · copy' : c.type === 'design' ? 'Client feedback · design' : 'Internal note'} · ${esc(mName(c.by) || 'Someone')} · ${new Date(c.at).toLocaleDateString()}</span><span>${esc(c.text)}</span>${c.type !== 'note' ? (c.rule ? '<span class="muted sm">Saved as a brand rule</span>' : `<div><button class="btn sm" data-act="saveRule" data-i="${i}">Save as brand rule</button></div>`) : ''}</div>`).join('') || '<p class="muted sm">No feedback yet.</p>'}</div>
+        <div class="rowline"><label class="f" style="flex:0 0 210px">Type<select class="in" id="fb-type">${opts([['note','Internal note'],['copy','Client feedback on copy'],['design','Client feedback on design']])}</select></label></div>
+        <label class="f">Feedback<textarea class="in" rows="2" id="fb-text" placeholder="Client: use 'value' not 'cheap', and show the bottle bigger"></textarea></label>
+        <div class="acts"><button class="btn sm pri" data-act="addFb">Add</button><span class="muted sm">Client feedback sends the post back to the writer or designer and starts a new round.</span></div>
+      </section>
+
+      ${showRes ? `<section class="sec"><h3>Results <small>${er(p) != null ? 'Engagement rate ' + er(p).toFixed(1) + '%' : 'Add numbers after it goes live'}</small></h3>
+        <label class="f">Live post link<input class="in" data-pf="liveUrl" id="pf-liveUrl" value="${esc(p.liveUrl)}" placeholder="https://www.instagram.com/p/…"></label>
+        <div class="metrics">${METRICS.map(([k,l]) => `<label class="f">${l}<input class="in" type="number" min="0" data-mf="${k}" data-id="${p.id}" id="dm-${k}" value="${esc(p.metrics?.[k] ?? '')}"></label>`).join('')}</div>
+      </section>` : ''}
+
+      <section class="sec"><h3>Danger zone</h3><div>${confirmBtn('delPost-' + p.id, 'Delete post', 'delPost')}</div></section>
+     </div>
+     <div class="dw-side">
+       <p class="eyebrow" style="align-self:flex-start">Preview</p>
+       ${phone(p)}
+       <section class="sec" style="width:100%"><h3>Publish checklist <small>${ckDone}/${CHECKS.length}</small></h3>
+         <div class="meter"><i style="width:${ckDone/CHECKS.length*100}%"></i></div>
+         <div class="checks">${CHECKS.map(([k,l]) => `<label class="${ck[k] ? 'done' : ''}"><input type="checkbox" data-chg="ck" data-k="${k}" ${ck[k] ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div>
+       </section>
+     </div>
+    </div></div>
+  </div>`;
+}
+function nextStatus(p){
+  const txt = p.format === 'Text';
+  const m = {'Idea':'Copy in progress','Copy in progress':'Copy review','Copy review': txt ? 'Sent to client' : 'Design in progress','Design in progress':'Design review','Design review':'Sent to client','Sent to client':'Approved','Changes requested':'Copy in progress','Approved':'Scheduled','Scheduled':'Published'};
+  return m[p.status] || null;
+}
+function setStatus(id, s){
+  const p = D.posts[id]; if (!p || p.status === s) return;
+  const part = {status:s};
+  if (s === 'Changes requested') part.round = (p.round || 0) + 1;
+  if (s === 'Approved'){ part.approvedAt = Date.now(); part.checklist = {appr:true}; }
+  if (s === 'Scheduled') part.checklist = {sched:true};
+  patch('posts', id, part);
+  const o = owner({...p, ...part});
+  toast(`Moved to ${s}${o ? ' · with ' + mName(o) : ''}`);
+}
+
+/* ---------- plan pipeline ---------- */
+async function pool(items, n, fn){ let i = 0; const run = async () => { while (i < items.length){ const k = i++; await fn(items[k], k); } }; await Promise.all(Array.from({length:Math.min(n, items.length)}, run)); }
+function step(pid, label){ gen[pid].label = label; sched(); }
+function contentPart(r, p){
+  const hs = Array.isArray(r.hashtags) ? r.hashtags.join(' ') : str(r.hashtags);
+  return {
+    concept:str(r.concept), hooks:arr(r.hooks).map(str).slice(0,6), hook:str(r.hook) || p.hook || '',
+    onImage:{headline:str(r.onImage?.headline), subline:str(r.onImage?.subline), cta:str(r.onImage?.cta)},
+    slides:arr(r.slides).map((s,i) => ({n:i+1, visual:str(s.visual), copy:str(s.copy)})),
+    script:arr(r.script).map(s => ({t:str(s.t), visual:str(s.visual), onscreen:str(s.onscreen), vo:str(s.vo), audio:str(s.audio)})),
+    caption:str(r.caption), hashtags:hs, altText:str(r.altText),
+    design:{layout:str(r.design?.layout), typography:str(r.design?.typography), palette:str(r.design?.palette), mood:str(r.design?.mood), elements:str(r.design?.elements), dos:str(r.design?.dos), donts:str(r.design?.donts), refSearch:str(r.design?.refSearch)},
+    builtFrom:arr(r.builtFrom).map(str).slice(0,10), compliance:str(r.compliance), hasContent:true, writtenAt:Date.now()
+  };
+}
+async function writePosts(posts, instr, signal){
+  const b = D.brands[posts[0].brandId]; const plan = D.plans[posts[0].planId];
+  const planWithId = plan ? {...plan, id:posts[0].planId} : null;
+  const res = await ai(promptD(b, planWithId, posts, instr), {signal});
+  const list = Array.isArray(res) ? res : arr(res?.posts);
+  let n = 0;
+  for (const p of posts){
+    const r = list.find(x => x && x.id === p.id) || (posts.length === 1 ? list[0] : null);
+    if (r){ await patch('posts', p.id, contentPart(r, p)); n++; }
+  }
+  if (!n) throw {code:'invalid_json', message:'no posts in reply'};
+}
+function newPost(b, planId, over){
+  return Object.assign({brandId:D.plans[planId]?.brandId || '', planId, date:'', time:'19:00', channel:activeCh(b)[0] || 'Instagram', format:'Static', pillar:'', topic:'', hook:'', topical:'', objective:'', product:'', status:'Idea', writer:b?.team?.writer || '', designer:b?.team?.designer || '', am:b?.team?.am || '', hasContent:false, round:0, comments:[], creatives:[], checklist:{}, metrics:{}, createdAt:Date.now()}, over);
+}
+async function runPlan(pid){
+  if (gen[pid]?.running) return;
+  if (!S){ toast('AI is not available in this view'); return; }
+  const ctl = new AbortController(); const signal = ctl.signal;
+  gen[pid] = {running:true, label:'Starting…', done:0, total:0, ctl}; sched();
+  try {
+    await patch('plans', pid, {status:'generating', error:''});
+    let plan = D.plans[pid]; const b = D.brands[plan.brandId];
+    if (!b) throw {message:'Brand not found'};
+    if (!plan.snapshot){
+      step(pid, 'Researching the brand, market and competitors…');
+      const r = await ai(promptA(b, plan), {signal});
+      if (!r?.snapshot) throw {code:'invalid_json'};
+      await patch('plans', pid, {snapshot:r.snapshot, research:r.research || {}});
+    }
+    plan = D.plans[pid];
+    if (!plan.strategy){
+      step(pid, 'Building the strategy, pillars and topical days…');
+      const r = await ai(promptB(b, plan), {signal});
+      if (!r?.strategy) throw {code:'invalid_json'};
+      const topical = arr(r.topicalDays).filter(t => validD(t.date) && str(t.date).startsWith(plan.month)).map(t => ({date:t.date, occasion:str(t.occasion), type:str(t.type), relevance:str(t.relevance), idea:str(t.idea), sensitive:!!t.sensitive, include:!t.sensitive && t.relevance !== 'Low'}));
+      await patch('plans', pid, {strategy:r.strategy, topical});
+    }
+    plan = D.plans[pid];
+    if (!postsOf(pid).length){
+      step(pid, 'Planning the content calendar…');
+      const slots = await ai(promptC(b, plan), {signal});
+      const list = (Array.isArray(slots) ? slots : arr(slots?.posts)).filter(s => s && validD(s.date));
+      if (!list.length) throw {code:'invalid_json'};
+      step(pid, `Adding ${list.length} posts to the calendar…`);
+      await pool(list, 4, async s => {
+        const id = uid();
+        await put('posts', id, newPost(b, pid, {id, date:s.date, time:str(s.time) || '19:00', channel:CH.includes(s.channel) ? s.channel : activeCh(b)[0], format:FORMATS.includes(s.format) ? s.format : 'Static', pillar:str(s.pillar), topic:str(s.topic), hook:str(s.hook), topical:str(s.topical), objective:str(s.objective), product:str(s.product)}));
+      });
+    }
+    const todo = postsOf(pid).filter(p => !p.hasContent);
+    const batches = []; for (let i = 0; i < todo.length; i += 4) batches.push(todo.slice(i, i+4));
+    gen[pid].total = todo.length; gen[pid].done = 0;
+    step(pid, `Writing posts · 0 of ${todo.length} done`);
+    let failed = 0;
+    await pool(batches, 2, async bt => {
+      if (signal.aborted) return;
+      bt.forEach(p => busy[p.id] = 'Writing…'); sched();
+      try { await writePosts(bt, '', signal); }
+      catch (e){ if (e?.code === 'cancelled') throw e; if (['not_granted','rate_limited','session_expired','sampling_disabled'].includes(e?.code)) throw e; failed += bt.length; }
+      finally { bt.forEach(p => delete busy[p.id]); }
+      gen[pid].done += bt.length; step(pid, `Writing posts · ${gen[pid].done} of ${gen[pid].total} done`);
+    });
+    if (failed) await patch('plans', pid, {status:'paused', error:`${failed} posts could not be written. Press Continue to retry them.`});
+    else { await patch('plans', pid, {status:'ready', error:'', readyAt:Date.now()}); toast('Plan ready'); }
+  } catch (e){
+    await patch('plans', pid, {status:'paused', error:e?.code === 'cancelled' ? 'Stopped. Press Continue to pick up where it left off.' : errCopy(e)});
+  } finally {
+    gen[pid].running = false; sched();
+  }
+}
+
+/* ---------- AI post tools ---------- */
+const TOOL = {
+  punchier:'Make it punchier and more scroll-stopping: shorter sentences, stronger verbs, sharper first line.',
+  shorter:'Cut the length by about 40% without losing the key message or CTA.',
+  premium:'Make it sound more premium and refined: fewer emojis, confident and calm tone.',
+  hinglish:'Rewrite in natural Hinglish (Hindi-English mix in Roman script), the way popular Indian creators write.',
+  emoji:'Add a few well-placed, relevant emojis. Do not overdo it.',
+  noemoji:'Remove every emoji and keep everything else.',
+  ref:'Rewrite it to follow the structure and style of the saved Copy and Hook references in the brand brain, without copying them.',
+  variants:'Write 3 distinct alternatives, each with a different angle.'
+};
+const FIELD_L = {'caption':'caption','hook':'opening hook','onImage.headline':'on-image headline (max 8 words)','onImage.subline':'on-image subline (max 14 words)','onImage.cta':'CTA (max 4 words)'};
+async function aiTool(k){
+  const p = D.posts[ui.postId]; if (!p) return;
+  const field = $('#ai-field')?.value || 'caption'; lsSet('mp_aifield', field);
+  const instr = k === 'custom' ? ($('#ai-custom')?.value || '').trim() : TOOL[k];
+  if (!instr){ toast('Type an instruction first'); return; }
+  const b = D.brands[p.brandId];
+  const cur = str(getPath(p, field));
+  const many = k === 'variants';
+  const prompt = `${PRE}
+
+${brandCtx(b, 7000)}
+
+POST: ${p.channel} ${p.format} · pillar ${p.pillar} · topic: ${p.topic}
+On-image: ${p.onImage?.headline} / ${p.onImage?.subline} / ${p.onImage?.cta}
+Caption: ${str(p.caption).slice(0, 1500)}
+
+TASK: Rewrite the ${FIELD_L[field]}. Instruction: ${instr}
+Keep it true to the brand brain, keep the facts, respect banned words and disclaimers, and keep it fitting the ${p.channel} channel.
+
+CURRENT ${FIELD_L[field].toUpperCase()}:
+${cur || '(empty — write it fresh)'}
+
+Reply with only JSON: ${many ? '{"options":["","",""]}' : '{"text":""}'}`;
+  busy[p.id] = many ? 'Writing 3 variants…' : 'Rewriting…'; delete variants[p.id]; sched();
+  try {
+    const r = await ai(prompt, {tier: ['emoji','noemoji','shorter'].includes(k) ? 'quick' : 'default'});
+    if (many){ const o = arr(r?.options).map(str).filter(Boolean); if (!o.length) throw {code:'invalid_json'}; variants[p.id] = {field, options:o}; }
+    else { const t = str(r?.text); if (!t) throw {code:'invalid_json'}; undo[p.id] = {field, value:cur}; await setField(p.id, field, t); toast('Rewritten'); }
+  } catch (e){ toast(errCopy(e)); }
+  finally { delete busy[p.id]; sched(); }
+}
+async function setField(id, path, value){
+  const p = D.posts[id]; if (!p) return;
+  const c = clone(p); setPath(c, path, value);
+  const top = path.split('.')[0];
+  await patch('posts', id, {[top]: c[top]});
+}
+async function regen(){
+  const p = D.posts[ui.postId]; if (!p) return;
+  const instr = ($('#regen-instr')?.value || '').trim();
+  busy[p.id] = 'Writing this post from the Brand Brain…'; delete variants[p.id]; sched();
+  try { await writePosts([p], instr); toast('Post written'); }
+  catch (e){ toast(errCopy(e)); }
+  finally { delete busy[p.id]; sched(); }
+}
+async function repurpose(){
+  const p = D.posts[ui.postId]; if (!p) return;
+  const ch = $('#rp-ch').value, fm = $('#rp-f').value;
+  const b = D.brands[p.brandId]; const id = uid();
+  await put('posts', id, newPost(b, p.planId, {id, brandId:p.brandId, date:p.date, time:p.time, channel:ch, format:fm, pillar:p.pillar, topic:p.topic, hook:'', topical:p.topical, objective:p.objective, product:p.product}));
+  ui.postId = id; busy[id] = `Adapting for ${ch} ${fm}…`; renderDrawer();
+  try { await writePosts([D.posts[id]], `Adapt this existing ${p.channel} ${p.format} post for ${ch} as a ${fm}. Keep the core idea but rewrite natively for the new channel and format. Original on-image: ${p.onImage?.headline} / ${p.onImage?.subline}. Original caption: ${str(p.caption).slice(0, 1200)}`); toast(`Created a ${ch} ${fm} version`); }
+  catch (e){ toast(errCopy(e)); }
+  finally { delete busy[id]; sched(); }
+}
+
+/* ---------- exports ---------- */
+function calRows(ps){ return [['Date','Day','Time','Channel','Format','Pillar','Topic','Hook','Topical day','Objective','Product','Status','Copywriter','Designer','Copy due','Design due']].concat(ps.map(p => { const d = dues(p); return [p.date, validD(p.date) ? DOW[pdate(p.date).getDay()] : '', p.time, p.channel, p.format, p.pillar, p.topic, p.hook, p.topical, p.objective, p.product, p.status, mName(p.writer), mName(p.designer), d.copy || '', d.design || '']; })); }
+function deckRows(ps){ return [['Date','Channel','Format','Pillar','Topic','Concept','Hook','Headline','Subline','CTA','Caption','Hashtags','Carousel slides','Video script','Alt text','Compliance','Built from','Status']].concat(ps.map(p => [p.date, p.channel, p.format, p.pillar, p.topic, p.concept, p.hook, p.onImage?.headline, p.onImage?.subline, p.onImage?.cta, p.caption, p.hashtags, arr(p.slides).map((s,i) => `${i+1}. ${s.visual} — ${s.copy}`).join('\n'), arr(p.script).map(s => `${s.t} | ${s.visual} | ${s.onscreen} | VO: ${s.vo} | ${s.audio}`).join('\n'), p.altText, p.compliance, arr(p.builtFrom).join('; '), p.status].map(str))); }
+function briefRowsX(ps){ return [['Date','Channel','Format','Size','Headline','Subline','CTA','Layout','Typography','Palette','Mood','Elements','Do','Don\'t','Reference search','Latest creative','Design due']].concat(ps.map(p => [p.date, p.channel, p.format, sizeFor(p.channel, p.format), p.onImage?.headline, p.onImage?.subline, p.onImage?.cta, p.design?.layout, p.design?.typography, p.design?.palette, p.design?.mood, p.design?.elements, p.design?.dos, p.design?.donts, p.design?.refSearch, arr(p.creatives).slice(-1)[0]?.url || '', dues(p).design || ''].map(str))); }
+function resRows(ps){ return [['Date','Channel','Format','Pillar','Topic','Live link'].concat(METRICS.map(m => m[1]), ['Engagement rate %'])].concat(ps.filter(hasMetrics).map(p => [p.date, p.channel, p.format, p.pillar, p.topic, p.liveUrl || ''].concat(METRICS.map(([k]) => num(p.metrics?.[k])), [er(p) != null ? +er(p).toFixed(2) : '']))); }
+const tsv = rows => rows.map(r => r.map(c => str(c).replace(/\t/g,' ').replace(/\r?\n/g,' ⏎ ')).join('\t')).join('\n');
+const csv = rows => rows.map(r => r.map(c => { const s = str(c); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; }).join(',')).join('\n');
+function briefText(p){
+  const b = D.brands[p.brandId] || {};
+  const L = [`DESIGN BRIEF — ${b.name} · ${fmtD(p.date)} · ${p.channel} ${p.format}`, `Topic: ${p.topic}`, `Size: ${sizeFor(p.channel, p.format)}`, `Design due: ${fmtD(dues(p).design)}`, '', 'ON-IMAGE COPY (final)', `Headline: ${p.onImage?.headline || ''}`, `Subline: ${p.onImage?.subline || ''}`, `CTA: ${p.onImage?.cta || ''}`];
+  if (arr(p.slides).length){ L.push('', 'SLIDES'); arr(p.slides).forEach((s,i) => L.push(`${i+1}. Visual: ${s.visual}\n   Copy: ${s.copy}`)); }
+  if (arr(p.script).length){ L.push('', 'SCRIPT'); arr(p.script).forEach(s => L.push(`${s.t} — ${s.visual} | On screen: ${s.onscreen} | VO: ${s.vo} | Audio: ${s.audio}`)); }
+  L.push('', 'DIRECTION', `Layout: ${p.design?.layout || ''}`, `Typography: ${p.design?.typography || ''} (brand fonts: ${b.brain?.kit?.fonts || '—'})`, `Palette: ${p.design?.palette || ''} (brand colours: ${b.brain?.kit?.colors || '—'})`, `Mood: ${p.design?.mood || ''}`, `Elements: ${p.design?.elements || ''}`, `Do: ${p.design?.dos || ''}`, `Don't: ${p.design?.donts || ''}`, `Logo rule: ${b.brain?.kit?.logo || '—'}`, `Reference search: ${p.design?.refSearch || ''}`);
+  arr(b.brain?.refs).filter(r => r.tag === 'Design').forEach(r => L.push(`Brand ref: ${r.url} ${r.notes ? '— ' + r.notes : ''}`));
+  return L.join('\n');
+}
+function planMd(plan, ps){
+  const b = D.brands[plan.brandId] || {}; const s = plan.strategy || {}; const sn = plan.snapshot || {};
+  const row = a => '| ' + a.map(x => str(x).replace(/\|/g,'/').replace(/\n/g,' ')).join(' | ') + ' |';
+  const table = (h, rows) => [row(h), row(h.map(() => '---')), ...rows.map(row)].join('\n');
+  const L = [`# ${b.name} — Social media plan, ${mLabel(plan.month)}`, '', `**Theme:** ${s.theme?.name || ''} — ${s.theme?.bigIdea || ''}`, '', `**Positioning:** ${sn.positioning || ''}`, '', '## Objectives', table(['Objective','KPI','Target','Measure'], arr(s.objectives).map(o => [o.objective,o.kpi,o.target,o.measure])), '', '## Content pillars', table(['Pillar','Mix','Purpose','Framework'], arr(s.pillars).map(p => [p.name, p.mix + '%', p.purpose, p.framework])), '', '## Channel roles', table(['Channel','Role','Formats','Frequency','Best times'], arr(s.channels).map(c => [c.channel,c.role,c.formats,c.frequency,c.bestTimes]))];
+  if (arr(s.theme?.series).length) L.push('', '## Recurring series', table(['Series','Cadence','Format','Description'], arr(s.theme.series).map(x => [x.name,x.cadence,x.format,x.description])));
+  L.push('', '## Topical days', table(['Date','Occasion','Relevance','Idea'], arr(plan.topical).filter(t => t.include).map(t => [t.date,t.occasion,t.relevance,t.idea])));
+  L.push('', '## Content calendar', table(['Date','Channel','Format','Pillar','Topic'], ps.map(p => [p.date,p.channel,p.format,p.pillar,p.topic])));
+  L.push('', '## Content deck');
+  ps.forEach((p,i) => {
+    L.push('', `### ${i+1}. ${p.topic} — ${fmtD(p.date)}, ${p.channel} ${p.format}`, `**Pillar:** ${p.pillar} · **Hook:** ${p.hook}`, '', `**On-image:** ${p.onImage?.headline || ''} / ${p.onImage?.subline || ''} / CTA: ${p.onImage?.cta || ''}`);
+    if (arr(p.slides).length) L.push('', table(['#','Visual','Copy'], arr(p.slides).map((x,j) => [j+1, x.visual, x.copy])));
+    if (arr(p.script).length) L.push('', table(['Time','Visual','On screen','Voiceover','Audio'], arr(p.script).map(x => [x.t,x.visual,x.onscreen,x.vo,x.audio])));
+    L.push('', '**Caption**', '', str(p.caption), '', str(p.hashtags));
+    if (p.compliance) L.push('', `*${p.compliance}*`);
+    L.push('', `**Design note:** ${p.design?.layout || ''} ${p.design?.mood ? '· Mood: ' + p.design.mood : ''}`);
+  });
+  if (plan.report?.text) L.push('', '## Performance report', '', plan.report.text);
+  return L.join('\n');
+}
+async function save(filename, data){
+  if (!DL){ toast('Downloads are not available here'); return; }
+  try { await DL.save({filename, data}); toast('Saved'); }
+  catch (e){ if (e?.code !== 'declined') toast(e?.code === 'rate_limited' ? 'A download prompt is already open' : 'Could not download this file'); }
+}
+const fname = (plan, ext) => `${str(D.brands[plan.brandId]?.name || 'plan').replace(/[^\w-]+/g,'-')}-${plan.month}.${ext}`;
+
+/* ---------- actions ---------- */
+let cT;
+const ACT = {
+  go: a => { ui.view = a.dataset.v; ui.postId = null; renderAll(); window.scrollTo(0,0); },
+  goBrand: a => { ui.view = 'brand'; ui.brandId = a.dataset.id; ui.btab = 'plans'; ui.answer = ''; ui.postId = null; renderAll(); window.scrollTo(0,0); },
+  goPlan: a => { ui.view = 'plan'; ui.planId = a.dataset.id; ui.tab = 'deck'; ui.f = {ch:'',st:'',pi:''}; renderAll(); window.scrollTo(0,0); },
+  btab: a => { ui.btab = a.dataset.k; renderAll(); },
+  tab: a => { ui.tab = a.dataset.k; renderAll(); },
+  open: a => { ui.postId = a.dataset.id; renderDrawer(); },
+  close: () => { ui.postId = null; renderDrawer(); },
+  closeCopy: () => { const b = $('#copybox'); b.hidden = true; b.innerHTML = ''; },
+  askConfirm: a => { ui.confirm = a.dataset.key; renderAll(); clearTimeout(cT); cT = setTimeout(() => { ui.confirm = null; renderAll(); }, 4000); },
+  newBrand: async () => {
+    const id = uid();
+    const chs = {}; CH.forEach(c => chs[c] = {on:c === 'Instagram' || c === 'LinkedIn', perWeek:c === 'Instagram' ? 4 : 2, formats:c === 'Instagram' ? 'Reels, Carousels, Statics' : ''});
+    await put('brands', id, {name:'Untitled brand', industry:'', sub:'', type:'D2C', stage:'Growth', price:'Premium', website:'', desc:'', offerings:'', audience:{age:'22-35', gender:'All', geo:'India', tier:'Metro', languages:'English', interests:'', pains:'', triggers:''}, channels:chs, objectives:{list:['Awareness','Engagement'], primary:'Awareness'}, voice:{formal:3, witty:3, premium:3, adjectives:'', avoid:'', compliance:''}, competitors:'', loved:'', team:{am:me || '', strategist:'', writer:'', designer:''}, sla:{copy:5, design:3, client:2}, brain:{products:[], rules:[], refs:[], replies:[], pastPosts:'', kit:{colors:'', fonts:'', logo:''}, brief:''}, ideas:[], createdAt:Date.now()});
+    ui.view = 'brand'; ui.brandId = id; ui.btab = 'profile'; renderAll(); window.scrollTo(0,0);
+    setTimeout(() => { const n = $('#bf-name'); if (n){ n.focus(); n.select(); } }, 50);
+  },
+  delBrand: () => { const id = ui.brandId; ui.confirm = null; ui.view = 'home'; ui.brandId = null; del('brands', id); toast('Brand deleted'); },
+  addProduct: () => {
+    const b = D.brands[ui.brandId]; const v = k => ($('#np-' + k)?.value || '').trim();
+    if (!v('name')){ toast('Add a product name'); return; }
+    patch('brands', ui.brandId, {brain:{products:arr(b.brain?.products).concat([{name:v('name'), what:v('what'), benefits:v('ben'), price:v('price'), offer:v('offer')}])}}); toast('Product added');
+  },
+  bulkProducts: () => {
+    const b = D.brands[ui.brandId]; const raw = $('#np-bulk')?.value || '';
+    const add = raw.split(/\n/).map(l => l.trim()).filter(Boolean).map(l => { const c = l.split(/\t|\|/).map(s => s.trim()); return {name:c[0]||'', what:c[1]||'', benefits:c[2]||'', price:c[3]||'', offer:c[4]||''}; }).filter(x => x.name);
+    if (!add.length){ toast('Nothing to add'); return; }
+    patch('brands', ui.brandId, {brain:{products:arr(b.brain?.products).concat(add)}}); toast(`${add.length} products added`);
+  },
+  addRule: () => { const b = D.brands[ui.brandId]; const t = ($('#nr-text')?.value || '').trim(); if (!t){ toast('Write the rule first'); return; } patch('brands', ui.brandId, {brain:{rules:arr(b.brain?.rules).concat([{type:$('#nr-type').value, text:t, source:'manual', at:Date.now()}])}}); toast('Rule added'); },
+  addRef: () => { const b = D.brands[ui.brandId]; const u = ($('#nf-url')?.value || '').trim(); if (!u){ toast('Paste a link or describe the reference'); return; } patch('brands', ui.brandId, {brain:{refs:arr(b.brain?.refs).concat([{tag:$('#nf-tag').value, url:u, notes:($('#nf-notes')?.value || '').trim(), by:me, at:Date.now()}])}}); toast('Reference saved'); },
+  addReply: () => { const b = D.brands[ui.brandId]; const c = ($('#nrp-c')?.value || '').trim(), r = ($('#nrp-r')?.value || '').trim(); if (!c || !r){ toast('Add both the comment and the reply'); return; } patch('brands', ui.brandId, {brain:{replies:arr(b.brain?.replies).concat([{comment:c, reply:r}])}}); toast('Reply saved'); },
+  copyReply: a => { const r = arr(D.brands[ui.brandId]?.brain?.replies)[+a.dataset.i]; if (r) copyText(r.reply); },
+  aiReplies: async () => {
+    const b = D.brands[ui.brandId]; ui.replyBusy = true; renderAll();
+    try {
+      const r = await ai(`${PRE}\n\n${brandCtx(b, 9000)}\n\nTASK: Write 8 approved community replies for this brand's social media team: the most common comments, questions, complaints and DMs this brand will get (pricing, delivery, availability, product questions, a complaint, a compliment, a collab request, a troll), each with a short on-brand reply that follows the brand rules. Replies must not invent facts that are not in the brand brain; where a fact is missing write [add detail].\n\nReply with only JSON: {"replies":[{"comment":"","reply":""}]}`);
+      const add = arr(r?.replies).filter(x => x && x.comment && x.reply).map(x => ({comment:str(x.comment), reply:str(x.reply)}));
+      if (!add.length) throw {code:'invalid_json'};
+      await patch('brands', ui.brandId, {brain:{replies:arr(D.brands[ui.brandId].brain?.replies).concat(add)}}); toast(`${add.length} replies added`);
+    } catch (e){ toast(errCopy(e)); }
+    ui.replyBusy = false; renderAll();
+  },
+  rmItem: a => { const b = D.brands[ui.brandId]; const k = a.dataset.k; const list = arr(b.brain?.[k]).slice(); list.splice(+a.dataset.i, 1); patch('brands', ui.brandId, {brain:{[k]:list}}); },
+  addIdea: () => { const b = D.brands[ui.brandId]; const t = ($('#ni-text')?.value || '').trim(); if (!t){ toast('Write the idea first'); return; } patch('brands', ui.brandId, {ideas:arr(b.ideas).concat([{text:t, channel:$('#ni-ch').value, by:me, at:Date.now(), used:false}])}); toast('Idea saved'); },
+  rmIdea: a => { const b = D.brands[ui.brandId]; const l = arr(b.ideas).slice(); l.splice(+a.dataset.i, 1); patch('brands', ui.brandId, {ideas:l}); },
+  aiIdeas: async () => {
+    const b = D.brands[ui.brandId]; const focus = ($('#ni-focus')?.value || '').trim();
+    ui.ideaBusy = true; renderAll();
+    try {
+      const existing = arr(b.ideas).map(i => i.text).slice(0, 30).join(' / ');
+      const r = await ai(`${PRE}\n\n${brandCtx(b, 9000)}\n\nTASK: Give 8 fresh, specific social media post ideas for this brand${focus ? ' about: ' + focus : ''}. Mix formats and channels from the brand's active channels (${activeCh(b).join(', ')}). Each idea must be concrete enough that a writer knows exactly what to make. Avoid these existing ideas: ${existing || 'none'}.\n\nReply with only JSON: {"ideas":[{"idea":"","channel":"","format":"Reel","pillar":"","why":"one line on why it will work"}]}`);
+      const add = arr(r?.ideas).filter(x => x && x.idea).map(x => ({text:str(x.idea), channel:CH.includes(x.channel) ? x.channel : '', format:FORMATS.includes(x.format) ? x.format : '', pillar:str(x.pillar), why:str(x.why), ai:true, by:'', at:Date.now(), used:false}));
+      if (!add.length) throw {code:'invalid_json'};
+      await patch('brands', ui.brandId, {ideas:arr(D.brands[ui.brandId].ideas).concat(add)}); toast(`${add.length} ideas added`);
+    } catch (e){ toast(errCopy(e)); }
+    ui.ideaBusy = false; renderAll();
+  },
+  ideaToPlan: async a => {
+    const b = D.brands[ui.brandId]; const i = +a.dataset.i; const idea = arr(b.ideas)[i]; const pid = $('#ni-plan')?.value;
+    if (!idea || !pid || !D.plans[pid]) { toast('Create a plan first'); return; }
+    const id = uid(); const plan = D.plans[pid];
+    await put('posts', id, newPost(b, pid, {id, brandId:ui.brandId, date:plan.month + '-01', channel:idea.channel || activeCh(b)[0] || 'Instagram', format:idea.format || 'Static', pillar:idea.pillar || '', topic:idea.text}));
+    const l = clone(arr(b.ideas)); l[i].used = true; await patch('brands', ui.brandId, {ideas:l});
+    ui.postId = id; renderDrawer(); toast('Added to ' + mLabel(plan.month) + '. Set the date, then write it.');
+  },
+  applyTeam: () => { const b = D.brands[ui.brandId]; const t = b.team || {}; let n = 0; Object.values(D.posts).filter(p => p.brandId === ui.brandId && group(p.status) !== 'done').forEach(p => { patch('posts', p.id, {writer:t.writer || '', designer:t.designer || '', am:t.am || ''}); n++; }); toast(`Updated ${n} posts`); },
+  ask: async () => {
+    const q = ($('#ask-q')?.value || '').trim(); if (!q) return;
+    const b = D.brands[ui.brandId]; ui.asking = true; ui.answer = ''; renderAll();
+    try { ui.answer = await ai(`${brandCtx(b)}\n\nAnswer this question from the team using only the brand profile and brand brain above. If the answer isn't there, say what's missing. Be brief and practical.\n\nQuestion: ${q}`, {tier:'quick', json:false}); }
+    catch (e){ ui.answer = errCopy(e); }
+    ui.asking = false; renderAll();
+  },
+  createPlan: async () => {
+    const month = $('#npl-month')?.value;
+    if (!/^\d{4}-\d{2}$/.test(month || '')){ toast('Pick a month'); return; }
+    const id = `${ui.brandId}__${month}`;
+    if (D.plans[id]){ toast('A plan for that month already exists'); ui.view = 'plan'; ui.planId = id; renderAll(); return; }
+    const reuse = $('#npl-reuse')?.checked ? plansOf(ui.brandId)[0]?.[1] : null;
+    const o = {region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
+    const doc = {brandId:ui.brandId, month, opts:o, status:'generating', createdAt:Date.now(), createdBy:me};
+    if (reuse){ doc.snapshot = reuse.snapshot; doc.research = reuse.research; }
+    await put('plans', id, doc);
+    ui.view = 'plan'; ui.planId = id; ui.tab = 'deck'; renderAll(); window.scrollTo(0,0);
+    runPlan(id);
+  },
+  runPlan: () => runPlan(ui.planId),
+  stopGen: () => { gen[ui.planId]?.ctl?.abort(); toast('Stopping…'); },
+  addPost: async a => {
+    const plan = D.plans[ui.planId]; const b = D.brands[plan.brandId]; const id = uid();
+    const date = a.dataset.date || (today().startsWith(plan.month) ? today() : plan.month + '-01');
+    await put('posts', id, newPost(b, ui.planId, {id, brandId:plan.brandId, date}));
+    ui.postId = id; renderDrawer();
+  },
+  topPost: async a => {
+    const plan = D.plans[ui.planId]; const t = arr(plan.topical)[+a.dataset.i]; if (!t) return;
+    const b = D.brands[plan.brandId]; const id = uid();
+    await put('posts', id, newPost(b, ui.planId, {id, brandId:plan.brandId, date:t.date, topical:t.occasion, topic:t.idea || t.occasion}));
+    ui.postId = id; renderDrawer();
+    if (S){ busy[id] = 'Writing this post from the Brand Brain…'; sched(); try { await writePosts([D.posts[id]], ''); } catch (e){ toast(errCopy(e)); } finally { delete busy[id]; sched(); } }
+  },
+  nextStage: () => { const p = D.posts[ui.postId]; const n = nextStatus(p); if (n) setStatus(p.id, n); },
+  setStatus: a => setStatus(ui.postId, a.dataset.s),
+  rvApprove: a => { const id = a.dataset.id; const fb = ($('#rvfb-' + id)?.value || '').trim(); if (fb){ const p = D.posts[id]; patch('posts', id, {comments:arr(p.comments).concat([{type:'note', text:'Client on approval: ' + fb, by:me, at:Date.now()}])}); } setStatus(id, 'Approved'); },
+  rvChange: a => {
+    const id = a.dataset.id, t = a.dataset.t; const p = D.posts[id]; const fb = ($('#rvfb-' + id)?.value || '').trim();
+    if (!fb){ toast('Write what the client wants changed'); $('#rvfb-' + id)?.focus(); return; }
+    patch('posts', id, {comments:arr(p.comments).concat([{type:t, text:fb, by:me, at:Date.now(), rule:false}]), status:t === 'copy' ? 'Copy in progress' : 'Design in progress', round:(p.round || 0) + 1});
+    toast(`Sent back to ${mName(t === 'copy' ? p.writer : p.designer) || (t === 'copy' ? 'the writer' : 'the designer')}`);
+  },
+  useHook: a => { const p = D.posts[ui.postId]; patch('posts', p.id, {hook:arr(p.hooks)[+a.dataset.i] || ''}); },
+  addRow: a => { const p = D.posts[ui.postId]; const k = a.dataset.k; const list = arr(p[k]).slice(); list.push(k === 'slides' ? {n:list.length+1, visual:'', copy:''} : {t:'', visual:'', onscreen:'', vo:'', audio:''}); patch('posts', p.id, {[k]:list}); },
+  rmRow: a => { const p = D.posts[ui.postId]; const k = a.dataset.k; const list = arr(p[k]).slice(); list.splice(+a.dataset.i, 1); patch('posts', p.id, {[k]:list}); },
+  aiTool: a => aiTool(a.dataset.k),
+  useVar: async a => { const p = D.posts[ui.postId]; const v = variants[p.id]; if (!v) return; undo[p.id] = {field:v.field, value:str(getPath(p, v.field))}; await setField(p.id, v.field, v.options[+a.dataset.i]); delete variants[p.id]; sched(); toast('Applied'); },
+  undo: async () => { const p = D.posts[ui.postId]; const u = undo[p.id]; if (!u) return; await setField(p.id, u.field, u.value); delete undo[p.id]; sched(); toast('Undone'); },
+  regen: () => regen(),
+  repurpose: () => repurpose(),
+  addCreative: () => { const p = D.posts[ui.postId]; const u = ($('#cv-url')?.value || '').trim(); if (!u){ toast('Paste the link to the creative'); return; } const part = {creatives:arr(p.creatives).concat([{v:arr(p.creatives).length + 1, url:u, by:me, at:Date.now()}])}; if (p.status === 'Design in progress') part.status = 'Design review'; patch('posts', p.id, part); toast('Creative added'); },
+  addFb: () => {
+    const p = D.posts[ui.postId]; const t = ($('#fb-text')?.value || '').trim(); if (!t){ toast('Write the feedback first'); return; }
+    const type = $('#fb-type').value;
+    const part = {comments:arr(p.comments).concat([{type, text:t, by:me, at:Date.now(), rule:false}])};
+    if (type !== 'note'){ part.status = type === 'copy' ? 'Copy in progress' : 'Design in progress'; part.round = (p.round || 0) + 1; }
+    patch('posts', p.id, part);
+    toast(type === 'note' ? 'Note added' : `Sent back to ${mName(type === 'copy' ? p.writer : p.designer) || (type === 'copy' ? 'the writer' : 'the designer')} · round ${part.round}`);
+  },
+  saveRule: async a => {
+    const p = D.posts[ui.postId]; const i = +a.dataset.i; const c = arr(p.comments)[i]; if (!c) return;
+    const b = D.brands[p.brandId];
+    let rule = c.text;
+    if (S){ try { const r = await ai(`Turn this client feedback on a social media post into one short, reusable brand rule for future content (max 20 words, imperative). Feedback: "${c.text}". Reply with only JSON: {"rule":""}`, {tier:'quick'}); if (str(r?.rule)) rule = str(r.rule); } catch (e) {} }
+    await patch('brands', p.brandId, {brain:{rules:arr(b.brain?.rules).concat([{type:'Style', text:rule, source:'feedback', at:Date.now()}])}});
+    const cm = clone(arr(p.comments)); cm[i].rule = true; await patch('posts', p.id, {comments:cm});
+    toast('Saved to Brand Brain: ' + rule.slice(0, 60));
+  },
+  aiReport: async () => {
+    const plan = D.plans[ui.planId]; const b = D.brands[plan.brandId]; const ps = postsOf(ui.planId).filter(hasMetrics);
+    ui.repBusy = true; renderAll();
+    const data = ps.map(p => ({date:p.date, channel:p.channel, format:p.format, pillar:p.pillar, topic:p.topic, hook:p.hook, er:er(p) != null ? +er(p).toFixed(2) : null, ...Object.fromEntries(METRICS.map(([k]) => [k, num(p.metrics?.[k])]))}));
+    try {
+      const t = await ai(`${PRE}\n\n${brandCtx(b, 5000)}\n\nPLAN: ${mLabel(plan.month)} · theme ${plan.strategy?.theme?.name || ''}\nObjectives: ${arr(plan.strategy?.objectives).map(o => o.objective + ' (' + o.kpi + ')').join('; ')}\n\nPOST RESULTS (er = engagement rate %):\n${JSON.stringify(data)}\n\nTASK: Write the monthly social media performance report for the client, in plain text with short headings and bullet points (use "- "). Sections: Summary (3 lines with the key numbers), What worked (top posts and why), What didn't, Pillar and format learnings, Recommendations for next month (5 specific actions). Use only these numbers; do not invent figures. Keep it under 350 words.`, {json:false});
+      await patch('plans', ui.planId, {report:{text:t, at:Date.now(), by:me}}); toast('Report written');
+    } catch (e){ toast(errCopy(e)); }
+    ui.repBusy = false; renderAll();
+  },
+  copyReport: () => copyText(D.plans[ui.planId]?.report?.text || ''),
+  saveWinners: () => {
+    const plan = D.plans[ui.planId]; const b = D.brands[plan.brandId];
+    const top = postsOf(ui.planId).filter(p => er(p) != null).sort((a,b2) => er(b2) - er(a)).slice(0,3);
+    const txt = top.map(p => `Top post (${mLabel(plan.month)}, ${p.channel} ${p.format}, ${er(p).toFixed(1)}% ER): hook "${p.hook}" — headline "${p.onImage?.headline || ''}" — ${str(p.caption).split('\n')[0]}`).join('\n');
+    patch('brands', plan.brandId, {brain:{pastPosts:(str(b.brain?.pastPosts).trim() + '\n' + txt).trim()}}); toast('Top posts added to the Brand Brain');
+  },
+  copyTags: () => { const h = D.plans[ui.planId]?.research?.hashtags || {}; copyText(['branded','niche','broad'].map(k => arr(h[k]).join(' ')).join(' ')); },
+  delPost: () => { const id = ui.postId; ui.confirm = null; ui.postId = null; del('posts', id); toast('Post deleted'); },
+  copyCaption: () => { const p = D.posts[ui.postId]; copyText([str(p.caption), str(p.compliance), str(p.hashtags)].filter(Boolean).join('\n\n')); },
+  copyBrief: () => copyText(briefText(D.posts[ui.postId])),
+  copyCal: () => copyText(tsv(calRows(postsOf(ui.planId)))),
+  copyBriefs: () => copyText(postsOf(ui.planId).filter(p => p.format !== 'Text').map(briefText).join('\n\n────────────\n\n')),
+  copyMd: () => copyText(planMd(D.plans[ui.planId], postsOf(ui.planId))),
+  csv: () => save(fname(D.plans[ui.planId], 'csv'), csv(calRows(postsOf(ui.planId)))),
+  md: () => save(fname(D.plans[ui.planId], 'md'), planMd(D.plans[ui.planId], postsOf(ui.planId))),
+  briefs: () => save(fname(D.plans[ui.planId], 'txt').replace('.txt','-design-briefs.txt'), postsOf(ui.planId).filter(p => p.format !== 'Text').map(briefText).join('\n\n────────────\n\n')),
+  xlsx: () => {
+    const plan = D.plans[ui.planId]; const ps = postsOf(ui.planId);
+    const wb = XLSX.utils.book_new();
+    const add = (name, rows, w) => { const ws = XLSX.utils.aoa_to_sheet(rows); ws['!cols'] = rows[0].map((_,i) => ({wch: w?.[i] || 18})); XLSX.utils.book_append_sheet(wb, ws, name); };
+    add('Calendar', calRows(ps), [11,6,7,11,10,18,38,40,18,16,18,16,14,14,11,11]);
+    add('Content deck', deckRows(ps), [11,11,10,18,34,40,40,30,34,16,60,30,50,60,30,30,40,14]);
+    add('Design briefs', briefRowsX(ps));
+    add('Results', resRows(ps));
+    add('Topical days', [['Date','Occasion','Type','Relevance','Idea','Included']].concat(arr(plan.topical).map(t => [t.date, t.occasion, t.type, t.relevance, t.idea, t.include ? 'Yes' : 'No'])));
+    add('Pillars', [['Pillar','Mix %','Purpose','Framework','Examples']].concat(arr(plan.strategy?.pillars).map(p => [p.name, p.mix, p.purpose, p.framework, arr(p.examples).join('; ')])));
+    save(fname(plan, 'xlsx'), XLSX.write(wb, {type:'array', bookType:'xlsx'}));
+  },
+  addMember: () => { const n = ($('#nm-name')?.value || '').trim(); if (!n){ toast('Add a name'); return; } put('team', uid(), {name:n, role:$('#nm-role').value, createdAt:Date.now()}); toast('Member added'); },
+  rmMember: a => { ui.confirm = null; del('team', a.dataset.id); if (me === a.dataset.id){ me = ''; lsSet('mp_me', ''); } }
+};
+const CHG = {
+  me: t => { me = t.value; lsSet('mp_me', me); renderAll(); },
+  fch: t => { ui.f.ch = t.value; renderAll(); },
+  fst: t => { ui.f.st = t.value; renderAll(); },
+  fpi: t => { ui.f.pi = t.value; renderAll(); },
+  role: t => patch('team', t.dataset.id, {role:t.value}),
+  ck: t => patch('posts', ui.postId, {checklist:{[t.dataset.k]:t.checked}}),
+  obj: t => { const b = D.brands[ui.brandId]; let l = arr(b.objectives?.list).slice(); if (t.checked){ if (!l.includes(t.value)) l.push(t.value); } else l = l.filter(x => x !== t.value); const part = {objectives:{list:l}}; if (!l.includes(b.objectives?.primary)) part.objectives.primary = l[0] || ''; patch('brands', ui.brandId, part); },
+  topInc: t => { const plan = D.plans[ui.planId]; const l = clone(arr(plan.topical)); if (l[+t.dataset.i]) l[+t.dataset.i].include = t.checked; patch('plans', ui.planId, {topical:l}); }
+};
+
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-act]'); if (!a || a.disabled) return;
+  const fn = ACT[a.dataset.act]; if (!fn) return;
+  e.preventDefault(); fn(a, e);
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.chg && CHG[t.dataset.chg]) return CHG[t.dataset.chg](t);
+  if (t.dataset.mf){ const id = t.dataset.id; if (D.posts[id]) patch('posts', id, {metrics:{[t.dataset.mf]:t.value === '' ? '' : num(t.value)}}); return; }
+  if (t.dataset.bf){
+    let v = t.type === 'checkbox' ? t.checked : t.value;
+    if (t.type === 'number' || t.type === 'range') v = Number(v);
+    patch('brands', ui.brandId, setPath({}, t.dataset.bf, v));
+    if (t.dataset.bf === 'name') toast('Saved');
+    return;
+  }
+  if (t.dataset.pf && ui.postId) setField(ui.postId, t.dataset.pf, t.value);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape'){ if (!$('#copybox').hidden) ACT.closeCopy(); else if (ui.postId) ACT.close(); } });
+document.addEventListener('dragstart', e => { const t = e.target.closest && e.target.closest('[data-drag]'); if (!t) return; e.dataTransfer.setData('text/plain', t.dataset.drag); e.dataTransfer.effectAllowed = 'move'; });
+document.addEventListener('dragover', e => { const c = e.target.closest && e.target.closest('[data-drop-date],[data-drop-status]'); if (!c) return; e.preventDefault(); document.querySelectorAll('.drop-on').forEach(x => x !== c && x.classList.remove('drop-on')); c.classList.add('drop-on'); });
+document.addEventListener('dragleave', e => { const c = e.target.closest && e.target.closest('[data-drop-date],[data-drop-status]'); if (c && !c.contains(e.relatedTarget)) c.classList.remove('drop-on'); });
+document.addEventListener('drop', e => {
+  const c = e.target.closest && e.target.closest('[data-drop-date],[data-drop-status]'); if (!c) return;
+  e.preventDefault(); c.classList.remove('drop-on');
+  const id = e.dataTransfer.getData('text/plain'); if (!D.posts[id]) return;
+  if (c.dataset.dropDate){ patch('posts', id, {date:c.dataset.dropDate}); toast('Moved to ' + fmtD(c.dataset.dropDate)); }
+  else setStatus(id, c.dataset.dropStatus);
+});
+const tip = $('#tip');
+document.addEventListener('mouseover', e => { const t = e.target.closest && e.target.closest('[data-tip]'); if (!t){ tip.hidden = true; return; } tip.textContent = t.dataset.tip; tip.hidden = false; });
+document.addEventListener('mousemove', e => { if (tip.hidden) return; const x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8); tip.style.left = x + 'px'; tip.style.top = (e.clientY + 16) + 'px'; });
+
+/* ---------- hosted (Vercel) adapters ---------- */
+function showLogin(msg){ const l = $('#login'); l.hidden = false; const e = $('#lg-err'); e.hidden = !msg; e.textContent = msg || ''; setTimeout(() => $('#lg-pw')?.focus(), 30); }
+function parseLoose(t){
+  const s = String(t || '').trim();
+  try { return JSON.parse(s); } catch (e) {}
+  const f = s.match(/```(?:json)?\s*([\s\S]*?)```/); if (f){ try { return JSON.parse(f[1]); } catch (e) {} }
+  const i = s.search(/[\[{]/), j = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']'));
+  if (i >= 0 && j > i){ try { return JSON.parse(s.slice(i, j + 1)); } catch (e) {} }
+  return undefined;
+}
+function httpDB(){
+  const subs = {}, last = {}; let ver = null, pending = 0, timer = null, warned = false;
+  async function sync(force){
+    if (pending && !force) return;
+    let r;
+    try { r = await fetch('/api/sync' + (ver != null && !force ? '?v=' + encodeURIComponent(ver) : ''), {credentials:'same-origin', cache:'no-store'}); }
+    catch (e){ if (!warned){ toast('Offline. Changes will sync when you reconnect.'); warned = true; } return; }
+    if (r.status === 401){ showLogin(); return; }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok){ if (!warned){ toast(j.error || 'Could not load data'); warned = true; } return; }
+    warned = false; $('#login').hidden = true;
+    if (j.same) return;
+    ver = j.v;
+    for (const col in subs){
+      const m = j.data?.[col] || {}; const k = JSON.stringify(m);
+      if (last[col] === k) continue; last[col] = k;
+      const snap = {docs:Object.entries(m).map(([id, v]) => ({id, exists:true, data:() => v}))};
+      subs[col].forEach(cb => cb(snap));
+    }
+  }
+  function start(){ if (timer) return; setTimeout(() => sync(true), 0); timer = setInterval(() => { if (!document.hidden) sync(); }, 30000); document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); }); }
+  async function write(body){
+    pending++;
+    try {
+      const r = await fetch('/api/db', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify(body)});
+      if (r.status === 401){ showLogin(); throw {code:'invalid_argument'}; }
+      if (!r.ok){ const j = await r.json().catch(() => ({})); throw {code:'unavailable', message:j.error}; }
+      const j = await r.json().catch(() => ({})); if (j.v != null) ver = j.v;
+    } finally { pending--; }
+  }
+  return {
+    refresh: () => sync(true),
+    collection: col => ({ limit: () => ({ onSnapshot: cb => { (subs[col] = subs[col] || []).push(cb); start(); return () => {}; } }) }),
+    doc: path => { const [col, id] = path.split('/'); return { set: d => write({op:'set', col, id, data:d}), update: d => write({op:'update', col, id, data:d}), delete: () => write({op:'delete', col, id}) }; }
+  };
+}
+async function hostedCall(prompt, o={}){
+  let r;
+  try { r = await fetch('/api/ai', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({prompt, tier:o.modelTier || 'default', json:!!o.json}), signal:o.signal}); }
+  catch (e){ if (e?.name === 'AbortError') throw {code:'cancelled'}; throw {code:'upstream_error', message:'Network error'}; }
+  if (r.status === 401){ showLogin(); throw {code:'not_granted', message:'Sign in again'}; }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw {code:j.code || 'upstream_error', message:j.error || ('AI error ' + r.status)};
+  return String(j.text || '');
+}
+const hostedAI = async (prompt, o={}) => { const text = await hostedCall(prompt, o); if (!text.trim()) throw {code:'empty_completion'}; return {text, truncated:false}; };
+hostedAI.json = async (prompt, o={}) => { const t = await hostedCall(prompt, {...o, json:true}); const v = parseLoose(t); if (v === undefined) throw {code:'invalid_json', text:t}; return v; };
+const hostedDL = { save: async ({filename, data}) => { const blob = data instanceof Blob ? data : new Blob([data]); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000); return {status:'saved'}; } };
+let hostedDB = null;
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const pw = $('#lg-pw').value;
+  try {
+    const r = await fetch('/api/login', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({password:pw})});
+    if (!r.ok){ const j = await r.json().catch(() => ({})); showLogin(j.error || 'Wrong password'); return; }
+    $('#login').hidden = true; $('#lg-pw').value = ''; hostedDB?.refresh();
+  } catch (err){ showLogin('Could not reach the server. Try again.'); }
+});
+
+/* ---------- boot ---------- */
+renderAll();
+(async () => {
+  const c = window.claude;
+  let db = null;
+  if (c && c.use){
+    const [a, sm, dl] = await Promise.all([c.use('db').catch(() => null), c.use('sample').catch(() => null), c.use('downloads').catch(() => null)]);
+    db = a; S = sm; DL = dl;
+  } else if (HOSTED){
+    hostedDB = db = httpDB(); S = hostedAI; DL = hostedDL;
+  } else return;
+  if (db){
+    DB = db;
+    for (const col of ['brands','team','plans','posts']){
+      DB.collection(col).limit(1000).onSnapshot(s => {
+        const m = {}; s.docs.forEach(d => { if (d.exists) m[d.id] = Object.assign({}, d.data(), col === 'posts' ? {id:d.id} : {}); });
+        D[col] = m; sched();
+      }, err => { toast(err?.code === 'revoked' ? 'Access to shared data was removed' : 'Live sync paused. Reload to reconnect.'); });
+    }
+  }
+  sched();
+})();
+})();
+</script>
+
+</body>
+</html>

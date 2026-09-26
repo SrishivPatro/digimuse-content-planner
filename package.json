@@ -1,0 +1,8 @@
+{
+  "name": "digimuse-content-planner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Digimuse Content Planner: AI social media planning, content deck, design briefs, approvals and reporting for the Digimuse team.",
+  "engines": { "node": ">=18" }
+}
