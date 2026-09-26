@@ -1153,6 +1153,22 @@ function getComps(b){
   if (Array.isArray(b.comps)) return b.comps;
   return str(b.competitors).split(/[,\n]/).map(x => x.trim()).filter(Boolean).slice(0, 8).map(x => { const h = (x.match(/@([\w.]+)/) || [])[1]; return {name:x.replace(/@[\w.]+/, '').replace(/[()]/g, '').trim() || h || x, instagram:h || '', linkedin:'', website:'', source:'profile', on:true}; });
 }
+function kNum(v){ const m = String(v || '').replace(/,/g, '').match(/([\d.]+)\s*([kKmM])?/); if (!m) return 0; return Math.round(parseFloat(m[1]) * (/k/i.test(m[2] || '') ? 1000 : /m/i.test(m[2] || '') ? 1e6 : 1)); }
+function parseLinkedInPaste(txt){
+  const t = str(txt).trim(); if (!t) return [];
+  let blocks = t.split(/\n\s*-{3,}\s*\n/);
+  if (blocks.length === 1) blocks = t.split(/\n\s*\n\s*\n+/);
+  return blocks.map(b => b.trim()).filter(b => b.length > 10).map(b => {
+    const g = re => { const m = b.match(re); return m ? kNum(m[1]) : 0; };
+    const likes = g(/([\d.,]+\s*[kKmM]?)\s*(?:reactions?|likes?)/i);
+    const comments = g(/([\d.,]+\s*[kKmM]?)\s*comments?/i);
+    const shares = g(/([\d.,]+\s*[kKmM]?)\s*(?:reposts?|shares?)/i);
+    const date = (b.match(/(\d{4}-\d{2}-\d{2})/) || [])[1] || '';
+    const url = (b.match(/https?:\/\/[^\s]*linkedin\.com[^\s]*/i) || [])[0] || '';
+    const text = b.split('\n').filter(l => !/^\s*[\d.,]+\s*[kKmM]?\s*(reactions?|likes?|comments?|reposts?|shares?)/i.test(l) && !/^\s*date\s*:/i.test(l)).join(' ').replace(/https?:\/\/\S+/g, '').replace(/\s+/g, ' ').trim().slice(0, 400);
+    return {platform:'LinkedIn', date, type:/carousel|pdf|document|slides?/i.test(b) ? 'Carousel' : /video|watch/i.test(b) ? 'Video' : /photo|image/i.test(b) ? 'Static' : 'Text', text, likes, comments, shares, views:0, url, pasted:true};
+  });
+}
 function benchStats(results, days){
   const wk = Math.max(1, (+days || 30) / 7);
   return arr(results).map(r => {
@@ -1160,11 +1176,13 @@ function benchStats(results, days){
     const byT = {}; P.forEach(p => byT[p.type] = (byT[p.type] || 0) + 1);
     const byP = {}; P.forEach(p => byP[p.platform] = (byP[p.platform] || 0) + 1);
     const score = p => (+p.likes || 0) + 2 * (+p.comments || 0) + 3 * (+p.shares || 0);
-    return {name:r.name, posts:n, perWeek:+(n / wk).toFixed(1), byType:byT, byPlatform:byP, avgLikes:n ? Math.round(sum('likes') / n) : 0, avgComments:n ? Math.round(sum('comments') / n) : 0, avgViews:P.some(p => p.views) ? Math.round(sum('views') / Math.max(1, P.filter(p => p.views).length)) : 0, top:P.slice().sort((a, b) => score(b) - score(a)).slice(0, 5), errors:arr(r.errors)};
+    const ig = P.filter(p => p.platform === 'Instagram'); const fol = +r.followers || 0;
+    const igER = fol && ig.length ? +(ig.reduce((s, p) => s + (+p.likes || 0) + (+p.comments || 0), 0) / ig.length / fol * 100).toFixed(2) : null;
+    return {name:r.name, followers:fol, igER, posts:n, perWeek:+(n / wk).toFixed(1), byType:byT, byPlatform:byP, avgLikes:n ? Math.round(sum('likes') / n) : 0, avgComments:n ? Math.round(sum('comments') / n) : 0, avgViews:P.some(p => p.views) ? Math.round(sum('views') / Math.max(1, P.filter(p => p.views).length)) : 0, top:P.slice().sort((a, b) => score(b) - score(a)).slice(0, 5), errors:arr(r.errors)};
   });
 }
 function promptBench(b, comps, data, stats, days){
-  const real = data.source === 'apify' && stats.some(s => s.posts);
+  const real = stats.some(s => s.posts);
   const sample = arr(data.results).map(r => ({competitor:r.name, recentPosts:arr(r.posts).slice(0, 14).map(p => ({date:p.date, platform:p.platform, type:p.type, likes:p.likes, comments:p.comments, shares:p.shares, views:p.views, text:str(p.text).slice(0, 220), url:p.url}))}));
   return `${PRE}
 
@@ -1172,7 +1190,7 @@ ${brandCtx(b, 5000)}
 
 TASK: Competitor benchmark for ${b.name} over the last ${days} days on Instagram and LinkedIn.
 COMPETITORS: ${comps.map(c => `${c.name}${c.instagram ? ' (IG ' + c.instagram + ')' : ''}${c.linkedin ? ' (LI ' + c.linkedin + ')' : ''}${c.website ? ' ' + c.website : ''}`).join('; ')}
-${real ? `REAL POST DATA (scraped, last ${days} days):\nSTATS: ${JSON.stringify(stats.map(s => ({name:s.name, posts:s.posts, perWeek:s.perWeek, byType:s.byType, byPlatform:s.byPlatform, avgLikes:s.avgLikes, avgComments:s.avgComments, avgViews:s.avgViews})))}\nPOSTS: ${JSON.stringify(sample).slice(0, 30000)}\nUse these numbers exactly; do not invent others.` : `No scraped post data is available. ${HOSTED ? 'Use web search to find each competitor\'s social media activity, campaigns and launches from the last ' + days + ' days. Mark estimates with "est."' : 'Work from what you know and mark everything as "est."'}`}
+${real ? `REAL POST DATA (Instagram from the official API, LinkedIn pasted by the team; last ${days} days):\nSTATS: ${JSON.stringify(stats.map(s => ({name:s.name, followers:s.followers, igEngagementRatePct:s.igER, posts:s.posts, perWeek:s.perWeek, byType:s.byType, byPlatform:s.byPlatform, avgLikes:s.avgLikes, avgComments:s.avgComments, avgViews:s.avgViews})))}\nPOSTS: ${JSON.stringify(sample).slice(0, 30000)}\nUse these numbers exactly; do not invent others. For competitors or platforms with no data here${HOSTED ? ', use web search to fill in their recent activity and mark it "est."' : ', mark anything you add as "est."'}.` : `No scraped post data is available. ${HOSTED ? 'Use web search to find each competitor\'s social media activity, campaigns and launches from the last ' + days + ' days. Mark estimates with "est."' : 'Work from what you know and mark everything as "est."'}`}
 
 Analyse like a strategist, not a summariser: what content pillars each competitor runs, their format mix and cadence, which themes and hooks get the most engagement and why, their tone, what they do badly, and exactly where ${b.name} can win.
 
@@ -1191,11 +1209,13 @@ async function runBench(){
       if (r.status === 401){ showLogin(); return; }
       data = await r.json().catch(() => ({source:'none', results:[]}));
     }
+    data.results = arr(data.results).length ? data.results : comps.map(c => ({name:c.name, posts:[], errors:[]}));
+    comps.forEach(c => { const li = parseLinkedInPaste(c.liPaste); if (!li.length) return; let r = data.results.find(x => x.name === c.name); if (!r){ r = {name:c.name, posts:[], errors:[]}; data.results.push(r); } r.posts.push(...li); });
     const stats = benchStats(data.results, days);
-    ui.benchBusy = data.source === 'apify' ? `Got ${stats.reduce((s, x) => s + x.posts, 0)} posts. Analysing…` : 'Researching on the web and analysing…'; renderAll();
+    ui.benchBusy = stats.some(x => x.posts) ? `Got ${stats.reduce((s, x) => s + x.posts, 0)} posts. Analysing…` : 'Researching on the web and analysing…'; renderAll();
     const {data:an, sources} = await webJSON(promptBench(b, comps, data, stats, days));
     const id = uid();
-    await put('reports', id, {type:'bench', brandId:ui.brandId, at:Date.now(), days, source:data.source === 'apify' && stats.some(x => x.posts) ? 'apify' : 'web', note:data.note || '', stats, analysis:an || {}, sources:arr(sources).slice(0, 20), comps:comps.map(c => c.name), by:me});
+    await put('reports', id, {type:'bench', brandId:ui.brandId, at:Date.now(), days, source:stats.some(x => x.posts) ? 'real' : 'web', srcDetail:[stats.some(x => x.byPlatform.Instagram) ? 'Instagram API' : '', stats.some(x => x.byPlatform.LinkedIn) ? 'LinkedIn ' + (data.source === 'apify' ? 'posts' : 'pasted posts') : ''].filter(Boolean).join(' + '), note:data.note || '', stats, analysis:an || {}, sources:arr(sources).slice(0, 20), comps:comps.map(c => c.name), by:me});
     ui.benchId = id; toast('Benchmark ready');
   } catch (e){ toast(e?.code ? errCopy(e) : 'Benchmark failed: ' + (e?.message || 'try again')); }
   finally { ui.benchBusy = ''; renderAll(); }
@@ -1206,19 +1226,20 @@ function vComp(b){
   const cur = (ui.benchId && D.reports[ui.benchId]?.brandId === ui.brandId ? [ui.benchId, D.reports[ui.benchId]] : runs[0]);
   const inp = (i, k, v, ph) => `<input class="in" data-chg="compF" data-i="${i}" data-k="${k}" id="cf-${i}-${k}" value="${esc(v)}" placeholder="${ph}">`;
   return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Competitors to track</h2><p>Add Instagram handles and LinkedIn company pages for real post data. Untick to skip one in the next run.</p></div><button class="btn sm pri" data-act="scoutComps" ${aiOff() || ui.scoutBusy ? 'disabled' : ''}>${ui.scoutBusy ? '<span class="spin"></span> Scouting…' : '<span class="spark">✦</span> Scout competitors'}</button></header>
-    <div class="tw"><table><thead><tr><th style="width:40px">Track</th><th>Name</th><th>Instagram</th><th>LinkedIn page</th><th>Website</th><th></th></tr></thead><tbody>${comps.map((c, i) => `<tr><td><input type="checkbox" data-chg="compOn" data-i="${i}" ${c.on !== false ? 'checked' : ''} style="accent-color:var(--accent);width:16px;height:16px" aria-label="Track ${esc(c.name)}"></td><td>${inp(i, 'name', c.name, 'Brand name')}${c.why ? `<div class="muted sm" style="margin-top:4px">${esc(c.why)}</div>` : ''}${c.source === 'scouted' ? '<span class="tag" style="margin-top:4px;display:inline-block">Scouted by AI</span>' : ''}</td><td>${inp(i, 'instagram', c.instagram, '@handle')}</td><td>${inp(i, 'linkedin', c.linkedin, 'linkedin.com/company/…')}</td><td>${inp(i, 'website', c.website, 'brand.com')}</td><td><button class="btn sm ghost" data-act="rmComp" data-i="${i}">Remove</button></td></tr>`).join('') || '<tr><td colspan="6" class="muted">No competitors yet. Add them or press Scout competitors.</td></tr>'}</tbody></table></div>
+    <div class="tw"><table><thead><tr><th style="width:40px">Track</th><th>Name</th><th>Instagram</th><th>LinkedIn page</th><th>Website</th><th></th></tr></thead><tbody>${comps.map((c, i) => `<tr><td><input type="checkbox" data-chg="compOn" data-i="${i}" ${c.on !== false ? 'checked' : ''} style="accent-color:var(--accent);width:16px;height:16px" aria-label="Track ${esc(c.name)}"></td><td>${inp(i, 'name', c.name, 'Brand name')}${c.why ? `<div class="muted sm" style="margin-top:4px">${esc(c.why)}</div>` : ''}${c.source === 'scouted' ? '<span class="tag" style="margin-top:4px;display:inline-block">Scouted by AI</span>' : ''}</td><td>${inp(i, 'instagram', c.instagram, '@handle')}</td><td>${inp(i, 'linkedin', c.linkedin, 'linkedin.com/company/…')}<button class="lnk" data-act="liToggle" data-i="${i}" style="margin-top:4px;font-size:12px">${parseLinkedInPaste(c.liPaste).length ? `${parseLinkedInPaste(c.liPaste).length} LinkedIn posts pasted · edit` : '+ Paste LinkedIn posts'}</button></td><td>${inp(i, 'website', c.website, 'brand.com')}</td><td><button class="btn sm ghost" data-act="rmComp" data-i="${i}">Remove</button></td></tr>${ui.liOpen === i ? `<tr><td></td><td colspan="5"><label class="f">LinkedIn posts from ${esc(c.name || 'this competitor')} <span class="hint">Open their LinkedIn page, copy each recent post and paste it here. Put a line with --- between posts and add the numbers LinkedIn shows, e.g. "120 reactions, 8 comments, 3 reposts". Adding the date (2026-09-14) and post link is optional.</span><textarea class="in" rows="8" data-chg="compF" data-i="${i}" data-k="liPaste" id="cf-${i}-liPaste" placeholder="We just opened our 10th store in Pune…&#10;240 reactions, 18 comments, 6 reposts&#10;---&#10;Carousel: 5 myths about cold brew…&#10;98 reactions, 4 comments">${esc(c.liPaste || '')}</textarea></label><p class="muted sm">${parseLinkedInPaste(c.liPaste).length} posts detected · ${parseLinkedInPaste(c.liPaste).reduce((s2, x) => s2 + x.likes, 0)} reactions · ${parseLinkedInPaste(c.liPaste).reduce((s2, x) => s2 + x.comments, 0)} comments</p></td></tr>` : ''}`).join('') || '<tr><td colspan="6" class="muted">No competitors yet. Add them or press Scout competitors.</td></tr>'}</tbody></table></div>
     <div><button class="btn sm" data-act="addComp">+ Add competitor</button></div>
   </section>
-  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Run a benchmark</h2><p>${HOSTED ? 'Pulls recent Instagram and LinkedIn posts (needs the Apify key in Vercel), then the AI compares cadence, formats, pillars, top posts and gaps. Without the key it researches on the web instead.' : 'On the Vercel version this pulls real posts. Here it works from the AI\'s knowledge.'}</p></div></header>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Run a benchmark</h2><p>${HOSTED ? 'Instagram: real followers, likes, comments and views from Instagram\'s free official API. LinkedIn: from the posts you paste above. The AI then compares cadence, formats, pillars, top posts and gaps, and fills anything missing with web research.' : 'On the Vercel version this pulls real Instagram data. Here it works from pasted posts and the AI\'s knowledge.'}</p></div>${HOSTED ? `<button class="btn sm" data-act="igCheck" ${ui.igChecking ? 'disabled' : ''}>${ui.igChecking ? '<span class="spin"></span> Checking…' : 'Check Instagram connection'}</button>` : ''}</header>
+    ${ui.igCheckMsg ? `<div class="banner ${ui.igCheckOk ? '' : 'err'}" style="padding:10px 14px"><div class="grow"><b>${esc(ui.igCheckMsg)}</b></div></div>` : ''}
     <div class="rowline"><label class="f" style="flex:0 0 200px">Period<select class="in" id="bn-days">${opts([['30','Last 30 days'],['60','Last 60 days'],['90','Last 90 days']], '30')}</select></label><button class="btn pri" data-act="runBench" ${aiOff() || ui.benchBusy ? 'disabled' : ''}>${ui.benchBusy ? '<span class="spin"></span> ' + esc(ui.benchBusy) : 'Run benchmark now'}</button>${runs.length > 1 ? `<label class="f" style="flex:0 0 240px">Past runs<select class="in" data-chg="benchPick">${opts(runs.map(([id, r]) => [id, `${new Date(r.at).toLocaleDateString()} · ${r.days} days · ${r.source === 'apify' ? 'real posts' : 'web research'}`]), cur?.[0])}</select></label>` : ''}</div>
   </section>
   ${cur ? vBenchResult(b, cur[0], cur[1]) : ''}`;
 }
 function vBenchResult(b, id, r){
   const a = r.analysis || {}; const st = arr(r.stats);
-  const real = r.source === 'apify';
-  return `<section class="hero"><div><p class="eyebrow">Benchmark · ${new Date(r.at).toLocaleDateString()} · last ${r.days} days · ${real ? 'real Instagram & LinkedIn posts' : 'web research (add the Apify key for real post data)'}</p><h2 style="font-size:24px">Where ${esc(b.name)} stands</h2><p style="margin-top:8px;white-space:pre-wrap">${esc(a.summary)}</p>${a.ourPosition ? `<p style="margin-top:8px"><b>Where to win:</b> ${esc(a.ourPosition)}</p>` : ''}</div><div class="acts"><button class="btn sm hot" data-act="benchPptx" data-id="${id}" ${typeof PptxGenJS === 'undefined' || !DL ? 'disabled' : ''}>Download PowerPoint</button>${confirmBtn('delRep-' + id, 'Delete run', 'delReport', `data-id="${id}"`)}</div></section>
-  ${real && st.some(x => x.posts) ? `<section class="panel"><header><h2><span class="dotc" style="--dc:var(--c3)"></span>The numbers</h2></header>${tbl(['Competitor','Posts','Per week','Formats','Platforms','Avg likes','Avg comments','Avg views'], st.map(x => [`<b>${esc(x.name)}</b>${x.errors.length ? `<div class="flag">${esc(x.errors.join('; ').slice(0, 120))}</div>` : ''}`, `<span class="mono">${x.posts}</span>`, `<span class="mono">${x.perWeek}</span>`, esc(Object.entries(x.byType).map(([k, v]) => k + ' ' + v).join(', ')), esc(Object.entries(x.byPlatform).map(([k, v]) => k + ' ' + v).join(', ')), `<span class="mono">${fmtN(x.avgLikes)}</span>`, `<span class="mono">${fmtN(x.avgComments)}</span>`, `<span class="mono">${x.avgViews ? fmtN(x.avgViews) : '—'}</span>`]))}
+  const real = r.source === 'real' || r.source === 'apify';
+  return `<section class="hero"><div><p class="eyebrow">Benchmark · ${new Date(r.at).toLocaleDateString()} · last ${r.days} days · ${real ? 'real data: ' + esc(r.srcDetail || 'Instagram & LinkedIn posts') : 'web research (connect the Instagram API or paste LinkedIn posts for real data)'}</p><h2 style="font-size:24px">Where ${esc(b.name)} stands</h2><p style="margin-top:8px;white-space:pre-wrap">${esc(a.summary)}</p>${a.ourPosition ? `<p style="margin-top:8px"><b>Where to win:</b> ${esc(a.ourPosition)}</p>` : ''}</div><div class="acts"><button class="btn sm hot" data-act="benchPptx" data-id="${id}" ${typeof PptxGenJS === 'undefined' || !DL ? 'disabled' : ''}>Download PowerPoint</button>${confirmBtn('delRep-' + id, 'Delete run', 'delReport', `data-id="${id}"`)}</div></section>
+  ${real && st.some(x => x.posts) ? `<section class="panel"><header><h2><span class="dotc" style="--dc:var(--c3)"></span>The numbers</h2></header>${tbl(['Competitor','IG followers','IG eng. rate','Posts','Per week','Formats','Platforms','Avg likes','Avg comments','Avg views'], st.map(x => [`<b>${esc(x.name)}</b>${x.errors.length ? `<div class="flag">${esc(x.errors.join('; ').slice(0, 160))}</div>` : ''}`, `<span class="mono">${x.followers ? fmtN(x.followers) : '—'}</span>`, `<span class="mono">${x.igER != null ? x.igER + '%' : '—'}</span>`, `<span class="mono">${x.posts}</span>`, `<span class="mono">${x.perWeek}</span>`, esc(Object.entries(x.byType).map(([k, v]) => k + ' ' + v).join(', ')), esc(Object.entries(x.byPlatform).map(([k, v]) => k + ' ' + v).join(', ')), `<span class="mono">${fmtN(x.avgLikes)}</span>`, `<span class="mono">${fmtN(x.avgComments)}</span>`, `<span class="mono">${x.avgViews ? fmtN(x.avgViews) : '—'}</span>`]))}
     <h3>Engagement per post (avg likes + comments)</h3>${hbars(st.filter(x => x.posts).map(x => ({l:x.name, v:x.avgLikes + x.avgComments, tip:`${x.name}: ${x.posts} posts`})), v => fmtN(v))}</section>` : ''}
   <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c5)"></span>Competitor by competitor</h2></header>${tbl(['Competitor','Cadence & formats','Content pillars','Top themes','Tone','What works','Weakness'], arr(a.competitors).map(c => [`<b>${esc(c.name)}</b>`, esc(`${c.postsPerWeek ? c.postsPerWeek + '/wk · ' : ''}${c.formatMix || ''}`), esc(c.pillars), esc(c.topThemes), esc(c.tone), esc(c.whatWorks), esc(c.weakness)]))}</section>
   <div class="grid2">
@@ -1799,7 +1820,7 @@ function vLive(){
     ['AI runs on the agency key','All AI writing uses the Gemini or Claude key set in Vercel. Watch usage in Google AI Studio or the Anthropic console.','--c3'],
     ['Changes sync every 30 seconds','Everyone sees the same brands and posts. If two people edit the same field at once, the last save wins, so split work by post.','--c2'],
     ['Change the password any time','Update TEAM_PASSWORD in Vercel and redeploy. Everyone signs in again with the new one.','--c4'],
-    ['Real competitor posts','For benchmarks with real Instagram and LinkedIn posts, add APIFY_TOKEN in Vercel (from apify.com → Settings → Integrations) and redeploy. Without it, benchmarks use web research.','--c5']
+    ['Real competitor data (free)','Instagram: connect Instagram\'s free official API by adding META_ACCESS_TOKEN and META_IG_USER_ID in Vercel (see the README), then use Check Instagram connection on any brand\'s Competitors tab. LinkedIn: paste competitors\' posts into the Competitors tab.','--c5']
   ] : [
     ['Share it with your team','Open the Share menu at the top of this page and share it with your organisation, or invite each teammate. Give writers, designers and account managers "Can edit" (Contributor) so they can change posts. Everyone sees the same live data.','--c1'],
     ['Each person picks their name','In the sidebar, "You are" sets whose tasks show up under My tasks. It is remembered on each person\'s own device.','--c2'],
@@ -2303,6 +2324,18 @@ const ACT = {
   addComp: () => { const b = D.brands[ui.brandId]; patch('brands', ui.brandId, {comps:getComps(b).concat([{name:'', instagram:'', linkedin:'', website:'', source:'manual', on:true}])}); setTimeout(() => { const l = document.querySelectorAll('[data-k="name"][data-chg="compF"]'); l[l.length - 1]?.focus(); }, 60); },
   rmComp: a => { const b = D.brands[ui.brandId]; const l = getComps(b).slice(); l.splice(+a.dataset.i, 1); patch('brands', ui.brandId, {comps:l}); },
   runBench: () => runBench(),
+  liToggle: a => { ui.liOpen = ui.liOpen === +a.dataset.i ? null : +a.dataset.i; renderAll(); setTimeout(() => $(`#cf-${a.dataset.i}-liPaste`)?.focus(), 50); },
+  igCheck: async () => {
+    const b = D.brands[ui.brandId]; const first = getComps(b).find(c => c.instagram)?.instagram || 'instagram';
+    ui.igChecking = true; ui.igCheckMsg = ''; renderAll();
+    try {
+      const r = await fetch('/api/bench', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({check:first})});
+      if (r.status === 401){ showLogin(); return; }
+      const j = await r.json();
+      ui.igCheckOk = !!j.ok; ui.igCheckMsg = j.ok ? `Connected as @${j.account}. Test: @${j.test} has ${fmtN(j.testFollowers)} followers, ${j.testPosts} recent posts found.` : `Not connected: ${j.error}`;
+    } catch (e){ ui.igCheckOk = false; ui.igCheckMsg = 'Could not reach the server.'; }
+    ui.igChecking = false; renderAll();
+  },
   benchIdea: a => { const r = D.reports[a.dataset.id]; const x = arr(r?.analysis?.stealIdeas)[+a.dataset.i]; if (!x) return; const b = D.brands[ui.brandId]; patch('brands', ui.brandId, {ideas:arr(b.ideas).concat([{text:x.idea, why:'From benchmark: ' + str(x.basedOn), format:FORMATS.includes(x.format) ? x.format : '', ai:true, at:Date.now(), used:false}])}); toast('Added to Ideas bank'); },
   benchAllIdeas: a => { const r = D.reports[a.dataset.id]; const b = D.brands[ui.brandId]; const add = arr(r?.analysis?.stealIdeas).map(x => ({text:x.idea, why:'From benchmark: ' + str(x.basedOn), format:FORMATS.includes(x.format) ? x.format : '', ai:true, at:Date.now(), used:false})); patch('brands', ui.brandId, {ideas:arr(b.ideas).concat(add)}); toast(`${add.length} ideas added`); },
   delReport: a => { ui.confirm = null; del('reports', a.dataset.id); if (ui.benchId === a.dataset.id) ui.benchId = null; if (ui.reportId === a.dataset.id) ui.reportId = null; },
@@ -2311,6 +2344,7 @@ const ACT = {
   benchPptx: a => { const r = D.reports[a.dataset.id]; const b = D.brands[r.brandId]; const an = r.analysis || {}; const st = arr(r.stats);
     const M = [{k:'cover'}, {k:'kv', ey:'Summary', title:'Where we stand', cols:1, items:[['Summary', an.summary, '--c1']]}];
     if (st.some(x => x.posts)) M.push({k:'table', ey:'The numbers', title:`Last ${r.days} days`, head:['Competitor','Posts','Per week','Formats','Avg likes','Avg comments'], rows:st.map(x => [x.name, x.posts, x.perWeek, Object.entries(x.byType).map(([k, v]) => k + ' ' + v).join(', '), x.avgLikes, x.avgComments])});
+    if (st.some(x => x.followers)) M.push({k:'table', ey:'Instagram', title:'Audience and engagement', head:['Competitor','Followers','Avg engagement rate per post'], rows:st.filter(x => x.followers).map(x => [x.name, fmtN(x.followers), (x.igER ?? '—') + '%'])});
     chunk(arr(an.competitors), 4).forEach((c, i) => M.push({k:'table', ey:'Competitor by competitor', title:i ? 'Competitors (cont.)' : 'What each competitor does', head:['Competitor','Cadence & formats','Pillars','What works','Weakness'], rows:c.map(x => [x.name, `${x.postsPerWeek || ''} ${x.formatMix || ''}`, x.pillars, x.whatWorks, x.weakness])}));
     if (arr(an.topPosts).length) M.push({k:'table', ey:'Top posts', title:'Posts to learn from', head:['Competitor','What it was','Why it worked'], rows:arr(an.topPosts).slice(0, 6).map(x => [`${x.competitor} · ${x.platform}`, x.what, x.whyItWorked])});
     if (arr(an.gaps).length) M.push({k:'list', ey:'Opportunities', title:'Gaps we can own', items:arr(an.gaps).slice(0, 6)});
