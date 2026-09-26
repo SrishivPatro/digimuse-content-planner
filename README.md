@@ -39,6 +39,7 @@ Internal social media planning tool for the Digimuse team.
 - `api/sync.js`: loads all data (skips the download when nothing changed).
 - `api/db.js`: saves, updates and deletes records.
 - `api/ai.js`: sends prompts to Gemini or Claude. Keys never reach the browser.
+- `api/og.js`: checks design reference links (Pinterest, Behance, etc.) really open and returns their preview image for the designer deck.
 - `api/login.js`: team password sign-in (30-day cookie).
 - `api/bench.js`: pulls competitors' recent Instagram and LinkedIn posts through Apify.
 - `api/scrape.js`: imports a brand's products from its website (Shopify and WooCommerce stores directly; any other site is read and the AI picks out products and services).

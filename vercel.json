@@ -5,6 +5,9 @@
     },
     "api/bench.js": {
       "maxDuration": 300
+    },
+    "api/og.js": {
+      "maxDuration": 60
     }
   },
   "headers": [

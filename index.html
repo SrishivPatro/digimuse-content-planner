@@ -31,6 +31,7 @@ html{color-scheme:light}
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.refgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;margin:6px 0 10px}.refc{display:flex;flex-direction:column;gap:4px;min-width:0}.refc img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block;background:#F3F5FB}.refc .noimg{display:flex;align-items:center;justify-content:center;aspect-ratio:4/5;border-radius:10px;border:1px dashed var(--line-2);font-size:12px;text-align:center;padding:6px;word-break:break-all}.refm{display:flex;justify-content:space-between;align-items:center}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--fb);-webkit-font-smoothing:antialiased}
 h1,h2,h3,h4{font-family:var(--fd);letter-spacing:-.015em;margin:0;text-wrap:balance;font-weight:700}
 h1{font-size:30px;line-height:1.1;font-weight:800}
@@ -1673,7 +1674,7 @@ function vExport(plan, ps){
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Client document</h2><p>Strategy plus every post in Markdown. Paste into Google Docs or Notion, or download.</p></div></header><div class="acts"><button class="btn" data-act="md" ${DL ? '' : 'disabled'}>Download .md</button><button class="btn" data-act="copyMd">Copy text</button></div></section>
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c6)"></span>Calendar</h2><p>Tab-separated, ready to paste into Google Sheets.</p></div></header><div class="acts"><button class="btn" data-act="copyCal">Copy for Sheets</button><button class="btn" data-act="csv" ${DL ? '' : 'disabled'}>Download .csv</button></div></section>
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Design briefs</h2><p>Every post's brief in one text file for the design team.</p></div></header><div class="acts"><button class="btn" data-act="briefs" ${DL ? '' : 'disabled'}>Download briefs</button><button class="btn" data-act="copyBriefs">Copy all</button></div></section>
-    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Designer deck</h2><p>One clean slide per post: date, platform, format, pillar, image copy, post copy, design ref and notes. Opens in Google Slides (upload to Drive → Open with Google Slides).</p></div></header><div class="acts"><button class="btn pri" data-act="designerDeck" ${typeof PptxGenJS === 'undefined' || !DL || !ps.length ? 'disabled' : ''}>Download deck</button></div></section>
+    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Designer deck</h2><p>One clean slide per post: date, platform, format, pillar, image copy, post copy, design ref and notes. Opens in Google Slides (upload to Drive → Open with Google Slides).</p></div></header><div class="acts"><button class="btn pri" data-act="designerDeck" ${typeof PptxGenJS === 'undefined' || !DL || !ps.length ? 'disabled' : ''}>Download deck</button><button class="btn hot" data-act="refFindAll" ${ui.refJob || aiOff() || !HOSTED || !ps.length ? 'disabled' : ''} title="${HOSTED ? 'Searches Pinterest, Behance and Dribbble and keeps only links that really open' : 'Needs the hosted version'}">${ui.refJob ? esc(ui.refJob) : 'Find real references for all posts'}</button></div><p class="muted sm">${ps.filter(p => refsOf(p).some(r => r.img)).length} of ${ps.filter(p => p.format !== 'Text').length} design posts have reference images. They appear on each slide.</p></section>
   </div>
   ${DL ? '' : '<p class="muted sm">Downloads are not available in this view. Use the copy buttons instead.</p>'}
   <p class="muted sm">${ps.length} posts · ${ps.filter(p => p.hasContent).length} written · ${ps.filter(p => group(p.status) === 'done').length} approved</p>`;
@@ -1752,7 +1753,7 @@ function slideHTML(m, i, n, plan){
   if (m.k === 'post'){
     const p = m.post; const c = brandColors(b);
     const extra = arr(p.slides).length ? `<table class="mini"><thead><tr><th>#</th><th>Slide copy</th></tr></thead><tbody>${arr(p.slides).slice(0, 6).map((x, j) => `<tr><td>${j + 1}</td><td>${esc(x.copy)}</td></tr>`).join('')}</tbody></table>` : arr(p.script).length ? `<table class="mini"><thead><tr><th>Time</th><th>On screen</th><th>Voiceover</th></tr></thead><tbody>${arr(p.script).slice(0, 5).map(x => `<tr><td>${esc(x.t)}</td><td>${esc(x.onscreen)}</td><td>${esc(x.vo)}</td></tr>`).join('')}</tbody></table>` : '';
-    return wrap(`<div class="ey">Post ${m.n} of ${m.of}${p.pillar ? ' · ' + esc(p.pillar) : ''}</div><h2>${esc(p.topic)}</h2><div class="pgrid"><div class="pcv" style="background:${c.bg};color:${c.fg}"><span class="o" style="background:${c.ac}"></span>${p.format === 'Text' ? `<div class="hl" style="font-size:2.2cqw">${esc(p.hook)}</div>` : `<div class="hl">${esc(p.onImage?.headline || p.topic)}</div>${p.onImage?.subline ? `<div class="sl">${esc(p.onImage.subline)}</div>` : ''}${p.onImage?.cta ? `<span class="ct" style="background:${c.ac};color:${c.bg}">${esc(p.onImage.cta)}</span>` : ''}`}</div><div style="display:flex;flex-direction:column;gap:1.2cqw;min-width:0;overflow:hidden"><div class="pmeta2"><span>${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</span><span class="ch" style="background:${CHC[p.channel] || '#555'}">${esc(p.channel)}</span><span>${esc(p.format)}</span>${p.topical ? `<span>${esc(p.topical)}</span>` : ''}</div>${p.hook ? `<div class="hook">${esc(p.hook)}</div>` : ''}${p.idea ? `<div style="font-size:1.15cqw;color:#444C66"><b style="color:#7C5CFF">The idea:</b> ${esc(p.idea)}</div>` : ''}<div class="capt" style="-webkit-line-clamp:${extra ? 4 : 7}">${esc(p.caption)}</div>${p.hashtags ? `<div class="tags">${esc(p.hashtags)}</div>` : ''}${extra}${(p.design?.layout || p.design?.mood) ? `<div style="background:#F3F5FB;border-radius:1cqw;padding:1cqw 1.2cqw;font-size:1.1cqw;line-height:1.45"><b style="color:var(--sc1);text-transform:uppercase;letter-spacing:.08em;font-size:1cqw">Design reference</b><br>${esc([p.design.layout, p.design.mood, p.design.elements].filter(Boolean).join(' · ').slice(0, 260))}${p.design.refSearch ? `<br><span style="color:#7A8199">Look up: ${esc(p.design.refSearch)}</span>` : ''}</div>` : ''}</div></div>`);
+    return wrap(`<div class="ey">Post ${m.n} of ${m.of}${p.pillar ? ' · ' + esc(p.pillar) : ''}</div><h2>${esc(p.topic)}</h2><div class="pgrid"><div class="pcv" style="background:${c.bg};color:${c.fg}"><span class="o" style="background:${c.ac}"></span>${p.format === 'Text' ? `<div class="hl" style="font-size:2.2cqw">${esc(p.hook)}</div>` : `<div class="hl">${esc(p.onImage?.headline || p.topic)}</div>${p.onImage?.subline ? `<div class="sl">${esc(p.onImage.subline)}</div>` : ''}${p.onImage?.cta ? `<span class="ct" style="background:${c.ac};color:${c.bg}">${esc(p.onImage.cta)}</span>` : ''}`}</div><div style="display:flex;flex-direction:column;gap:1.2cqw;min-width:0;overflow:hidden"><div class="pmeta2"><span>${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</span><span class="ch" style="background:${CHC[p.channel] || '#555'}">${esc(p.channel)}</span><span>${esc(p.format)}</span>${p.topical ? `<span>${esc(p.topical)}</span>` : ''}</div>${p.hook ? `<div class="hook">${esc(p.hook)}</div>` : ''}${p.idea ? `<div style="font-size:1.15cqw;color:#444C66"><b style="color:#7C5CFF">The idea:</b> ${esc(p.idea)}</div>` : ''}<div class="capt" style="-webkit-line-clamp:${extra ? 4 : 7}">${esc(p.caption)}</div>${p.hashtags ? `<div class="tags">${esc(p.hashtags)}</div>` : ''}${extra}${(p.design?.layout || p.design?.mood || refsOf(p).some(r => r.img)) ? `<div style="background:#F3F5FB;border-radius:1cqw;padding:1cqw 1.2cqw;font-size:1.1cqw;line-height:1.45"><b style="color:var(--sc1);text-transform:uppercase;letter-spacing:.08em;font-size:1cqw">Design reference</b><br>${esc([p.design.layout, p.design.mood, p.design.elements].filter(Boolean).join(' · ').slice(0, 260))}${p.design.refSearch ? `<br><span style="color:#7A8199">Look up: ${esc(p.design.refSearch)}</span>` : ''}${refsOf(p).some(r => r.img) ? `<div style="display:flex;gap:.6cqw;margin-top:.6cqw">${refsOf(p).filter(r => r.img).slice(0, 4).map(r => `<a href="${esc(r.url)}" target="_blank" rel="noopener"><img src="${esc(r.img)}" alt="" referrerpolicy="no-referrer" style="height:6.5cqw;width:5.2cqw;object-fit:cover;border-radius:.6cqw;display:block"></a>`).join('')}</div>` : ''}</div>` : ''}</div></div>`);
   }
   return '';
 }
@@ -1859,6 +1860,58 @@ async function downloadPptx(Mx, meta={}){
   } catch (e){ console.error(e); toast('Could not build the PowerPoint'); }
 }
 
+/* ---------- real design references (verified links + thumbnails) ---------- */
+const refsOf = p => arr(p?.design?.refs);
+const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e){ return str(u); } };
+const pinSearch = p => 'https://www.pinterest.com/search/pins/?q=' + encodeURIComponent(str(p.design?.refSearch || p.topic));
+async function ogCheck(urls, images){
+  if (!HOSTED) return urls.map(u => ({url:u, ok:true, img:/\.(png|jpe?g|webp|gif)(\?|$)/i.test(u) ? u : ''}));
+  const r = await fetch('/api/og', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({urls, images:!!images})});
+  if (r.status === 401){ showLogin(); throw {message:'Please sign in again'}; }
+  if (!r.ok) throw {message:'Could not check those links right now'};
+  return arr((await r.json()).results);
+}
+function promptRefs(b, ps){
+  return `You are a senior art director. Find REAL visual design references on the web for each social media post below, for the designer to follow.
+Search Pinterest, Behance, Dribbble, and well-designed brand accounts or award sites. Useful searches: "site:pinterest.com <keywords>", "site:behance.net/gallery <keywords>", "site:dribbble.com/shots <keywords>".
+RULES
+- Only return URLs you actually saw in search results. Never build, shorten or guess a URL. Every link will be opened and checked, fake ones are thrown away.
+- Prefer single pin / project / shot pages (pinterest.com/pin/…, behance.net/gallery/…, dribbble.com/shots/…) over search or board pages.
+- Match each post's format, layout and mood. Suit a ${str(b.industry) || 'consumer'} brand${b.brain?.kit?.colors ? ' with colours ' + b.brain.kit.colors : ''}. Avoid generic stock photos.
+- 3 to 6 URLs per post, each with one short note on what to borrow (layout, type treatment, colour, styling).
+BRAND: ${str(b.name)} — ${str(b.desc || b.sub).slice(0, 200)}
+POSTS
+${ps.map(p => `- id: ${p.id} | ${p.channel} ${p.format} | topic: ${str(p.topic)} | layout: ${str(p.design?.layout).slice(0, 160)} | mood: ${str(p.design?.mood).slice(0, 100)} | search words: ${str(p.design?.refSearch)}`).join('\n')}
+Return JSON only: {"posts":[{"id":"","urls":[""],"notes":["what to borrow, same order as urls"]}]}`;
+}
+async function findRefs(list){
+  list = list.filter(Boolean);
+  if (!list.length){ toast('Every post already has references'); return; }
+  if (!HOSTED){ toast('Finding real references needs the hosted version, which checks every link'); return; }
+  if (aiOff()){ toast('AI is not available in this view'); return; }
+  const b = D.brands[list[0].brandId] || {}; let found = 0, done = 0, noSearch = false;
+  for (const batch of chunk(list, 4)){
+    ui.refJob = `Finding references… ${done}/${list.length} posts`; batch.forEach(p => busy[p.id] = 'Finding real design references…'); sched();
+    try {
+      const {data, searched} = await webJSON(promptRefs(b, batch)); if (searched === false) noSearch = true;
+      const want = arr(data?.posts || data);
+      for (const p of batch){
+        const w = want.find(x => str(x?.id) === p.id) || {};
+        const cands = [...new Set(arr(w.urls).map(str).filter(u => /^https?:\/\/[^\s]+\.[^\s]+/.test(u)))].slice(0, 8);
+        if (!cands.length) continue;
+        const res = await ogCheck(cands, false);
+        const have = refsOf(D.posts[p.id]); const seen = new Set(have.map(r => r.url));
+        const add = res.filter(r => r.ok && r.img && !seen.has(r.final || r.url)).slice(0, Math.max(0, 4 - have.filter(r => r.img).length))
+          .map(r => ({url:r.final || r.url, img:r.img, title:str(r.title).slice(0, 140), src:'ai', why:str(arr(w.notes)[cands.indexOf(r.url)]).slice(0, 160)}));
+        if (add.length){ found += add.length; await patch('posts', p.id, {design:{refs:have.concat(add)}}); }
+      }
+    } catch (e){ toast(errCopy(e)); }
+    finally { batch.forEach(p => delete busy[p.id]); done += batch.length; sched(); }
+  }
+  ui.refJob = ''; sched();
+  toast(found ? `Added ${found} verified references` : noSearch ? 'Web search is not available on this AI key, so no verified links were found. Paste Pinterest links instead.' : 'No verified references found this time. Try again or paste Pinterest links.');
+}
+
 /* ---------- designer deck: one table slide per post, for writer → designer handoff ---------- */
 function designerRows(p, b){
   const oi = p.onImage || {}, d = p.design || {}, kit = b.brain?.kit || {};
@@ -1866,6 +1919,7 @@ function designerRows(p, b){
   const slides = arr(p.slides).map((x, i) => `Slide ${i + 1}: ${str(x.copy)}${x.visual ? '  [Visual: ' + x.visual + ']' : ''}`).join('\n');
   const script = arr(p.script).map(x => `${str(x.t)}  ${x.visual ? 'Visual: ' + x.visual + ' · ' : ''}${x.onscreen ? 'On screen: ' + x.onscreen + ' · ' : ''}${x.vo ? 'VO: ' + x.vo : ''}${x.audio ? ' · Audio: ' + x.audio : ''}`).join('\n');
   const ref = [d.layout && 'Layout: ' + d.layout, d.mood && 'Mood: ' + d.mood, d.palette && 'Palette: ' + d.palette, d.typography && 'Type: ' + d.typography, d.refSearch && 'Look up: ' + d.refSearch]
+    .concat(refsOf(p).slice(0, 4).map((r, i) => `Ref ${i + 1}: ${r.url}${r.why ? ' (' + r.why + ')' : ''}`))
     .concat(arr(b.brain?.refs).filter(r => r.tag === 'Design' && r.url).slice(0, 2).map(r => 'Brand ref: ' + r.url)).filter(Boolean).join('\n');
   const notes = [d.elements && 'Elements: ' + d.elements, d.dos && 'Do: ' + d.dos, d.donts && "Don't: " + d.donts, kit.colors && 'Brand colours: ' + kit.colors, kit.fonts && 'Brand fonts: ' + kit.fonts, kit.logo && 'Logo: ' + kit.logo]
     .concat(arr(p.comments).filter(c => c.type === 'design' && c.text).slice(-2).map(c => 'Feedback: ' + c.text)).filter(Boolean).join('\n');
@@ -1903,14 +1957,32 @@ async function downloadDesignerDeck(){
     chunk(idx.slice(1), 18).forEach((rows, k) => { const sl = pptx.addSlide(); sl.background = {color:'FFFFFF'};
       sl.addText(`Post index${k ? ' (cont.)' : ''}`, {x:X, y:0.3, w:CW, h:0.5, fontFace:F, fontSize:20, bold:true, color:INK});
       sl.addTable([idx[0]].concat(rows), {x:X, y:0.95, w:CW, colW:[0.5, 1.4, 1.4, 1.3, 2.3, CW - 6.9], fontFace:F, fontSize:10, color:'252C45', border:{type:'solid', pt:0.75, color:LINE}, margin:0.06, valign:'middle'}); });
+    const imgs = {};
+    if (HOSTED){
+      const want = ps.flatMap(p => refsOf(p).filter(r => r.img).slice(0, 3).map(r => r.url));
+      for (let k = 0; k < want.length; k += 6){
+        toast(`Fetching reference images… ${Math.min(k + 6, want.length)}/${want.length}`);
+        try { (await ogCheck(want.slice(k, k + 6), true)).forEach(r => { if (r.data) imgs[r.url] = r.data; }); } catch (e){}
+      }
+    }
     ps.forEach((p, i) => {
-      const rows = designerRows(p, b); const chars = rows.reduce((n, r) => n + str(r[1]).length + 40, 0);
+      const pics = refsOf(p).filter(r => imgs[r.url] || (!HOSTED && /^data:image/.test(r.img))).slice(0, 3);
+      const TW = pics.length ? CW - 3.35 : CW;
+      const rows = designerRows(p, b); const chars = rows.reduce((n, r) => n + str(r[1]).length + 40, 0) * (CW / TW);
       const fs = chars > 2600 ? 7.5 : chars > 1900 ? 8.5 : chars > 1300 ? 9.5 : chars > 800 ? 11 : 13;
       const sl = pptx.addSlide(); sl.background = {color:'FFFFFF'};
       sl.addText(`Post ${i + 1} of ${ps.length}`, {x:X, y:0.2, w:6, h:0.35, fontFace:F, fontSize:11, bold:true, color:ACC});
       sl.addText(`${b.name} · ${mLabel(plan.month)}`, {x:W - X - 6, y:0.2, w:6, h:0.35, fontFace:F, fontSize:9, color:GREY, align:'right'});
       sl.addTable(rows.map(([k, v]) => [{text:k, options:{fontFace:F, color:INK}}, {text:str(v) || ' ', options:{fontFace:F, color:'252C45'}}]),
-        {x:X, y:0.6, w:CW, colW:[LW, CW - LW], fontFace:F, fontSize:fs, border:{type:'solid', pt:0.75, color:LINE}, margin:[0.08, 0.12, 0.08, 0.12], valign:'top', autoPage:true, autoPageRepeatHeader:false, autoPageSlideStartY:0.6});
+        {x:X, y:0.6, w:TW, colW:[LW, TW - LW], fontFace:F, fontSize:fs, border:{type:'solid', pt:0.75, color:LINE}, margin:[0.08, 0.12, 0.08, 0.12], valign:'top', autoPage:true, autoPageRepeatHeader:false, autoPageSlideStartY:0.6});
+      if (pics.length){
+        const RX = X + CW - 3.15, RW = 3.15, gap = 0.12, ih = (6.1 - gap * (pics.length - 1)) / pics.length;
+        sl.addText('DESIGN REFERENCES', {x:RX, y:0.6, w:RW, h:0.3, fontFace:F, fontSize:9, bold:true, color:ACC, charSpacing:1});
+        pics.forEach((r, k) => { const y = 0.95 + k * (ih + gap);
+          sl.addShape(pptx.ShapeType.rect, {x:RX, y, w:RW, h:ih, fill:{color:'F3F5FB'}, line:{color:'E6E9F2'}});
+          sl.addImage({data:imgs[r.url] || r.img, x:RX, y, w:RW, h:ih, sizing:{type:'contain', w:RW, h:ih}, hyperlink:{url:r.url, tooltip:r.title || r.url}}); });
+      }
+      sl.addText([{text:'Find more on Pinterest ↗', options:{hyperlink:{url:pinSearch(p)}, color:ACC}}].concat(refsOf(p).length ? [{text:'   ·   click an image to open the reference', options:{color:GREY}}] : []), {x:X, y:7.05, w:CW, h:0.3, fontFace:F, fontSize:9});
     });
     const out = await pptx.write({outputType:'arraybuffer'});
     await save(fname(plan, 'pptx').replace('.pptx', '-designer-deck.pptx'), out);
@@ -2056,9 +2128,12 @@ function vDrawer(p){
         <dl class="dl"><dt>Size</dt><dd>${esc(sizeFor(p.channel, p.format))}</dd><dt>Due</dt><dd class="mono">${fmtD(du.design)}</dd><dt>Fonts</dt><dd>${esc(b.brain?.kit?.fonts || '—')}</dd><dt>Logo rule</dt><dd>${esc(b.brain?.kit?.logo || '—')}</dd></dl>
         ${kitColors(b).length ? `<div class="swatches">${kitColors(b).map(c => `<span class="sw"><i style="background:${c}"></i>${c}</span>`).join('')}</div>` : ''}
         <div class="fg">${ta('Layout','design.layout',p.design?.layout)}${ta('Typography','design.typography',p.design?.typography)}${ta('Palette use','design.palette',p.design?.palette)}${ta('Mood','design.mood',p.design?.mood)}${ta('Elements','design.elements',p.design?.elements)}${ta('Do','design.dos',p.design?.dos)}${ta("Don't",'design.donts',p.design?.donts)}${inp('Reference search words','design.refSearch',p.design?.refSearch)}</div>
-        <div><p class="eyebrow">References</p><div class="list">
+        <div><p class="eyebrow">References</p>
+          ${refsOf(p).length ? `<div class="refgrid">${refsOf(p).map((r, i) => `<div class="refc">${r.img ? `<a href="${esc(r.url)}" target="_blank" rel="noopener" title="${esc(r.title || r.url)}"><img src="${esc(r.img)}" alt="" loading="lazy" referrerpolicy="no-referrer"></a>` : `<a class="noimg" href="${esc(r.url)}" target="_blank" rel="noopener">${esc(hostOf(r.url))} ↗</a>`}<div class="refm"><span class="tag">${r.src === 'ai' ? 'AI · verified' : 'Team'}</span><button class="btn sm ghost" data-act="refDel" data-i="${i}" title="Remove">×</button></div>${r.why ? `<span class="muted sm">${esc(r.why)}</span>` : ''}</div>`).join('')}</div>` : '<p class="muted sm">No reference images yet. Paste Pinterest or Behance links, or let AI find real ones.</p>'}
+          <div class="rowline"><label class="f"><input class="in" id="ref-url" placeholder="Paste a Pinterest pin, Behance, Dribbble or image link"></label><button class="btn sm" data-act="refAdd" ${bz ? 'disabled' : ''}>Add</button><button class="btn sm hot" data-act="refFind" ${bz || aiOff() || !HOSTED ? 'disabled' : ''} title="${HOSTED ? '' : 'Needs the hosted version'}">Find real references</button></div>
+          <div class="list">
           ${designRefs.map(r => `<div class="li"><span class="tx">${linkOK(r.url) ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>` : esc(r.url)}<span class="muted sm">${esc(r.notes)}</span></span><span class="tag">Brand ref</span></div>`).join('')}
-          <div class="acts"><a class="btn sm" href="https://www.pinterest.com/search/pins/?q=${encodeURIComponent(rs)}" target="_blank" rel="noopener">Search Pinterest ↗</a><a class="btn sm" href="https://www.behance.net/search/projects?search=${encodeURIComponent(rs)}" target="_blank" rel="noopener">Search Behance ↗</a><a class="btn sm" href="https://unsplash.com/s/photos/${encodeURIComponent(rs)}" target="_blank" rel="noopener">Search Unsplash ↗</a></div>
+          <div class="acts"><a class="btn sm" href="https://www.pinterest.com/search/pins/?q=${encodeURIComponent(rs)}" target="_blank" rel="noopener">Search Pinterest ↗</a><a class="btn sm" href="https://www.behance.net/search/projects?search=${encodeURIComponent(rs)}" target="_blank" rel="noopener">Search Behance ↗</a><a class="btn sm" href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(rs)}" target="_blank" rel="noopener">Google Images ↗</a><a class="btn sm" href="https://unsplash.com/s/photos/${encodeURIComponent(rs)}" target="_blank" rel="noopener">Search Unsplash ↗</a></div>
         </div></div>
         <div><p class="eyebrow">Creative versions</p><div class="list">${arr(p.creatives).map(c => `<div class="li"><span class="tx"><b>v${c.v}</b>${linkOK(c.url) ? `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.url)}</a>` : esc(c.url)}<span class="muted sm">${esc(mName(c.by) || 'Someone')} · ${new Date(c.at).toLocaleDateString()}</span></span></div>`).join('') || '<p class="muted sm">No creative uploaded yet.</p>'}</div>
           <div class="rowline" style="margin-top:8px"><label class="f">Link to creative <span class="hint">Figma, Canva or Drive</span><input class="in" id="cv-url" placeholder="https://www.figma.com/file/…"></label><button class="btn sm" data-act="addCreative">Add version</button></div></div>
@@ -2412,6 +2487,21 @@ const ACT = {
   pNext: () => movePresent(1), pPrev: () => movePresent(-1), pClose: () => closePresent(),
   pptx: () => downloadPptx(),
   designerDeck: () => downloadDesignerDeck(),
+  refFindAll: () => { if (ui.refJob) return; findRefs(postsOf(ui.planId).filter(p => p.format !== 'Text' && refsOf(p).filter(r => r.img).length < 2)); },
+  refFind: () => findRefs([D.posts[ui.postId]]),
+  refDel: a => { const p = D.posts[ui.postId]; const l = refsOf(p).slice(); l.splice(+a.dataset.i, 1); patch('posts', p.id, {design:{refs:l}}); },
+  refAdd: async () => {
+    const id = ui.postId; let u = ($('#ref-url')?.value || '').trim(); if (!u) { toast('Paste a link first'); return; }
+    if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    busy[id] = 'Checking the link…'; sched();
+    try {
+      const [r] = await ogCheck([u], false);
+      if (!r?.ok){ toast(`That link did not open${r?.why ? ': ' + r.why : ''}`); return; }
+      const have = refsOf(D.posts[id]); if (have.some(x => x.url === (r.final || u))){ toast('Already added'); return; }
+      await patch('posts', id, {design:{refs:have.concat([{url:r.final || u, img:r.img || '', title:str(r.title).slice(0, 140), src:'team', by:me || ''}]).slice(0, 10)}});
+      toast(r.img ? 'Reference added' : 'Added as a link (that page has no preview image)');
+    } catch (e){ toast(errCopy(e)); } finally { delete busy[id]; sched(); }
+  },
   pdf: () => printDeck(),
   goBrand: a => { ui.sched = null; ui.planMode = null; ui.view = 'brand'; ui.brandId = a.dataset.id; ui.btab = 'plans'; ui.answer = ''; ui.postId = null; renderAll(); window.scrollTo(0,0); },
   goPlan: a => { ui.view = 'plan'; ui.planId = a.dataset.id; ui.tab = 'present'; ui.f = {ch:'',st:'',pi:''}; renderAll(); window.scrollTo(0,0); },
