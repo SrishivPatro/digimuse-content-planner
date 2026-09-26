@@ -31,6 +31,7 @@ html{color-scheme:light}
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.chpick{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:0 0 14px}.chpick .eyebrow{margin:0;flex-basis:100%}.deckside .chpick{margin:0}
 .refgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;margin:6px 0 10px}.refc{display:flex;flex-direction:column;gap:4px;min-width:0}.refc img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block;background:#F3F5FB}.refc .noimg{display:flex;align-items:center;justify-content:center;aspect-ratio:4/5;border-radius:10px;border:1px dashed var(--line-2);font-size:12px;text-align:center;padding:6px;word-break:break-all}.refm{display:flex;justify-content:space-between;align-items:center}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--fb);-webkit-font-smoothing:antialiased}
 h1,h2,h3,h4{font-family:var(--fd);letter-spacing:-.015em;margin:0;text-wrap:balance;font-weight:700}
@@ -1500,7 +1501,7 @@ function vPlan(){
   const tabs = [['present','Client deck'],['deck','Posts'],['calendar','Calendar'],['board','Board'],['research','Research'],['strategy','Strategy'],['topical','Topical days'],['review','Client review',rvN],['report','Performance'],['export','Export']];
   let body = '';
   switch (ui.tab){
-    case 'present': body = vPresent(plan, ps); break;
+    case 'present': body = vPresent(plan, expPosts()); break;
     case 'calendar': body = vCal(plan, ps); break;
     case 'board': body = vBoard(ps); break;
     case 'review': body = vReview(plan, ps); break;
@@ -1508,7 +1509,7 @@ function vPlan(){
     case 'strategy': body = vStrategy(plan); break;
     case 'research': body = vResearch(plan); break;
     case 'topical': body = vTopical(plan); break;
-    case 'export': body = vExport(plan, ps); break;
+    case 'export': body = vExport(plan, expPosts()); break;
     default: body = vDeck(plan, ps);
   }
   return `<section class="hero brand" style="--bc:${c.solid || 'var(--c1)'}"><span class="blob" aria-hidden="true"></span><div><div class="crumb"><button data-act="go" data-v="home">Dashboard</button>›<button data-act="goBrand" data-id="${plan.brandId}">${esc(b.name)}</button>›<span>Plan</span></div><h1>${esc(mLabel(plan.month))}${plan.strategy?.theme?.name ? ` · <em style="color:var(--accent)">${esc(plan.strategy.theme.name)}</em>` : ''}</h1>
@@ -1669,7 +1670,7 @@ function vTopical(plan){
   ${tbl(['Use','Date','Occasion','Type','Relevance','Post idea','Posts',''], t.map(x => [`<input type="checkbox" data-chg="topInc" data-i="${x.i}" ${x.include ? 'checked' : ''} aria-label="Include ${esc(x.occasion)}" style="accent-color:var(--accent);width:16px;height:16px">`, `<span class="mono">${fmtD(x.date)}</span>`, `<b>${esc(x.occasion)}</b>${x.sensitive ? ' <span class="tag fb">Sensitive</span>' : ''}`, esc(x.type), `<span class="pill" style="--c:var(${rc[x.relevance] || '--s-idea'})">${esc(x.relevance)}</span>`, esc(x.idea), `<span class="mono">${has(x).length || '—'}</span>`, `<button class="btn sm" data-act="topPost" data-i="${x.i}">${has(x).length ? 'Add another' : 'Create post'}</button>`]))}`;
 }
 function vExport(plan, ps){
-  return `<div class="grid2">
+  return `${chPicker()}<div class="grid2">
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c5)"></span>Full workbook</h2><p>Excel file with calendar, content deck, design briefs, results, topical days and pillars on separate sheets. Opens in Google Sheets too.</p></div></header><div><button class="btn pri" data-act="xlsx" ${typeof XLSX === 'undefined' || !DL ? 'disabled' : ''}>Download .xlsx</button></div></section>
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Client document</h2><p>Strategy plus every post in Markdown. Paste into Google Docs or Notion, or download.</p></div></header><div class="acts"><button class="btn" data-act="md" ${DL ? '' : 'disabled'}>Download .md</button><button class="btn" data-act="copyMd">Copy text</button></div></section>
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c6)"></span>Calendar</h2><p>Tab-separated, ready to paste into Google Sheets.</p></div></header><div class="acts"><button class="btn" data-act="copyCal">Copy for Sheets</button><button class="btn" data-act="csv" ${DL ? '' : 'disabled'}>Download .csv</button></div></section>
@@ -1763,6 +1764,7 @@ function vPresent(plan, ps){
   const plan2 = {...plan, id:ui.planId};
   const pre = [['full','Full plan'],['research','Research deck'],['strategy','Strategy only'],['content','Content only']];
   return `<div class="deckwrap"><aside class="deckside">
+    ${chPicker() ? `<section class="panel" style="padding:18px">${chPicker()}</section>` : ''}
     <section class="panel" style="padding:18px"><h3>Present to the client</h3><p class="muted sm">${M.length} slides, built from this plan. Edit any post or section and the deck updates.</p>
       <div class="acts" style="flex-direction:column;align-items:stretch"><button class="btn pri" data-act="present" ${M.length ? '' : 'disabled'}>▶ Present</button><button class="btn hot" data-act="pptx" ${typeof PptxGenJS === 'undefined' || !DL || !M.length ? 'disabled' : ''}>Download PowerPoint</button>${HOSTED ? `<button class="btn" data-act="pdf" ${M.length ? '' : 'disabled'}>Save as PDF</button>` : ''}</div>
       ${typeof PptxGenJS === 'undefined' ? '<p class="muted sm">PowerPoint export is still loading or blocked.</p>' : ''}</section>
@@ -1778,7 +1780,7 @@ function startPresent(i){
 }
 function renderPresent(){
   const plan = D.plans[ui.planId]; if (!plan) return;
-  const M = deckModel({...plan, id:ui.planId}, postsOf(ui.planId)); if (!M.length) return;
+  const M = deckModel({...plan, id:ui.planId}, expPosts()); if (!M.length) return;
   pIdx = Math.max(0, Math.min(M.length - 1, pIdx));
   const el = $('#present'); el.hidden = false;
   el.innerHTML = `${slideHTML(M[pIdx], pIdx, M.length, {...plan, id:ui.planId})}<div class="pbar"><button class="btn sm" data-act="pPrev">← Prev</button><span>${pIdx + 1} / ${M.length}</span><button class="btn sm" data-act="pNext">Next →</button><button class="btn sm" data-act="pClose">Exit</button></div>`;
@@ -1786,7 +1788,7 @@ function renderPresent(){
 function movePresent(d){ pIdx += d; renderPresent(); }
 function closePresent(){ const el = $('#present'); el.hidden = true; el.innerHTML = ''; try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {} }
 function printDeck(){
-  const plan = D.plans[ui.planId]; const M = deckModel({...plan, id:ui.planId}, postsOf(ui.planId));
+  const plan = D.plans[ui.planId]; const M = deckModel({...plan, id:ui.planId}, expPosts());
   const pd = $('#printdeck'); pd.innerHTML = M.map((m, i) => slideHTML(m, i, M.length, {...plan, id:ui.planId})).join('');
   setTimeout(() => { window.print(); }, 150);
 }
@@ -1794,7 +1796,7 @@ function hx(c, fb='2F5BEA'){ let h = String(c || '').replace('#', ''); if (/^[0-
 function tint(h, t){ const n = [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); return n.map(v => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0')).join('').toUpperCase(); }
 const PALHEX = {'--c1':'2F5BEA','--c2':'FF5A5F','--c3':'FFA41B','--c4':'10B9A0','--c5':'7C5CFF','--c6':'1FA2FF'};
 async function downloadPptx(Mx, meta={}){
-  const plan = meta.plan || D.plans[ui.planId]; const ps = meta.ps || postsOf(ui.planId); const b = meta.b || D.brands[plan.brandId] || {};
+  const plan = meta.plan || D.plans[ui.planId]; const ps = meta.ps || expPosts(); const b = meta.b || D.brands[plan.brandId] || {};
   const M = Array.isArray(Mx) ? Mx : deckModel({...plan, id:ui.planId}, ps); if (!M.length) return;
   const LBL = meta.label || mLabel(plan.month);
   toast('Building PowerPoint…');
@@ -1941,7 +1943,7 @@ function designerRows(p, b){
 }
 async function downloadDesignerDeck(){
   const plan = D.plans[ui.planId]; if (!plan) return; const b = D.brands[plan.brandId] || {};
-  const ps = postsOf(ui.planId).filter(p => p.format !== 'Text').slice().sort((a, z) => str(a.date + a.time).localeCompare(str(z.date + z.time)));
+  const ps = expPosts().filter(p => p.format !== 'Text').slice().sort((a, z) => str(a.date + a.time).localeCompare(str(z.date + z.time)));
   if (!ps.length){ toast('No design posts in this plan yet'); return; }
   toast('Building designer deck…');
   try {
@@ -2474,7 +2476,16 @@ async function save(filename, data){
   try { await DL.save({filename, data}); toast('Saved'); }
   catch (e){ if (e?.code !== 'declined') toast(e?.code === 'rate_limited' ? 'A download prompt is already open' : 'Could not download this file'); }
 }
-const fname = (plan, ext) => `${str(D.brands[plan.brandId]?.name || 'plan').replace(/[^\w-]+/g,'-')}-${plan.month}.${ext}`;
+const fname = (plan, ext) => { const sel = expSel(); const tag = sel && plan === D.plans[ui.planId] ? '-' + [...sel].map(c => c.toLowerCase()).join('-') : ''; return `${str(D.brands[plan.brandId]?.name || 'plan').replace(/[^\w-]+/g,'-')}-${plan.month}${tag}.${ext}`; };
+/* platform filter for exports and the client deck (per plan) */
+const planChs = pid => CH.filter(c => postsOf(pid).some(p => p.channel === c));
+const expSel = () => { const e = ui.expCh; if (!e || e.pid !== ui.planId) return null; const all = planChs(ui.planId); return e.set.size && all.some(c => !e.set.has(c)) ? e.set : null; };
+const expPosts = () => { const sel = expSel(); return postsOf(ui.planId).filter(p => !sel || sel.has(p.channel)); };
+function chPicker(){
+  const all = planChs(ui.planId); if (all.length < 2) return '';
+  const sel = expSel(); const n = c => postsOf(ui.planId).filter(p => p.channel === c).length;
+  return `<div class="chpick"><span class="eyebrow">Platforms to include</span>${all.map(c => `<label class="chk"><input type="checkbox" data-chg="expCh" value="${esc(c)}" ${!sel || sel.has(c) ? 'checked' : ''}> ${esc(c)} <span class="muted">(${n(c)})</span></label>`).join('')}${sel ? '<button class="lnk" data-act="expAll">All platforms</button>' : ''}</div>`;
+}
 
 /* ---------- actions ---------- */
 let cT;
@@ -2487,7 +2498,8 @@ const ACT = {
   pNext: () => movePresent(1), pPrev: () => movePresent(-1), pClose: () => closePresent(),
   pptx: () => downloadPptx(),
   designerDeck: () => downloadDesignerDeck(),
-  refFindAll: () => { if (ui.refJob) return; findRefs(postsOf(ui.planId).filter(p => p.format !== 'Text' && refsOf(p).filter(r => r.img).length < 2)); },
+  expAll: () => { ui.expCh = null; renderAll(); },
+  refFindAll: () => { if (ui.refJob) return; findRefs(expPosts().filter(p => p.format !== 'Text' && refsOf(p).filter(r => r.img).length < 2)); },
   refFind: () => findRefs([D.posts[ui.postId]]),
   refDel: a => { const p = D.posts[ui.postId]; const l = refsOf(p).slice(); l.splice(+a.dataset.i, 1); patch('posts', p.id, {design:{refs:l}}); },
   refAdd: async () => {
@@ -2755,14 +2767,14 @@ const ACT = {
   delPost: () => { const id = ui.postId; ui.confirm = null; ui.postId = null; del('posts', id); toast('Post deleted'); },
   copyCaption: () => { const p = D.posts[ui.postId]; copyText([str(p.caption), str(p.compliance), str(p.hashtags)].filter(Boolean).join('\n\n')); },
   copyBrief: () => copyText(briefText(D.posts[ui.postId])),
-  copyCal: () => copyText(tsv(calRows(postsOf(ui.planId)))),
-  copyBriefs: () => copyText(postsOf(ui.planId).filter(p => p.format !== 'Text').map(briefText).join('\n\n────────────\n\n')),
-  copyMd: () => copyText(planMd(D.plans[ui.planId], postsOf(ui.planId))),
-  csv: () => save(fname(D.plans[ui.planId], 'csv'), csv(calRows(postsOf(ui.planId)))),
-  md: () => save(fname(D.plans[ui.planId], 'md'), planMd(D.plans[ui.planId], postsOf(ui.planId))),
-  briefs: () => save(fname(D.plans[ui.planId], 'txt').replace('.txt','-design-briefs.txt'), postsOf(ui.planId).filter(p => p.format !== 'Text').map(briefText).join('\n\n────────────\n\n')),
+  copyCal: () => copyText(tsv(calRows(expPosts()))),
+  copyBriefs: () => copyText(expPosts().filter(p => p.format !== 'Text').map(briefText).join('\n\n────────────\n\n')),
+  copyMd: () => copyText(planMd(D.plans[ui.planId], expPosts())),
+  csv: () => save(fname(D.plans[ui.planId], 'csv'), csv(calRows(expPosts()))),
+  md: () => save(fname(D.plans[ui.planId], 'md'), planMd(D.plans[ui.planId], expPosts())),
+  briefs: () => save(fname(D.plans[ui.planId], 'txt').replace('.txt','-design-briefs.txt'), expPosts().filter(p => p.format !== 'Text').map(briefText).join('\n\n────────────\n\n')),
   xlsx: () => {
-    const plan = D.plans[ui.planId]; const ps = postsOf(ui.planId);
+    const plan = D.plans[ui.planId]; const ps = expPosts();
     const wb = XLSX.utils.book_new();
     const add = (name, rows, w) => { const ws = XLSX.utils.aoa_to_sheet(rows); ws['!cols'] = rows[0].map((_,i) => ({wch: w?.[i] || 18})); XLSX.utils.book_append_sheet(wb, ws, name); };
     add('Calendar', calRows(ps), [11,6,7,11,10,18,38,40,18,16,18,16,14,14,11,11]);
@@ -2777,6 +2789,7 @@ const ACT = {
   rmMember: a => { ui.confirm = null; del('team', a.dataset.id); if (me === a.dataset.id){ me = ''; lsSet('mp_me', ''); } }
 };
 const CHG = {
+  expCh: t => { const all = planChs(ui.planId); const cur = expSel() ? new Set(expSel()) : new Set(all); if (t.checked) cur.add(t.value); else cur.delete(t.value); if (!cur.size){ t.checked = true; toast('Keep at least one platform'); return; } ui.expCh = {pid:ui.planId, set:cur}; renderAll(); },
   me: t => { me = t.value; lsSet('mp_me', me); renderAll(); },
   fch: t => { ui.f.ch = t.value; renderAll(); },
   fst: t => { ui.f.st = t.value; renderAll(); },
