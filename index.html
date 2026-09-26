@@ -599,6 +599,19 @@ Rules:
 - Vary hooks and openers; each post must feel different.
 - Use Indian cultural context where it fits. Be sensitive with solemn days.`;
 
+const FMT_CH = {Static:['Instagram','Facebook','LinkedIn','X','Threads','Pinterest','WhatsApp'], Carousel:['Instagram','LinkedIn','Facebook'], Reel:['Instagram','Facebook','YouTube'], Story:['Instagram','Facebook','WhatsApp'], Video:['YouTube','LinkedIn','Facebook','X'], Text:['LinkedIn','X','Threads']};
+const FMT_HINT = {Static:'Single image post', Carousel:'Swipe post, 5–8 slides', Reel:'Short vertical video, 15–45s', Story:'24-hour vertical post', Video:'Longer or landscape video', Text:'Copy-only post'};
+function fmtChoices(b, f){ const act = activeCh(b); const l = FMT_CH[f].filter(c => act.includes(c)); return l.length ? l : FMT_CH[f].filter(c => act.length ? false : true); }
+function defaultMix(b){
+  if (b.mixDefault) return b.mixDefault;
+  const wk = activeCh(b).reduce((s, c) => s + (+b.channels[c].perWeek || 0), 0);
+  const total = Math.min(60, Math.max(4, Math.round(wk * 4.3)));
+  const pct = {Reel:.35, Carousel:.25, Static:.3, Story:.1, Video:0, Text:0};
+  if (activeCh(b).includes('LinkedIn')){ pct.Text = .1; pct.Static = .2; }
+  const m = {}; FORMATS.forEach(f => { const ch = fmtChoices(b, f); m[f] = {n: ch.length ? Math.round(total * pct[f]) : 0, ch}; });
+  return m;
+}
+function mixTotal(mix){ return Object.values(mix || {}).reduce((s, v) => s + (+v.n || 0), 0); }
 function activeCh(b){ return CH.filter(c => b?.channels?.[c]?.on); }
 function brandCtx(b, max=14000){
   const a = b.audience || {}, v = b.voice || {}, br = b.brain || {}, k = br.kit || {};
@@ -669,7 +682,7 @@ TASK: Build this month's social media strategy and list the topical days.
 - objectives: 3-4 rows tied to the brand's objectives; targets are directional, write "Set with client" when unsure.
 - pillars: 4-5 pillars whose mix adds up to 100; framework is one of AIDA, PAS, Hook-Story-Offer, Before/After, Myth vs Fact, Listicle, POV, UGC-style, Founder voice, Meme format.
 - channels: one row per active channel.
-- formatMix: percentages adding to 100${o.reels ? '' : '; keep Reels and video low'}.
+- formatMix: ${o.mix ? `the team has fixed this month's mix as ${Object.entries(o.mix).filter(([,v]) => v.n > 0).map(([f,v]) => `${v.n} ${f} (${v.ch.join('/')})`).join(', ')}; express it as percentages adding to 100` : `percentages adding to 100${o.reels ? '' : '; keep Reels and video low'}`}.
 - theme: a monthly big idea plus 1-2 recurring series with a fixed cadence.
 - engagement: 4-6 concrete community/engagement tactics.
 - paid: ${o.paid ? '3 boost suggestions' : 'return []'}.
@@ -687,7 +700,17 @@ function splitCounts(b, ym){
   return {c, total};
 }
 function promptC(b, plan){
-  const {c, total} = splitCounts(b, plan.month);
+  const mixE = plan.opts.mix ? Object.entries(plan.opts.mix).filter(([,v]) => +v.n > 0) : null;
+  let {c, total} = splitCounts(b, plan.month);
+  let splitLine, chList;
+  if (mixE && mixE.length){
+    total = mixE.reduce((s, [,v]) => s + (+v.n), 0);
+    splitLine = `this exact format mix, which the team has fixed: ${mixE.map(([f,v]) => `${v.n} × ${f} (platform: ${v.ch.join(' or ')})`).join('; ')}. Each post goes on exactly one platform, chosen from that format's allowed platforms; spread posts across those platforms and use each platform's role`;
+    chList = [...new Set(mixE.flatMap(([,v]) => v.ch))];
+  } else {
+    splitLine = `this split by channel: ${Object.entries(c).map(([k,v]) => `${k} ${v}`).join(', ')}`;
+    chList = Object.keys(c);
+  }
   const st = plan.strategy || {};
   const dates = monthDays(plan.month).map(d => `${d} ${DOW[pdate(d).getDay()]}`).join(', ');
   const tdays = arr(plan.topical).filter(t => t.include).map(t => `${t.date}: ${t.occasion} — ${t.idea}`).join('\n') || 'none';
@@ -711,9 +734,9 @@ ${tdays}
 
 DATES IN ${mLabel(plan.month).toUpperCase()}: ${dates}
 
-TASK: Build the content calendar. Create exactly ${total} posts with this split by channel: ${Object.entries(c).map(([k,v]) => `${k} ${v}`).join(', ')}.
+TASK: Build the content calendar. Create exactly ${total} posts with ${splitLine}.
 Rules: spread posts evenly across the month; honour each channel's format preferences and the format mix${plan.opts.reels ? '' : '; avoid Reels and video'}; run each series on its cadence; put a post on each included topical day on the best-fit channel (these count within the split); rotate pillars by their mix; feature real products across the month ("product" field, empty for brand-level posts); no repeated topics or hooks; post times in IST, 24h.
-format must be one of: Static, Carousel, Reel, Story, Video, Text. channel must be one of: ${Object.keys(c).join(', ')}.
+format must be one of: ${mixE && mixE.length ? mixE.map(([f]) => f).join(', ') : 'Static, Carousel, Reel, Story, Video, Text'}. channel must be one of: ${chList.join(', ')}.
 
 Reply with only a JSON array of ${total} objects in this shape:
 [{"date":"YYYY-MM-DD","channel":"Instagram","format":"Reel","pillar":"","topic":"specific post title","hook":"opening line","topical":"occasion name or empty","objective":"","time":"19:00","product":""}]`;
@@ -946,6 +969,8 @@ function vPlans(b){
       <label class="f">Language<select class="in" id="npl-lang">${opts(LANGS, b.audience?.languages && LANGS.includes(b.audience.languages) ? b.audience.languages : 'English')}</select></label>
       <label class="f span2">Focus for this month <span class="hint">Launches, offers, campaigns, client asks</span><textarea class="in" id="npl-brief" rows="2">${esc(b.brain?.brief || '')}</textarea></label>
     </div>
+    ${hasCh ? (() => { const mx = defaultMix(b); const tot = mixTotal(mx); return `<div style="display:flex;flex-direction:column;gap:8px"><div class="pmeta"><h3>Content mix</h3><span class="chip" style="background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700"><b id="mx-total">${tot}</b>&nbsp;posts this month</span></div><p class="muted sm">Set how many of each format you want and where each can go. The AI plans exactly this mix and picks the best platform for every post.</p>
+      <div class="tw"><table><thead><tr><th>Format</th><th style="width:120px">Posts</th><th>Platforms it can go on</th></tr></thead><tbody>${FORMATS.map(f => { const ch = fmtChoices(b, f).length ? fmtChoices(b, f) : FMT_CH[f]; return `<tr><td><b>${f}</b><div class="muted sm">${FMT_HINT[f]}</div></td><td><input class="in" type="number" min="0" max="40" id="mx-${f}" data-chg="mxTotal" value="${esc(mx[f]?.n ?? 0)}" aria-label="${f} posts"></td><td><div class="chips" style="margin:0">${ch.map(c => `<label class="chk chip"><input type="checkbox" id="mxc-${f}-${c}" ${(mx[f]?.ch || []).includes(c) ? 'checked' : ''}> ${esc(c)}</label>`).join('')}</div></td></tr>`; }).join('')}</tbody></table></div></div>`; })() : ''}
     <div class="acts">
       <label class="chk"><input type="checkbox" id="npl-top" checked> Topical days</label>
       <label class="chk"><input type="checkbox" id="npl-reels" checked> Reel scripts</label>
@@ -1104,13 +1129,16 @@ function vDeck(plan, ps){
   const chs = [...new Set(ps.map(p => p.channel).filter(Boolean))];
   const list = ps.filter(p => (!f.ch || p.channel === f.ch) && (!f.st || p.status === f.st) && (!f.pi || p.pillar === f.pi));
   if (!ps.length) return `<div class="empty"><p>No posts yet. ${gen[ui.planId]?.running ? 'The calendar is being planned.' : 'Continue the plan or add a post.'}</p></div>`;
-  return `<div class="filters"><select class="in" data-chg="fch" aria-label="Channel">${opts(chs, f.ch, 'All channels')}</select><select class="in" data-chg="fst" aria-label="Status">${opts(STAT, f.st, 'All statuses')}</select><select class="in" data-chg="fpi" aria-label="Pillar">${opts(pillars, f.pi, 'All pillars')}</select><span class="muted sm">${list.length} of ${ps.length}</span></div>
+  const mixE = plan.opts?.mix ? Object.entries(plan.opts.mix).filter(([,v]) => +v.n > 0) : [];
+  const tracker = mixE.length ? `<section class="panel" style="padding:14px 18px"><div class="pmeta"><h3>Content mix</h3><span class="muted sm">Planned vs in this plan</span></div><div class="chips" style="margin:0">${mixE.map(([f,v]) => { const n = ps.filter(p => p.format === f).length; const ok = n === +v.n; return `<span class="chip" style="font-weight:700;${ok ? 'border-color:var(--s-approved);color:var(--s-approved)' : 'border-color:var(--s-client);color:var(--s-client)'}">${f} ${n}/${v.n}</span>`; }).join('')}${[...new Set(ps.map(p => p.channel))].map(c => `${chBadge(c)}<span class="muted sm" style="margin-right:6px">${ps.filter(p => p.channel === c).length}</span>`).join('')}</div></section>` : '';
+  return tracker + `<div class="filters"><select class="in" data-chg="fch" aria-label="Channel">${opts(chs, f.ch, 'All channels')}</select><select class="in" data-chg="fst" aria-label="Status">${opts(STAT, f.st, 'All statuses')}</select><select class="in" data-chg="fpi" aria-label="Pillar">${opts(pillars, f.pi, 'All pillars')}</select><span class="muted sm">${list.length} of ${ps.length}</span></div>
   <div class="deck">${list.map(p => { const fl = flags(p); return `<button class="post ${p.hasContent ? '' : 'unwritten'}" data-act="open" data-id="${p.id}">
     ${creative(p)}
     <div class="pb"><div class="pmeta"><span class="mono">${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</span>${stPill(p.status)}</div>
     <div class="pmeta" style="justify-content:flex-start">${chBadge(p.channel)}<span class="chip">${esc(p.format)}</span>${p.topical ? `<span class="tday">${esc(p.topical)}</span>` : ''}</div>
     <b style="font-size:14px;line-height:1.3">${esc(p.topic || 'Untitled post')}</b>
     <p class="cap">${p.hasContent ? esc(p.caption) : busy[p.id] ? 'Writing…' : 'Not written yet'}</p>
+    ${p.hasContent && (p.design?.layout || p.design?.mood) ? `<p class="sm" style="color:var(--ink-2);border-top:1px dashed var(--line);padding-top:7px"><b style="color:var(--accent)">Design ref:</b> ${esc(str(p.design.mood || p.design.layout).slice(0, 90))}</p>` : ''}
     <div class="pfoot"><span class="pil" style="--pc:${pillarColor(plan, p.pillar)}">${esc(p.pillar || 'No pillar')}</span><span>${fl.length ? `<span class="flag">${fl.length} check${fl.length > 1 ? 's' : ''}</span>` : ''}${p.round ? ` · R${p.round}` : ''}${owner(p) ? ' · ' + esc(mName(owner(p))) : ''}</span></div></div></button>`; }).join('')}</div>`;
 }
 function vCal(plan, ps){
@@ -1303,7 +1331,7 @@ function slideHTML(m, i, n, plan){
   if (m.k === 'post'){
     const p = m.post; const c = brandColors(b);
     const extra = arr(p.slides).length ? `<table class="mini"><thead><tr><th>#</th><th>Slide copy</th></tr></thead><tbody>${arr(p.slides).slice(0, 6).map((x, j) => `<tr><td>${j + 1}</td><td>${esc(x.copy)}</td></tr>`).join('')}</tbody></table>` : arr(p.script).length ? `<table class="mini"><thead><tr><th>Time</th><th>On screen</th><th>Voiceover</th></tr></thead><tbody>${arr(p.script).slice(0, 5).map(x => `<tr><td>${esc(x.t)}</td><td>${esc(x.onscreen)}</td><td>${esc(x.vo)}</td></tr>`).join('')}</tbody></table>` : '';
-    return wrap(`<div class="ey">Post ${m.n} of ${m.of}${p.pillar ? ' · ' + esc(p.pillar) : ''}</div><h2>${esc(p.topic)}</h2><div class="pgrid"><div class="pcv" style="background:${c.bg};color:${c.fg}"><span class="o" style="background:${c.ac}"></span>${p.format === 'Text' ? `<div class="hl" style="font-size:2.2cqw">${esc(p.hook)}</div>` : `<div class="hl">${esc(p.onImage?.headline || p.topic)}</div>${p.onImage?.subline ? `<div class="sl">${esc(p.onImage.subline)}</div>` : ''}${p.onImage?.cta ? `<span class="ct" style="background:${c.ac};color:${c.bg}">${esc(p.onImage.cta)}</span>` : ''}`}</div><div style="display:flex;flex-direction:column;gap:1.2cqw;min-width:0;overflow:hidden"><div class="pmeta2"><span>${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</span><span class="ch" style="background:${CHC[p.channel] || '#555'}">${esc(p.channel)}</span><span>${esc(p.format)}</span>${p.topical ? `<span>${esc(p.topical)}</span>` : ''}</div>${p.hook ? `<div class="hook">${esc(p.hook)}</div>` : ''}<div class="capt" style="${extra ? '-webkit-line-clamp:5' : ''}">${esc(p.caption)}</div>${p.hashtags ? `<div class="tags">${esc(p.hashtags)}</div>` : ''}${extra}</div></div>`);
+    return wrap(`<div class="ey">Post ${m.n} of ${m.of}${p.pillar ? ' · ' + esc(p.pillar) : ''}</div><h2>${esc(p.topic)}</h2><div class="pgrid"><div class="pcv" style="background:${c.bg};color:${c.fg}"><span class="o" style="background:${c.ac}"></span>${p.format === 'Text' ? `<div class="hl" style="font-size:2.2cqw">${esc(p.hook)}</div>` : `<div class="hl">${esc(p.onImage?.headline || p.topic)}</div>${p.onImage?.subline ? `<div class="sl">${esc(p.onImage.subline)}</div>` : ''}${p.onImage?.cta ? `<span class="ct" style="background:${c.ac};color:${c.bg}">${esc(p.onImage.cta)}</span>` : ''}`}</div><div style="display:flex;flex-direction:column;gap:1.2cqw;min-width:0;overflow:hidden"><div class="pmeta2"><span>${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</span><span class="ch" style="background:${CHC[p.channel] || '#555'}">${esc(p.channel)}</span><span>${esc(p.format)}</span>${p.topical ? `<span>${esc(p.topical)}</span>` : ''}</div>${p.hook ? `<div class="hook">${esc(p.hook)}</div>` : ''}<div class="capt" style="-webkit-line-clamp:${extra ? 4 : 7}">${esc(p.caption)}</div>${p.hashtags ? `<div class="tags">${esc(p.hashtags)}</div>` : ''}${extra}${(p.design?.layout || p.design?.mood) ? `<div style="background:#F3F5FB;border-radius:1cqw;padding:1cqw 1.2cqw;font-size:1.1cqw;line-height:1.45"><b style="color:var(--sc1);text-transform:uppercase;letter-spacing:.08em;font-size:1cqw">Design reference</b><br>${esc([p.design.layout, p.design.mood, p.design.elements].filter(Boolean).join(' · ').slice(0, 260))}${p.design.refSearch ? `<br><span style="color:#7A8199">Look up: ${esc(p.design.refSearch)}</span>` : ''}</div>` : ''}</div></div>`);
   }
   return '';
 }
@@ -1319,7 +1347,7 @@ function vPresent(plan, ps){
     <section class="panel" style="padding:18px"><h3>Deck type</h3><div class="acts">${pre.map(([k, l]) => `<button class="btn sm ${DECK_PRESETS[k].length === ui.deckSec.size && DECK_PRESETS[k].every(x => ui.deckSec.has(x)) ? 'pri' : ''}" data-act="deckPreset" data-k="${k}">${l}</button>`).join('')}</div>
       <h3 style="margin-top:6px">Sections</h3><div class="secs">${DECK_SECS.map(([k, l]) => `<label><input type="checkbox" data-chg="dsec" value="${k}" ${ui.deckSec.has(k) ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div></section>
   </aside>
-  <div class="slides">${M.length ? M.map((m, i) => `<div class="sl-wrap"><div class="sl-cap"><span>Slide ${i + 1}</span><button class="lnk" data-act="present" data-i="${i}" style="font-size:12px">Present from here</button></div>${slideHTML(m, i, M.length, plan2)}</div>`).join('') : '<div class="empty"><p>Nothing to show yet. Generate the plan or tick some sections.</p></div>'}</div></div>`;
+  <div class="slides">${M.length ? M.map((m, i) => `<div class="sl-wrap"><div class="sl-cap"><span>Slide ${i + 1}${m.k === 'post' ? ` · ${esc(m.post.channel)} ${esc(m.post.format)}` : ''}</span><span class="acts">${m.k === 'post' ? `<button class="lnk" data-act="open" data-id="${m.post.id}" style="font-size:12px">Edit post</button>` : ''}<button class="lnk" data-act="present" data-i="${i}" style="font-size:12px">Present from here</button></span></div>${slideHTML(m, i, M.length, plan2)}</div>`).join('') : '<div class="empty"><p>Nothing to show yet. Generate the plan or tick some sections.</p></div>'}</div></div>`;
 }
 let pIdx = 0;
 function startPresent(i){
@@ -1399,8 +1427,9 @@ async function downloadPptx(){
         sl.addText(`${fmtD(p.date)}${p.time ? ' · ' + p.time : ''}   |   ${p.channel} ${p.format}${p.topical ? '   |   ' + p.topical : ''}`, {x:RX, y:1.55, w:RW, h:0.35, fontFace:F, fontSize:11, bold:true, color:ACC});
         if (p.hook) sl.addText(str(p.hook), {x:RX, y:1.95, w:RW, h:0.75, fontFace:F, fontSize:16, bold:true, color:INK, valign:'top'});
         const extra = arr(p.slides).length ? [['#','Slide copy']].concat(arr(p.slides).slice(0, 6).map((x, j) => [String(j + 1), str(x.copy)])) : arr(p.script).length ? [['Time','On screen','Voiceover']].concat(arr(p.script).slice(0, 5).map(x => [str(x.t), str(x.onscreen), str(x.vo)])) : null;
-        sl.addText(str(p.caption) + (p.hashtags ? '\n\n' + p.hashtags : ''), {x:RX, y:2.75, w:RW, h:extra ? 1.95 : 4.1, fontFace:F, fontSize:extra ? 10.5 : 12.5, color:'333A52', valign:'top', fit:'shrink'});
-        if (extra) sl.addTable(extra.map((r, j) => r.map(c => ({text:c, options:j ? {} : {bold:true, fill:{color:'F3F5FB'}}}))), {x:RX, y:4.8, w:RW, fontFace:F, fontSize:8, color:'252C45', border:{type:'solid', pt:0.5, color:'E6E9F2'}, margin:0.04, colW:extra[0].length === 2 ? [0.4, RW - 0.4] : [0.8, (RW - 0.8) / 2, (RW - 0.8) / 2]});
+        sl.addText(str(p.caption) + (p.hashtags ? '\n\n' + p.hashtags : ''), {x:RX, y:2.75, w:RW, h:extra ? 1.95 : 3.35, fontFace:F, fontSize:extra ? 10.5 : 12.5, color:'333A52', valign:'top', fit:'shrink'});
+        if (p.design?.layout || p.design?.mood) sl.addText([{text:'DESIGN REFERENCE  ', options:{bold:true, color:ACC, fontSize:8.5, charSpacing:1}}, {text:[p.design.layout, p.design.mood].filter(Boolean).join(' · ').slice(0, 220) + (p.design.refSearch ? '  |  Look up: ' + p.design.refSearch : ''), options:{color:'444C66', fontSize:9}}], {x:RX, y:extra ? 6.45 : 6.2, w:RW, h:0.5, fontFace:F, valign:'top', fit:'shrink'});
+        if (extra) sl.addTable(extra.map((r, j) => r.map(c => ({text:c, options:j ? {} : {bold:true, fill:{color:'F3F5FB'}}}))), {x:RX, y:4.8, w:RW, fontFace:F, fontSize:8, color:'252C45', border:{type:'solid', pt:0.5, color:'E6E9F2'}, margin:0.04, rowH:0.2, colW:extra[0].length === 2 ? [0.4, RW - 0.4] : [0.8, (RW - 0.8) / 2, (RW - 0.8) / 2]});
       }
     });
     const out = await pptx.write({outputType:'arraybuffer'});
@@ -1656,7 +1685,7 @@ async function runPlan(pid){
       step(pid, `Adding ${list.length} posts to the calendar…`);
       await pool(list, 4, async s => {
         const id = uid();
-        await put('posts', id, newPost(b, pid, {id, date:s.date, time:str(s.time) || '19:00', channel:CH.includes(s.channel) ? s.channel : activeCh(b)[0], format:FORMATS.includes(s.format) ? s.format : 'Static', pillar:str(s.pillar), topic:str(s.topic), hook:str(s.hook), topical:str(s.topical), objective:str(s.objective), product:str(s.product)}));
+        await put('posts', id, newPost(b, pid, {id, date:s.date, time:str(s.time) || '19:00', format:FORMATS.includes(s.format) ? s.format : 'Static', channel:(() => { const f = FORMATS.includes(s.format) ? s.format : 'Static'; const allow = plan.opts.mix?.[f]?.ch; return CH.includes(s.channel) && (!allow || !allow.length || allow.includes(s.channel)) ? s.channel : (allow && allow[0]) || activeCh(b)[0]; })(), pillar:str(s.pillar), topic:str(s.topic), hook:str(s.hook), topical:str(s.topical), objective:str(s.objective), product:str(s.product)}));
       });
     }
     const todo = postsOf(pid).filter(p => !p.hasContent);
@@ -1884,7 +1913,13 @@ const ACT = {
     const id = `${ui.brandId}__${month}`;
     if (D.plans[id]){ ui.view = 'plan'; ui.planId = id; ui.tab = 'deck'; renderAll(); window.scrollTo(0,0); if (D.plans[id].status !== 'ready' || postsOf(id).some(p => !p.hasContent)){ toast('Picking up this month\'s plan where it stopped'); runPlan(id); } else toast('This month already has a plan'); return; }
     const reuse = $('#npl-reuse')?.checked ? plansOf(ui.brandId)[0]?.[1] : null;
-    const o = {region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
+    const b0 = D.brands[ui.brandId]; const mix = {}; let bad = '';
+    FORMATS.forEach(f => { const n = Math.max(0, Math.min(40, parseInt($('#mx-' + f)?.value || '0', 10) || 0)); const ch = FMT_CH[f].filter(c => $(`#mxc-${f}-${c}`)?.checked); mix[f] = {n, ch}; if (n > 0 && !ch.length) bad = f; });
+    if (bad){ toast(`Pick at least one platform for ${bad}`); return; }
+    if (!mixTotal(mix)){ toast('Set how many posts you want'); return; }
+    if (mixTotal(mix) > 60){ toast('Keep it to 60 posts or fewer per month'); return; }
+    patch('brands', ui.brandId, {mixDefault:mix});
+    const o = {mix, region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
     const doc = {brandId:ui.brandId, month, opts:o, status:'generating', createdAt:Date.now(), createdBy:me};
     if (reuse){ doc.snapshot = reuse.snapshot; doc.research = reuse.research; }
     await put('plans', id, doc);
@@ -1991,6 +2026,7 @@ const CHG = {
   role: t => patch('team', t.dataset.id, {role:t.value}),
   ck: t => patch('posts', ui.postId, {checklist:{[t.dataset.k]:t.checked}}),
   obj: t => { const b = D.brands[ui.brandId]; let l = arr(b.objectives?.list).slice(); if (t.checked){ if (!l.includes(t.value)) l.push(t.value); } else l = l.filter(x => x !== t.value); const part = {objectives:{list:l}}; if (!l.includes(b.objectives?.primary)) part.objectives.primary = l[0] || ''; patch('brands', ui.brandId, part); },
+  mxTotal: () => { const t = FORMATS.reduce((s, f) => s + (parseInt($('#mx-' + f)?.value || '0', 10) || 0), 0); const el = $('#mx-total'); if (el) el.textContent = t; },
   dsec: t => { if (!ui.deckSec) ui.deckSec = new Set(DECK_PRESETS.full); if (t.checked) ui.deckSec.add(t.value); else ui.deckSec.delete(t.value); renderAll(); },
   topInc: t => { const plan = D.plans[ui.planId]; const l = clone(arr(plan.topical)); if (l[+t.dataset.i]) l[+t.dataset.i].include = t.checked; patch('plans', ui.planId, {topical:l}); }
 };
