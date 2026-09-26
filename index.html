@@ -7,48 +7,48 @@
 <title>Digimuse Content Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
-  --bg:#F4F7FD; --surface:#FFFFFF; --surface-2:#F6F8FD; --ink:#0B1020; --ink-2:#3B4560; --muted:#6B7590;
-  --line:#E2E7F2; --line-2:#CBD4E6;
-  --side:#0B1020; --side-2:#1A2338; --side-ink:#F2F5FC; --side-muted:#8D98B4;
-  --accent:#1F5BFF; --accent-ink:#FFFFFF; --accent-soft:#E8EEFF;
-  --c1:#1F5BFF; --c2:#0B1020; --c3:#4F8BFF; --c4:#8DB4FF; --c5:#0A3BC2; --c6:#0098F0;
-  --c1s:#E8EEFF; --c2s:#ECEEF3; --c3s:#EAF1FF; --c4s:#EEF4FF; --c5s:#E4EBFA; --c6s:#E2F4FE;
-  --s-idea:#7D869E; --s-copy:#1F5BFF; --s-design:#6B47DC; --s-client:#C77A00; --s-changes:#D92D3A; --s-approved:#138A52; --s-live:#0A7F8C;
-  --warn:#D92D3A; --bar:#1F5BFF;
-  --shadow:0 1px 2px rgba(11,16,32,.05),0 10px 30px rgba(11,16,32,.07);
-  --fd:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F6F7F9; --ink:#0A0A0B; --ink-2:#3A3D46; --muted:#7A7E8A;
+  --line:#E8E8EA; --line-2:#D4D6DC;
+  --side:#0A0A0B; --side-2:#1B1C21; --side-ink:#F4F4F1; --side-muted:#8B8E97;
+  --accent:#0F2350; --accent-ink:#FFFFFF; --accent-soft:#EEF1F7;
+  --c1:#0F2350; --c2:#0A0A0B; --c3:#34466E; --c4:#8C96AB; --c5:#1C3A7A; --c6:#5B6B8C;
+  --c1s:#F4F5F8; --c2s:#F4F5F8; --c3s:#F4F5F8; --c4s:#F1F3F8; --c5s:#F4F5F8; --c6s:#F4F5F8;
+  --s-idea:#8A8F9C; --s-copy:#2B4C8C; --s-design:#5A4A8A; --s-client:#94681E; --s-changes:#A23B3B; --s-approved:#2F6B4F; --s-live:#2D5F6B;
+  --warn:#A23B3B; --bar:#0F2350;
+  --shadow:0 1px 2px rgba(10,10,11,.04),0 12px 32px rgba(10,10,11,.06);
+  --fd:'Instrument Serif','Iowan Old Style','Palatino Linotype',Georgia,serif;
   --fb:'Instrument Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   --fm:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-    --bg:#080B14; --surface:#111726; --surface-2:#172033; --ink:#EEF2FA; --ink-2:#BCC6DA; --muted:#8490A8;
-    --line:#212B40; --line-2:#2E3A54;
-    --side:#05070D; --side-2:#161E31; --side-ink:#EEF2FA; --side-muted:#8390AC;
-    --accent:#5C8DFF; --accent-ink:#06091A; --accent-soft:#18264A;
-    --c1:#5C8DFF; --c2:#E6EBF5; --c3:#7FA8FF; --c4:#A9C5FF; --c5:#3D6BE8; --c6:#33B5FF;
-    --c1s:#18264A; --c2s:#1C2335; --c3s:#172845; --c4s:#1A2640; --c5s:#152144; --c6s:#10304A;
-    --s-idea:#9AA3B8; --s-copy:#6E9BFF; --s-design:#A184F5; --s-client:#F0AE3A; --s-changes:#FF6B72; --s-approved:#3CC67F; --s-live:#3BC0C8;
-    --warn:#FF6B72; --bar:#5C8DFF;
-    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 30px rgba(0,0,0,.3);
+    --bg:#0A0B0E; --surface:#111318; --surface-2:#171A21; --ink:#F2F2EF; --ink-2:#C2C5CE; --muted:#868A95;
+    --line:#22252D; --line-2:#30343F;
+    --side:#050507; --side-2:#17181D; --side-ink:#F2F2EF; --side-muted:#868A95;
+    --accent:#9DB2E3; --accent-ink:#0A0B0E; --accent-soft:#1A2238;
+    --c1:#9DB2E3; --c2:#F2F2EF; --c3:#7F93C0; --c4:#5E6A86; --c5:#B8C8EE; --c6:#6F7FA6;
+    --c1s:#161A24; --c2s:#161A24; --c3s:#161A24; --c4s:#161A24; --c5s:#161A24; --c6s:#161A24;
+    --s-idea:#9A9FAC; --s-copy:#8FA9E6; --s-design:#B3A5E0; --s-client:#D8AE62; --s-changes:#E38A8A; --s-approved:#7FC3A0; --s-live:#7FC0CC;
+    --warn:#E38A8A; --bar:#9DB2E3;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.35);
   }
 }
 :root[data-theme="dark"]{
     color-scheme:dark;
-  --bg:#080B14; --surface:#111726; --surface-2:#172033; --ink:#EEF2FA; --ink-2:#BCC6DA; --muted:#8490A8;
-  --line:#212B40; --line-2:#2E3A54;
-  --side:#05070D; --side-2:#161E31; --side-ink:#EEF2FA; --side-muted:#8390AC;
-  --accent:#5C8DFF; --accent-ink:#06091A; --accent-soft:#18264A;
-  --c1:#5C8DFF; --c2:#E6EBF5; --c3:#7FA8FF; --c4:#A9C5FF; --c5:#3D6BE8; --c6:#33B5FF;
-  --c1s:#18264A; --c2s:#1C2335; --c3s:#172845; --c4s:#1A2640; --c5s:#152144; --c6s:#10304A;
-  --s-idea:#9AA3B8; --s-copy:#6E9BFF; --s-design:#A184F5; --s-client:#F0AE3A; --s-changes:#FF6B72; --s-approved:#3CC67F; --s-live:#3BC0C8;
-  --warn:#FF6B72; --bar:#5C8DFF;
-  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 30px rgba(0,0,0,.3);
+  --bg:#0A0B0E; --surface:#111318; --surface-2:#171A21; --ink:#F2F2EF; --ink-2:#C2C5CE; --muted:#868A95;
+  --line:#22252D; --line-2:#30343F;
+  --side:#050507; --side-2:#17181D; --side-ink:#F2F2EF; --side-muted:#868A95;
+  --accent:#9DB2E3; --accent-ink:#0A0B0E; --accent-soft:#1A2238;
+  --c1:#9DB2E3; --c2:#F2F2EF; --c3:#7F93C0; --c4:#5E6A86; --c5:#B8C8EE; --c6:#6F7FA6;
+  --c1s:#161A24; --c2s:#161A24; --c3s:#161A24; --c4s:#161A24; --c5s:#161A24; --c6s:#161A24;
+  --s-idea:#9A9FAC; --s-copy:#8FA9E6; --s-design:#B3A5E0; --s-client:#D8AE62; --s-changes:#E38A8A; --s-approved:#7FC3A0; --s-live:#7FC0CC;
+  --warn:#E38A8A; --bar:#9DB2E3;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.35);
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -345,6 +345,76 @@ tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
   .hero{padding:20px 18px}
   .rv{grid-template-columns:1fr}
 }
+/* ===== luxury layer: white, black, deep navy ===== */
+h1,h2,h3,h4{font-weight:400;letter-spacing:-.005em}
+h1{font-size:42px;line-height:1.05;font-weight:400}
+h2{font-size:23px;line-height:1.15}
+h3{font-family:var(--fb);font-size:14px;font-weight:600;letter-spacing:.01em}
+h1 em,h2 em{font-style:italic}
+.eyebrow{letter-spacing:.16em;font-weight:600;font-size:10.5px}
+.logo .wm{font-weight:400;font-size:32px;letter-spacing:-.01em;font-style:italic}
+.logo .wm span{color:var(--side-muted)}
+.logo small{text-transform:uppercase;letter-spacing:.22em;font-size:10px}
+.spectrum{height:1px;border-radius:0;background:var(--side-2)} .spectrum i{display:none}
+.nav button,.bitem{border-radius:6px;font-weight:500}
+.nav button.on,.bitem.on{box-shadow:inset 2px 0 0 var(--side-ink)}
+.nav .ico{background:transparent!important;border:1px solid var(--side-2);color:var(--side-ink);font-size:10px;border-radius:50%}
+.nav .count{background:var(--side-ink);color:var(--side);font-weight:700}
+.lnk{color:var(--side-ink);text-decoration:underline;text-underline-offset:3px;font-weight:500}
+.bav{border-radius:50%;font-family:var(--fb);font-weight:600;letter-spacing:.02em}
+.me{border-radius:8px;background:transparent;border:1px solid var(--side-2)}
+.hero{border-radius:4px;padding:34px 36px;border:1px solid var(--line)}
+.hero::before{background:var(--accent);height:3px}
+.hero.brand::before{width:3px;height:100%}
+.hero .blob{opacity:.05}
+.panel{border-radius:4px;padding:24px 26px}
+.panel h2 .dotc{background:var(--accent);width:6px;height:6px;border-radius:50%;vertical-align:5px;margin-right:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:20px 22px}
+.stat i{background:var(--accent);height:2px;width:22px;border-radius:0;margin-bottom:10px}
+.stat b{font-weight:400;font-size:46px;letter-spacing:-.01em}
+.stat span{text-transform:uppercase;letter-spacing:.12em;font-size:10.5px;color:var(--muted)}
+.btn{border-radius:6px;font-weight:600;letter-spacing:.01em}
+.btn.pri{box-shadow:none}
+.btn.pri:hover{filter:none;background:var(--ink);border-color:var(--ink)}
+.in{border-radius:6px}
+.tabs{border-radius:6px;padding:3px;background:var(--surface-2);border-color:var(--line)}
+.tabs button{border-radius:4px;font-weight:600;letter-spacing:.01em}
+.tabs button.on{background:var(--accent);color:var(--accent-ink)}
+.tw{border-radius:4px}
+th{letter-spacing:.12em;font-size:10.5px;font-weight:600;color:var(--muted);background:var(--surface)}
+.chip{border-radius:99px;background:transparent}
+.chb{background:transparent;color:var(--ink);border:1px solid var(--line-2);border-radius:99px;font-weight:600;letter-spacing:.04em}
+.meter{border-radius:0;height:3px;border:0;background:var(--line)}
+.meter i{background:var(--accent)}
+.bar{border-radius:0;height:6px;gap:2px}
+.banner{border-radius:4px}
+.post{border-radius:4px}
+.post:hover{transform:none}
+.cv .deco{background:transparent;border:1px solid var(--cac);opacity:.35;width:150px;height:150px;right:-40px;top:-40px}
+.cv .deco2{display:none}
+.cv .hl{font-weight:400;font-size:26px;line-height:1.02;letter-spacing:-.005em}
+.cv .ct{background:transparent;color:var(--cfg);border:1px solid var(--cfg);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:10.5px}
+.cv .fm{letter-spacing:.14em}
+.phone{border-radius:10px}
+.phone .cv .hl{font-size:34px}
+.tday{background:transparent;border-left:2px solid var(--accent);border-radius:0;padding:1px 6px;color:var(--accent);font-weight:600}
+.pc{background:var(--surface-2);box-shadow:inset 2px 0 0 var(--accent);border-radius:3px}
+.pc:hover{background:var(--accent-soft)}
+.calw,.col,.kc,.sec,.li,.idea,.lu,.rvc,.empty,.answer,.report,.var{border-radius:4px}
+.col{border-top-width:2px}
+.dw-h::before{background:var(--accent)!important;height:3px}
+.sec.ai{background:var(--surface-2);border-color:var(--line)}
+.idea{border-left:2px solid var(--accent)}
+.built span{background:var(--surface-2);border:1px solid var(--line)}
+.hooks button{border-radius:4px}
+.lu .d{font-weight:400;font-size:26px}
+.ring b{font-weight:400;font-size:48px}
+.pil::before{border-radius:50%}
+#login{background:var(--side)}
+#login .box{border-radius:4px;padding:40px 36px}
+#login .wm{font-weight:400;font-style:italic;font-size:40px}
+#login .wm span{color:var(--muted)}
+#toast{border-radius:4px}
 </style>
 
 </head>
@@ -422,7 +492,7 @@ const linkOK = u => /^https?:\/\//i.test(u||'');
 function lum(hex){ let h = hex.replace('#',''); if (h.length === 3) h = h.split('').map(x => x+x).join(''); const [r,g,b] = [0,2,4].map(i => parseInt(h.substr(i,2),16)/255).map(c => c <= .03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4)); return .2126*r + .7152*g + .0722*b; }
 function brandColors(b){
   const k = kitColors(b);
-  if (!k.length) return {bg:'#1F5BFF', fg:'#FFFFFF', ac:'#0B1020', solid:null};
+  if (!k.length) return {bg:'#0F2350', fg:'#FFFFFF', ac:'#FFFFFF', solid:null};
   const sorted = k.slice().sort((x,y) => lum(x) - lum(y));
   const bg = k[0], L = lum(bg);
   const fg = L > .45 ? (sorted[0] !== bg ? sorted[0] : '#1A1033') : (sorted[sorted.length-1] !== bg && lum(sorted[sorted.length-1]) > .6 ? sorted[sorted.length-1] : '#FFFFFF');
@@ -744,7 +814,7 @@ function vSide(){
   return `<div class="logo"><div class="wm">digimuse<span>.</span></div><small>Content Planner</small>${spec}</div>
   <nav class="nav" aria-label="Main">${nb('home','Dashboard','◆','--c1')}${nb('tasks','My tasks','✓','--c5', me ? myTasks().length : 0)}${nb('team','Team','●','--c6')}${nb('live','Go live guide','↗','--c3')}</nav>
   <div><div class="slabel">Brands <button class="lnk" data-act="newBrand">+ New brand</button></div>
-    <div class="blist">${sortedBrands().map(([id,b]) => { const c = brandColors(b); return `<button class="bitem ${ui.brandId===id && (ui.view==='brand'||ui.view==='plan') ? 'on' : ''}" data-act="goBrand" data-id="${id}"><span class="bav" style="background:${c.solid || '#1F5BFF'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name))}</span>${esc(b.name)}</button>`; }).join('') || '<p class="sm" style="padding:0 10px;color:var(--side-muted)">No brands yet</p>'}</div></div>
+    <div class="blist">${sortedBrands().map(([id,b]) => { const c = brandColors(b); return `<button class="bitem ${ui.brandId===id && (ui.view==='brand'||ui.view==='plan') ? 'on' : ''}" data-act="goBrand" data-id="${id}"><span class="bav" style="background:${c.solid || '#0F2350'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name))}</span>${esc(b.name)}</button>`; }).join('') || '<p class="sm" style="padding:0 10px;color:var(--side-muted)">No brands yet</p>'}</div></div>
   <div class="me"><label for="meSel">You are</label><select id="meSel" class="in" data-chg="me">${opts(team, me, 'Pick your name')}</select></div>
   ${DB ? '' : `<p class="mode">${HOSTED ? 'Connecting…' : 'Shared saving is off in this view, so changes stay in this tab only.'}</p>`}`;
 }
@@ -768,7 +838,7 @@ function vHome(){
     const lt = ps.filter(isLate).length;
     const nd = ps.filter(p => curDue(p)).map(curDue).sort()[0];
     const h = health(b).score; const c = brandColors(b);
-    return `<tr class="click" data-act="goBrand" data-id="${id}"><td><div style="display:flex;gap:10px;align-items:center"><span class="bav" style="width:30px;height:30px;border-radius:9px;background:${c.solid || '#1F5BFF'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name))}</span><div><b>${esc(b.name)}</b><div class="muted sm">${esc(b.industry || '')}</div></div></div></td><td>${pl ? esc(mLabel(pl[1].month)) + `<div class="muted sm">${ps.length} posts</div>` : '<span class="muted">No plan yet</span>'}</td><td>${ps.length ? progressBar(ps) : ''}</td><td class="num ${lt ? 'late' : ''}">${lt}</td><td class="num">${nd ? shortD(nd) : '—'}</td><td style="min-width:110px"><div class="meter"><i style="width:${h}%"></i></div><span class="muted sm">${h}%</span></td></tr>`;
+    return `<tr class="click" data-act="goBrand" data-id="${id}"><td><div style="display:flex;gap:10px;align-items:center"><span class="bav" style="width:30px;height:30px;border-radius:9px;background:${c.solid || '#0F2350'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name))}</span><div><b>${esc(b.name)}</b><div class="muted sm">${esc(b.industry || '')}</div></div></div></td><td>${pl ? esc(mLabel(pl[1].month)) + `<div class="muted sm">${ps.length} posts</div>` : '<span class="muted">No plan yet</span>'}</td><td>${ps.length ? progressBar(ps) : ''}</td><td class="num ${lt ? 'late' : ''}">${lt}</td><td class="num">${nd ? shortD(nd) : '—'}</td><td style="min-width:110px"><div class="meter"><i style="width:${h}%"></i></div><span class="muted sm">${h}%</span></td></tr>`;
   });
   const team = Object.entries(D.team);
   const teamRows = team.map(([id,m]) => { const open = all.filter(p => owner(p) === id && group(p.status) !== 'done'); return [`<b>${esc(m.name)}</b>`, esc(m.role), `<span class="mono">${open.length}</span>`, `<span class="mono ${open.filter(isLate).length ? 'late' : ''}">${open.filter(isLate).length}</span>`, `<span class="mono">${open.filter(p => { const d = curDue(p); return d && d >= td && d <= wk; }).length}</span>`]; });
@@ -947,7 +1017,7 @@ function vPlan(){
     case 'export': body = vExport(plan, ps); break;
     default: body = vDeck(plan, ps);
   }
-  return `<section class="hero brand" style="--bc:${c.solid || 'var(--c1)'}"><span class="blob" aria-hidden="true"></span><div><div class="crumb"><button data-act="go" data-v="home">Dashboard</button>›<button data-act="goBrand" data-id="${plan.brandId}">${esc(b.name)}</button>›<span>Plan</span></div><h1>${esc(mLabel(plan.month))}${plan.strategy?.theme?.name ? ` · <span style="color:var(--accent)">${esc(plan.strategy.theme.name)}</span>` : ''}</h1>
+  return `<section class="hero brand" style="--bc:${c.solid || 'var(--c1)'}"><span class="blob" aria-hidden="true"></span><div><div class="crumb"><button data-act="go" data-v="home">Dashboard</button>›<button data-act="goBrand" data-id="${plan.brandId}">${esc(b.name)}</button>›<span>Plan</span></div><h1>${esc(mLabel(plan.month))}${plan.strategy?.theme?.name ? ` · <em style="color:var(--accent)">${esc(plan.strategy.theme.name)}</em>` : ''}</h1>
     <div class="chips"><span class="chip"><b>${esc(b.name)}</b></span><span class="chip">${ps.length} posts</span><span class="chip">${esc(plan.opts?.region || '')}</span><span class="chip">${esc(plan.opts?.lang || '')}</span></div></div>
     <div class="acts" style="flex-direction:column;align-items:flex-end">${ps.length ? progressBar(ps) : ''}<button class="btn pri" data-act="addPost">+ Add post</button></div></section>
   ${banner(plan, ps)}
@@ -1051,7 +1121,7 @@ function vStrategy(plan){
   const s = plan.strategy;
   if (!s) return `<div class="empty"><p>Strategy hasn't been written yet.</p></div>`;
   const fm = arr(s.formatMix);
-  return `<section class="panel" style="background:linear-gradient(135deg,var(--c1s),var(--c2s))"><header><div><p class="eyebrow">Monthly theme</p><h2 style="font-size:24px">${esc(s.theme?.name || '')}</h2></div></header><p style="font-size:15px">${esc(s.theme?.bigIdea || '')}</p>
+  return `<section class="panel" style="background:var(--surface-2)"><header><div><p class="eyebrow">Monthly theme</p><h2 style="font-size:34px"><em>${esc(s.theme?.name || '')}</em></h2></div></header><p style="font-size:15px">${esc(s.theme?.bigIdea || '')}</p>
     ${arr(s.theme?.series).length ? tbl(['Series','Cadence','Format','What it is'], arr(s.theme.series).map(x => [`<b>${esc(x.name)}</b>`, esc(x.cadence), esc(x.format), esc(x.description)])) : ''}</section>
   <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c2)"></span>Objectives</h2></header>${tbl(['Objective','KPI','Target','How we measure'], arr(s.objectives).map(o => [`<b>${esc(o.objective)}</b>`, esc(o.kpi), esc(o.target), esc(o.measure)]))}</section>
   <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c3)"></span>Content pillars</h2></header>${tbl(['Pillar','Mix','Purpose','Framework','Example topics'], arr(s.pillars).map((p,i) => [`<span class="pil" style="--pc:var(${PAL[i % PAL.length]})"><b>${esc(p.name)}</b></span>`, `<span class="mono">${esc(p.mix)}%</span>`, esc(p.purpose), esc(p.framework), esc(arr(p.examples).join(' · '))]))}</section>
