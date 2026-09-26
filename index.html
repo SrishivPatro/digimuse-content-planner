@@ -293,6 +293,8 @@ tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
 .report{white-space:pre-wrap;font-size:13.5px;line-height:1.6;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 
 #login{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:var(--side);padding:16px}
+#pwbox{position:fixed;inset:0;z-index:91;display:grid;place-items:center;background:rgba(15,30,74,.45);padding:16px}#pwbox .box{background:var(--surface);border-radius:20px;padding:26px;width:min(420px,100%);display:flex;flex-direction:column;gap:12px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.whoami{display:flex;flex-direction:column;gap:6px}.whoami b{font-size:14px}.whoami .acts{gap:6px}.tempbox{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;background:#FFF8E6;border:1px solid #FFE0A3;margin:0 0 12px}.tempbox code{font-size:16px;font-weight:700;letter-spacing:.04em}
 #login .box{background:var(--surface);border-radius:20px;padding:30px 28px;width:min(400px,100%);display:flex;flex-direction:column;gap:14px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
 #login .wm{font-family:var(--fd);font-weight:800;font-size:30px;letter-spacing:-.03em;line-height:1}
 #login .wm span{color:var(--accent)}
@@ -502,7 +504,8 @@ th{background:var(--surface-2)}
 <div id="tip" hidden></div>
 <div id="present" hidden></div>
 <div id="printdeck" aria-hidden="true"></div>
-<div id="login" hidden><form class="box" id="loginForm"><div style="display:flex;gap:12px;align-items:center"><div style="display:flex;flex-direction:column;gap:6px"><span id="lg-logo"></span><p class="muted" style="font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase">Content Planner</p></div></div><label class="f">Team password<input class="in" type="password" id="lg-pw" autocomplete="current-password" required></label><p class="err" id="lg-err" hidden></p><button class="btn pri" type="submit" style="justify-content:center">Sign in</button></form></div>
+<div id="login" hidden><form class="box" id="loginForm"><div style="display:flex;gap:12px;align-items:center"><div style="display:flex;flex-direction:column;gap:6px"><span id="lg-logo"></span><p class="muted" style="font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase">Content Planner</p></div></div><label class="f">Username<input class="in" id="lg-user" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="e.g. priya"></label><label class="f">Password<input class="in" type="password" id="lg-pw" autocomplete="current-password" required></label><p class="err" id="lg-err" hidden></p><button class="btn pri" type="submit" style="justify-content:center">Sign in</button><p class="muted sm">No login yet? Ask your admin to create one for you on the Team page.</p></form></div>
+<div id="pwbox" hidden><form class="box" id="pwForm"><h2 style="font-size:20px" id="pw-title">Change your password</h2><p class="muted sm" id="pw-note"></p><label class="f">Current password<input class="in" type="password" id="pw-old" autocomplete="current-password" required></label><label class="f">New password <span class="hint">at least 8 characters</span><input class="in" type="password" id="pw-new" autocomplete="new-password" minlength="8" required></label><label class="f">Repeat new password<input class="in" type="password" id="pw-new2" autocomplete="new-password" minlength="8" required></label><p class="err" id="pw-err" hidden></p><div class="acts"><button class="btn pri" type="submit">Save password</button><button class="btn ghost" type="button" id="pw-cancel">Cancel</button></div></form></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -1022,7 +1025,7 @@ function vSide(){
   <nav class="nav" aria-label="Main">${nb('home','Dashboard','home','--c1')}${nb('tasks','My tasks','tasks','--c2', me ? myTasks().length : 0)}${nb('team','Team','team','--c4')}${nb('live','Go live guide','rocket','--c3')}</nav>
   <div><div class="slabel">Brands <button class="lnk" data-act="newBrand">+ New brand</button></div>
     <div class="blist">${sortedBrands().map(([id,b]) => { const c = brandColors(b); return `<button class="bitem ${ui.brandId===id && (ui.view==='brand'||ui.view==='plan') ? 'on' : ''}" data-act="goBrand" data-id="${id}"><span class="bav" style="background:${c.solid || '#2F5BEA'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name || 'Untitled'))}</span>${esc(str(b.name).trim() || 'Untitled brand')}</button>`; }).join('') || '<p class="sm" style="padding:0 10px;color:var(--side-muted)">No brands yet</p>'}</div></div>
-  <div class="me"><label for="meSel">You are</label><select id="meSel" class="in" data-chg="me">${opts(team, me, 'Pick your name')}</select></div>
+  ${HOSTED && ui.user ? `<div class="me whoami"><label>Signed in as</label><b>${esc(ui.user.name)}${ui.user.role === 'admin' ? ' <span class="chip">Admin</span>' : ''}</b>${ui.user.teamId && D.team[ui.user.teamId] ? '' : `<select id="meSel" class="in" data-chg="me" aria-label="Link to team member">${opts(team, me, 'Which team member are you?')}</select>`}<div class="acts">${ui.user.owner ? '' : '<button class="lnk" data-act="openPw">Change password</button>'}<button class="lnk" data-act="logout">Sign out</button></div></div>` : `<div class="me"><label for="meSel">You are</label><select id="meSel" class="in" data-chg="me">${opts(team, me, 'Pick your name')}</select></div>`}
   ${DB ? '' : `<p class="mode">${HOSTED ? 'Connecting…' : 'Shared saving is off in this view, so changes stay in this tab only.'}</p>`}`;
 }
 
@@ -2130,12 +2133,31 @@ function vTeam(){
   <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c6)"></span>Members</h2></header>
     ${tbl(['Name','Role','Open tasks','Overdue',''], m.map(([id,x]) => { const open = all.filter(p => owner(p) === id && group(p.status) !== 'done'); return [`<b>${esc(x.name)}</b>`, `<select class="in" data-chg="role" data-id="${id}" aria-label="Role">${opts(ROLES, x.role)}</select>`, `<span class="mono">${open.length}</span>`, `<span class="mono ${open.filter(isLate).length ? 'late' : ''}">${open.filter(isLate).length}</span>`, confirmBtn('rmm-' + id, 'Remove', 'rmMember', `data-id="${id}"`)]; }))}
     <div class="rowline"><label class="f">Name<input class="in" id="nm-name" placeholder="Full name"></label><label class="f" style="flex:0 0 190px">Role<select class="in" id="nm-role">${opts(ROLES, 'Copywriter')}</select></label><button class="btn pri" data-act="addMember">Add member</button></div>
+  </section>
+  ${vLogins(m)}`;
+}
+function vLogins(m){
+  if (!HOSTED) return '';
+  if (ui.user?.role !== 'admin') return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Your login</h2><p>Signed in as <b>${esc(ui.user?.name || '')}</b> (${esc(ui.user?.username || '')}). Only admins can add or reset logins.</p></div><button class="btn sm" data-act="openPw">Change password</button></header></section>`;
+  if (ui.logins == null && !ui.loginsBusy) setTimeout(loadLogins, 0);
+  const L = arr(ui.logins); const teamOpts = [['', 'Not linked']].concat(m.map(([id, x]) => [id, x.name]));
+  const when = t => t ? new Date(t).toLocaleDateString() : 'Never';
+  return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Logins</h2><p>Everyone signs in with their own username and password. New logins get a temporary password they must change on first sign-in. Link each login to a team member so My tasks and assignments follow them.</p></div></header>
+    ${ui.user?.legacy || (ui.userCount === 0 && !L.length) ? `<div class="tempbox"><span>⚠️ The team still signs in with the shared password. As soon as you create the first login below, the shared password stops working for everyone. You can always get back in with username <b>owner</b> and the TEAM_PASSWORD from Vercel.</span></div>` : ''}
+    ${ui.tempPw ? `<div class="tempbox"><span>Temporary password for <b>${esc(ui.tempPw.u)}</b>:</span><code>${esc(ui.tempPw.pw)}</code><button class="btn sm" data-act="copyTemp">Copy login details</button><button class="lnk" data-act="hideTemp">Done</button><span class="muted sm" style="flex-basis:100%">Share it privately (WhatsApp or in person). It is shown only once.</span></div>` : ''}
+    ${ui.loginsBusy && !L.length ? '<p class="muted sm"><span class="spin"></span> Loading logins…</p>' : tbl(['Name','Username','Access','Team member','Last sign-in','Status',''], L.map(u => [`<b>${esc(u.name)}</b>${u.mustChange ? '<br><span class="muted sm">Temporary password</span>' : ''}`, `<span class="mono">${esc(u.username)}</span>`,
+      `<select class="in" data-chg="lgRole" data-u="${esc(u.username)}" aria-label="Access" ${u.username === ui.user.username ? 'disabled' : ''}>${opts([['member','Member'],['admin','Admin']], u.role)}</select>`,
+      `<select class="in" data-chg="lgTeam" data-u="${esc(u.username)}" aria-label="Team member">${opts(teamOpts, u.teamId)}</select>`, `<span class="muted sm">${when(u.lastLogin)}</span>`, u.disabled ? '<span class="chip">Disabled</span>' : '<span class="chip" style="color:var(--c4)">Active</span>',
+      `<div class="acts"><button class="btn sm" data-act="lgReset" data-u="${esc(u.username)}">Reset password</button>${u.username === ui.user.username ? '' : `<button class="btn sm ghost" data-act="lgToggle" data-u="${esc(u.username)}" data-d="${u.disabled ? '' : '1'}">${u.disabled ? 'Enable' : 'Disable'}</button>${ui.confirm === 'lg' + u.username ? `<button class="btn sm danger" data-act="lgDelete" data-u="${esc(u.username)}">Yes, delete</button>` : `<button class="btn sm ghost" data-act="ask2" data-k="lg${esc(u.username)}">Delete</button>`}`}</div>`]))}
+    <div class="rowline"><label class="f">Full name<input class="in" id="lg-name" placeholder="Priya Sharma"></label><label class="f" style="flex:0 0 190px">Username<input class="in" id="lg-un" placeholder="priya" autocapitalize="none" spellcheck="false"></label><label class="f" style="flex:0 0 140px">Access<select class="in" id="lg-role">${opts([['member','Member'],['admin','Admin']], 'member')}</select></label><label class="f" style="flex:0 0 190px">Team member<select class="in" id="lg-team">${opts([['__new', 'Add as new member']].concat(teamOpts.slice(1)), '__new')}</select></label><button class="btn pri" data-act="lgCreate">Create login</button></div>
+    <p class="muted sm">Admins can manage logins. Members can use everything else. Disabling or resetting a login signs that person out everywhere.</p>
   </section>`;
 }
+async function loginDo(body, msg){ try { const j = await usersApi(body); if (j.tempPassword) ui.tempPw = {u:body.username, pw:j.tempPassword}; if (msg) toast(msg); await loadLogins(); } catch (e){ toast(e.message); } }
 function vLive(){
   const steps = HOSTED ? [
-    ['Share the link and password','Send your team this page\'s address and the team password. It works in any browser, on laptop or phone. Bookmark it.','--c1'],
-    ['Each person picks their name','In the sidebar, "You are" sets whose tasks show up under My tasks. It is remembered on each person\'s own device.','--c5'],
+    ['Give everyone their own login','On the Team page, create a login for each person. Share the link, their username and the temporary password privately. They set their own password on first sign-in.','--c1'],
+    ['Link logins to team members','Link each login to a team member so My tasks, assignments and approvals follow the person on any device.','--c5'],
     ['Add the team first','Go to Team and add everyone with their role, then assign people per brand under Profile & team.','--c6'],
     ['AI runs on the agency key','All AI writing uses the Gemini or Claude key set in Vercel. Watch usage in Google AI Studio or the Anthropic console.','--c3'],
     ['Changes sync every 30 seconds','Everyone sees the same brands and posts. If two people edit the same field at once, the last save wins, so split work by post.','--c2'],
@@ -2620,6 +2642,20 @@ const ACT = {
   pptx: () => downloadPptx(),
   designerDeck: () => downloadDesignerDeck(),
   labKind: a => { ui.labKind = a.dataset.k; renderAll(); },
+  openPw: () => openPw(false),
+  logout: async () => { try { await fetch('/api/login', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({logout:true})}); } catch (e){} ui.user = null; ui.logins = null; lsSet('mp_me', ''); me = ''; showLogin(); },
+  lgCreate: async () => {
+    const name = ($('#lg-name')?.value || '').trim(); const un = ($('#lg-un')?.value || '').trim().toLowerCase(); let teamId = $('#lg-team')?.value || '';
+    if (!name || !un){ toast('Add a name and a username'); return; }
+    if (teamId === '__new'){ teamId = uid(); await put('team', teamId, {name, role:'Copywriter', createdAt:Date.now()}); }
+    try { const j = await usersApi({action:'create', name, username:un, role:$('#lg-role').value, teamId}); ui.tempPw = {u:j.user.username, pw:j.tempPassword}; ui.userCount = (ui.userCount || 0) + 1; ['#lg-name','#lg-un'].forEach(x => { const el = $(x); if (el){ el.value = ''; el.blur(); } }); toast('Login created'); await loadLogins(); }
+    catch (e){ toast(e.message); }
+  },
+  lgReset: a => loginDo({action:'reset', username:a.dataset.u}, 'Password reset. Share the new temporary password.'),
+  lgToggle: a => loginDo({action:'update', username:a.dataset.u, disabled:!!a.dataset.d}, a.dataset.d ? 'Login disabled' : 'Login enabled'),
+  lgDelete: a => { ui.confirm = null; loginDo({action:'delete', username:a.dataset.u}, 'Login deleted'); },
+  copyTemp: () => copyText(`Digimuse Content Planner\n${location.origin}\nUsername: ${ui.tempPw.u}\nTemporary password: ${ui.tempPw.pw}\nYou'll be asked to set your own password when you sign in.`),
+  hideTemp: () => { ui.tempPw = null; renderAll(); },
   runLab: () => runLab(),
   labIdea: a => { const r = D.reports[a.dataset.id]; const i = +a.dataset.i; const x = labIdea(r, i); if (!x) return; const b = D.brands[r.brandId]; patch('brands', r.brandId, {ideas:arr(b.ideas).concat([x])}); patch('reports', a.dataset.id, {saved:[...new Set(arr(r.saved).concat([i]))]}); toast('Saved to Ideas bank'); },
   labAllIdeas: a => { const r = D.reports[a.dataset.id]; const saved = new Set(arr(r.saved)); const idx = arr(r.data?.ideas).map((_, i) => i).filter(i => !saved.has(i)); if (!idx.length){ toast('All ideas are already saved'); return; } const b = D.brands[r.brandId]; patch('brands', r.brandId, {ideas:arr(b.ideas).concat(idx.map(i => labIdea(r, i)).filter(Boolean))}); patch('reports', a.dataset.id, {saved:[...saved, ...idx]}); toast(`${idx.length} ideas saved to Ideas bank`); },
@@ -2928,7 +2964,9 @@ const ACT = {
 const CHG = {
   labPick: t => { ui.labId = t.value; renderAll(); },
   expCh: t => { const all = planChs(ui.planId); const cur = expSel() ? new Set(expSel()) : new Set(all); if (t.checked) cur.add(t.value); else cur.delete(t.value); if (!cur.size){ t.checked = true; toast('Keep at least one platform'); return; } ui.expCh = {pid:ui.planId, set:cur}; renderAll(); },
-  me: t => { me = t.value; lsSet('mp_me', me); renderAll(); },
+  me: t => { me = t.value; lsSet('mp_me', me); if (HOSTED && ui.user && !ui.user.owner){ usersApi({action:'linkMe', teamId:me}).then(j => { ui.user = j.user; sched(); }).catch(() => {}); } renderAll(); },
+  lgRole: t => loginDo({action:'update', username:t.dataset.u, role:t.value}, 'Role updated'),
+  lgTeam: t => loginDo({action:'update', username:t.dataset.u, teamId:t.value}, 'Linked'),
   fch: t => { ui.f.ch = t.value; renderAll(); },
   fst: t => { ui.f.st = t.value; renderAll(); },
   fpi: t => { ui.f.pi = t.value; renderAll(); },
@@ -3046,7 +3084,30 @@ Reply with only JSON: {"description":"","offerings":"","products":[{"name":"","w
 }
 
 /* ---------- hosted (Vercel) adapters ---------- */
-function showLogin(msg){ const lg = $('#lg-logo'); if (lg && !lg.innerHTML) lg.innerHTML = LOGO_IMG; const l = $('#login'); l.hidden = false; const e = $('#lg-err'); e.hidden = !msg; e.textContent = msg || ''; setTimeout(() => $('#lg-pw')?.focus(), 30); }
+function showLogin(msg){ const lg = $('#lg-logo'); if (lg && !lg.innerHTML) lg.innerHTML = LOGO_IMG; const l = $('#login'); l.hidden = false; const e = $('#lg-err'); e.hidden = !msg; e.textContent = msg || ''; setTimeout(() => ($('#lg-user')?.value ? $('#lg-pw') : $('#lg-user'))?.focus(), 30); }
+async function loadMe(){
+  if (!HOSTED) return;
+  try {
+    const r = await fetch('/api/users', {credentials:'same-origin', cache:'no-store'});
+    if (r.status === 401){ showLogin(); return; }
+    const j = await r.json(); ui.user = j.user || null; ui.userCount = +j.users || 0;
+    if (ui.user?.teamId){ me = ui.user.teamId; lsSet('mp_me', me); }
+    if (ui.user?.mustChange) openPw(true);
+    sched();
+  } catch (e){}
+}
+function openPw(forced){
+  $('#pwbox').hidden = false; $('#pw-err').hidden = true; ['#pw-old','#pw-new','#pw-new2'].forEach(x => $(x).value = '');
+  $('#pw-title').textContent = forced ? 'Set your own password' : 'Change your password';
+  $('#pw-note').textContent = forced ? 'You signed in with a temporary password. Choose your own to continue.' : 'Other devices will be signed out.';
+  $('#pw-cancel').hidden = !!forced; setTimeout(() => $('#pw-old').focus(), 30);
+}
+async function usersApi(body){
+  const r = await fetch('/api/users', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify(body)});
+  if (r.status === 401){ showLogin(); throw {message:'Please sign in again'}; }
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw {message:j.error || 'Something went wrong'}; return j;
+}
+async function loadLogins(){ if (!HOSTED || ui.user?.role !== 'admin') return; ui.loginsBusy = true; try { ui.logins = (await usersApi({action:'list'})).users; } catch (e){ toast(e.message); } ui.loginsBusy = false; sched(); }
 function parseLoose(t){
   const s = String(t || '').trim();
   try { return JSON.parse(s); } catch (e) {}
@@ -3114,13 +3175,23 @@ const hostedDL = { save: async ({filename, data}) => { const blob = data instanc
 let hostedDB = null;
 $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const pw = $('#lg-pw').value;
+  const pw = $('#lg-pw').value; const un = $('#lg-user').value.trim();
   try {
-    const r = await fetch('/api/login', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({password:pw})});
-    if (!r.ok){ const j = await r.json().catch(() => ({})); showLogin(j.error || 'Wrong password'); return; }
-    $('#login').hidden = true; $('#lg-pw').value = ''; hostedDB?.refresh();
+    const r = await fetch('/api/login', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({username:un, password:pw})});
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok){ showLogin(j.error || 'Wrong username or password'); return; }
+    $('#login').hidden = true; $('#lg-pw').value = ''; ui.logins = null; hostedDB?.refresh(); await loadMe();
   } catch (err){ showLogin('Could not reach the server. Try again.'); }
 });
+
+$('#pwForm').addEventListener('submit', async e => {
+  e.preventDefault(); const err = $('#pw-err');
+  const o = $('#pw-old').value, n = $('#pw-new').value, n2 = $('#pw-new2').value;
+  if (n !== n2){ err.hidden = false; err.textContent = 'The new passwords do not match'; return; }
+  try { const j = await usersApi({action:'changePassword', old:o, password:n}); ui.user = j.user; $('#pwbox').hidden = true; toast('Password changed'); sched(); }
+  catch (x){ err.hidden = false; err.textContent = x.message; }
+});
+$('#pw-cancel').addEventListener('click', () => { $('#pwbox').hidden = true; });
 
 /* ---------- boot ---------- */
 renderAll();
@@ -3131,7 +3202,7 @@ renderAll();
     const [a, sm, dl] = await Promise.all([c.use('db').catch(() => null), c.use('sample').catch(() => null), c.use('downloads').catch(() => null)]);
     db = a; S = sm; DL = dl;
   } else if (HOSTED){
-    hostedDB = db = httpDB(); S = hostedAI; DL = hostedDL;
+    hostedDB = db = httpDB(); S = hostedAI; DL = hostedDL; loadMe();
   } else return;
   if (db){
     DB = db;

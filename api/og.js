@@ -55,7 +55,7 @@ async function check(url, withImage){
 
 export default async function handler(req, res){
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
-  if (!authed(req)) return deny(res);
+  if (!(await authed(req))) return deny(res);
   const urls = [...new Set((Array.isArray(req.body?.urls) ? req.body.urls : []).map(String))].slice(0, 24);
   const withImage = !!req.body?.images;
   const results = [];

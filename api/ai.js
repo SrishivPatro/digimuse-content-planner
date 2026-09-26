@@ -2,7 +2,7 @@ import { authed, deny } from './_lib.js';
 
 export default async function handler(req, res){
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
-  if (!authed(req)) return deny(res);
+  if (!(await authed(req))) return deny(res);
   const { prompt, tier = 'default', json = false, search = false } = req.body || {};
   if (!prompt || typeof prompt !== 'string') return res.status(400).json({ error: 'Missing prompt' });
   const provider = (process.env.AI_PROVIDER || (process.env.GEMINI_API_KEY ? 'gemini' : process.env.ANTHROPIC_API_KEY ? 'claude' : '')).toLowerCase();

@@ -22,7 +22,7 @@ Internal social media planning tool for the Digimuse team.
    | Name | Value |
    |---|---|
    | `GEMINI_API_KEY` | From aistudio.google.com/apikey |
-   | `TEAM_PASSWORD` | The password your team will sign in with |
+   | `TEAM_PASSWORD` | Owner password. Sign in with username `owner` and this password, then create a personal login for each person on the Team page. |
    | `GEMINI_MODEL` *(optional)* | Leave empty to use Google's latest Flash model. If Google retires a model, the app switches to the replacement automatically. |
    | `META_ACCESS_TOKEN` + `META_IG_USER_ID` *(optional, free)* | Real Instagram competitor data (followers, likes, comments, views) through Instagram's official Business Discovery API. Setup below. |
 | `APIFY_TOKEN` *(optional, paid)* | Only if you later want automated LinkedIn posts. Not needed: LinkedIn posts can be pasted in the Competitors tab. |
@@ -31,7 +31,15 @@ Internal social media planning tool for the Digimuse team.
    | `CLAUDE_MODEL` *(optional)* | Defaults to `claude-sonnet-5` |
 
 4. **Redeploy** (Deployments → ⋯ → Redeploy) so the new variables load.
-5. Share the URL and password with the team.
+5. Sign in as `owner`, open **Team → Logins** and create a login for each person. Share the link, their username and the temporary password privately. They set their own password on first sign-in.
+
+### Logins
+
+- Every person has their own username and password (stored hashed with scrypt, never in the synced data).
+- Admins create, reset, disable and delete logins. Resetting or disabling signs that person out everywhere.
+- 8 wrong passwords lock that username for 15 minutes.
+- `owner` + `TEAM_PASSWORD` always works as the break-glass admin login. Changing `TEAM_PASSWORD` in Vercel signs the owner out everywhere.
+- Optional `SESSION_SECRET` variable: set a long random string to sign session cookies with your own secret.
 
 ## How it's built
 
@@ -40,7 +48,8 @@ Internal social media planning tool for the Digimuse team.
 - `api/db.js`: saves, updates and deletes records.
 - `api/ai.js`: sends prompts to Gemini or Claude. Keys never reach the browser.
 - `api/og.js`: checks design reference links (Pinterest, Behance, etc.) really open and returns their preview image for the designer deck.
-- `api/login.js`: team password sign-in (30-day cookie).
+- `api/login.js`: sign-in and sign-out (30-day signed session cookie).
+- `api/users.js`: personal logins: create, reset, disable, change password.
 - `api/bench.js`: pulls competitors' recent Instagram and LinkedIn posts through Apify.
 - `api/scrape.js`: imports a brand's products from its website (Shopify and WooCommerce stores directly; any other site is read and the AI picks out products and services).
 

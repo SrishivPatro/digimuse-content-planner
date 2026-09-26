@@ -65,7 +65,7 @@ async function linkedin(c, since){
 
 export default async function handler(req, res){
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
-  if (!authed(req)) return deny(res);
+  if (!(await authed(req))) return deny(res);
   const { competitors = [], days = 30, check } = req.body || {};
   const hasMeta = !!(META_TOKEN && META_IG);
   if (check){

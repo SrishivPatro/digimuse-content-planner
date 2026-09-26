@@ -4,7 +4,7 @@ const ID = /^[A-Za-z0-9_\-.~:@+]{1,200}$/;
 
 export default async function handler(req, res){
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
-  if (!authed(req)) return deny(res);
+  if (!(await authed(req))) return deny(res);
   const { op, col, id, data } = req.body || {};
   if (!COLS.includes(col) || !ID.test(id || '')) return res.status(400).json({ error: 'Bad request' });
   const key = PREFIX + col;

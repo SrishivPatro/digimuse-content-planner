@@ -2,7 +2,7 @@ import { authed, deny, pipeline, redis, COLS, PREFIX } from './_lib.js';
 
 export default async function handler(req, res){
   res.setHeader('Cache-Control', 'no-store');
-  if (!authed(req)) return deny(res);
+  if (!(await authed(req))) return deny(res);
   try {
     const v = String((await redis(['GET', PREFIX + 'ver'])) ?? '0');
     if (req.query.v != null && String(req.query.v) === v) return res.status(200).json({ same: true, v });

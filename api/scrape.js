@@ -71,7 +71,7 @@ function jsonld(html){
 
 export default async function handler(req, res){
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
-  if (!authed(req)) return deny(res);
+  if (!(await authed(req))) return deny(res);
   let u;
   try { u = new URL(/^https?:\/\//i.test(req.body?.url || '') ? req.body.url : 'https://' + (req.body?.url || '')); } catch (e) { return res.status(400).json({ error: 'That website address looks wrong' }); }
   if (!/^https?:$/.test(u.protocol) || PRIVATE.test(u.hostname) || !u.hostname.includes('.')) return res.status(400).json({ error: 'That website address looks wrong' });
