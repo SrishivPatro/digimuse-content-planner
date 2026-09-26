@@ -455,6 +455,20 @@ th{background:var(--surface-2)}
 .ms-pop input{accent-color:var(--accent);width:15px;height:15px;flex:none}
 .ms-pop .ms-h{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700;padding:6px 8px 2px}
 .tw.vis{overflow:visible}
+.modes{display:inline-flex;gap:4px;padding:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;flex-wrap:wrap}
+.modes label{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:9px;cursor:pointer;font-weight:700;font-size:13px;color:var(--ink-2)}
+.modes input{accent-color:var(--accent)}
+.modes label:has(input:checked){background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
+.week{display:grid;grid-template-columns:repeat(7,minmax(138px,1fr));gap:8px;overflow-x:auto;padding-bottom:6px}
+.dayc{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:8px;min-width:138px}
+.dayc > header{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13px}
+.slot{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--chc,var(--accent));border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:5px}
+.slot select,.slot input{font-size:12px;padding:5px 7px;border-radius:7px}
+.slot .top{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.slot .x{background:none;border:0;cursor:pointer;color:var(--muted);font-size:15px;line-height:1;padding:2px 4px}
+.slot .x:hover{color:var(--warn)}
+[draggable="true"].dragging{opacity:.45}
+.post.drop-on,.pc.drop-on,.sl-wrap.drop-on{outline:3px dashed var(--accent);outline-offset:3px}
 @media (max-width:760px){.tw.vis{overflow-x:auto}}
 .mxcell{display:flex;flex-direction:column;gap:6px;min-width:200px}
 @media print{
@@ -793,6 +807,36 @@ format must be one of: ${mixE && mixE.length ? mixE.map(([f]) => f).join(', ') :
 Reply with only a JSON array of ${total} objects in this shape:
 [{"date":"YYYY-MM-DD","channel":"Instagram","format":"Reel","pillar":"","topic":"specific post title","hook":"opening line","topical":"occasion name or empty","objective":"","time":"19:00","product":""}]`;
 }
+function promptC2(b, plan, slots){
+  const st = plan.strategy || {};
+  const tdays = arr(plan.topical).filter(t => t.include).map(t => `${t.date}: ${t.occasion} — ${t.idea}`).join('\n') || 'none';
+  const ideas = arr(b.ideas).filter(i => !i.used).slice(0, 15).map(i => '- ' + i.text).join('\n');
+  return `${PRE}
+
+${brandCtx(b, 6000)}
+
+STRATEGY:
+Theme: ${st.theme?.name || ''} — ${st.theme?.bigIdea || ''}
+Pillars: ${arr(st.pillars).map(p => `${p.name} (${p.framework}): ${p.purpose}`).join(' | ')}
+Series: ${arr(st.theme?.series).map(s => `${s.name} — ${s.cadence}: ${s.description}`).join(' | ') || 'none'}
+Channel roles: ${arr(st.channels).map(x => `${x.channel}: ${x.role}; best times ${x.bestTimes}`).join(' | ')}
+${arr(plan.opts.hero).length ? 'HERO PRODUCTS (feature most, in priority order): ' + plan.opts.hero.map(h => `${h.name}${h.note ? ' — must say: ' + h.note : ''}`).join(' | ') : ''}
+${plan.creative?.references?.length ? 'CREATIVE REFERENCES TO BORROW FROM: ' + plan.creative.references.slice(0, 10).map(r => `${r.brand}: ${r.piece} → ${r.borrow}`).join(' | ') : ''}
+${ideas ? 'TEAM IDEAS BANK (use the strong ones):\n' + ideas : ''}
+
+INCLUDED TOPICAL DAYS:
+${tdays}
+
+The team has fixed the schedule. Every slot's date, platform and format are final. "pillar": "choose" and "product": "choose" mean you pick the best fit; otherwise keep what is given ("brand-level" means no product).
+
+SLOTS:
+${JSON.stringify(slots.map((s, i) => ({i, date:s.date, day:DOW[pdate(s.date).getDay()], channel:s.channel, format:s.format, pillar:s.pillar || 'choose', product:s.product === '__brand' ? 'brand-level' : (s.product || 'choose')})))}
+
+TASK: For every slot write a specific post idea: topic (a concrete idea, not a category), opening hook, objective, and the topical day if the slot's date matches one. Run recurring series on their cadence when they fit a slot. Spread products and pillars sensibly across the month, and never repeat a topic or hook. Suggest a post time in IST (24h) where none is given.
+
+Reply with only a JSON array with one object per slot, in order:
+[{"i":0,"topic":"","hook":"","objective":"","topical":"","pillar":"","product":"","time":"19:00"}]`;
+}
 function promptD(b, plan, posts, instr){
   const st = plan?.strategy || {};
   const used = Object.values(D.posts).filter(p => p.planId === plan?.id && p.hook && !posts.some(x => x.id === p.id)).map(p => p.hook).slice(0, 40);
@@ -1030,7 +1074,10 @@ function vPlans(b){
       <label class="f">Language<select class="in" id="npl-lang">${opts(LANGS, b.audience?.languages && LANGS.includes(b.audience.languages) ? b.audience.languages : 'English')}</select></label>
       <label class="f span2">Focus for this month <span class="hint">Launches, offers, campaigns, client asks</span><textarea class="in" id="npl-brief" rows="2">${esc(b.brain?.brief || '')}</textarea></label>
     </div>
-    ${hasCh ? (() => { const mx = defaultMix(b); const tot = mixTotal(mx); return `<div style="display:flex;flex-direction:column;gap:8px"><div class="pmeta"><h3>Content mix</h3><span class="chip" style="background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700"><b id="mx-total">${tot}</b>&nbsp;posts this month</span></div><p class="muted sm">Set how many of each format you want and where each can go. The AI plans exactly this mix and picks the best platform for every post.</p>
+    ${hasCh ? (() => { const mx = defaultMix(b); const tot = mixTotal(mx); const mode = ui.planMode || b.planMode || 'mix';
+      return `<div style="display:flex;flex-direction:column;gap:8px"><h3>How should posts be placed?</h3><div class="modes"><label><input type="radio" name="npl-mode" value="mix" data-chg="planMode" ${mode === 'mix' ? 'checked' : ''}> Content mix: I set the counts, AI picks the days</label><label><input type="radio" name="npl-mode" value="schedule" data-chg="planMode" ${mode === 'schedule' ? 'checked' : ''}> Weekly schedule: I pick what goes on each day</label></div></div>
+      <div id="mode-sched" style="display:flex;flex-direction:column;gap:8px" ${mode === 'schedule' ? '' : 'hidden'}><h3>Weekly posting schedule</h3><p class="muted sm">Add posts to each weekday with format, platform, pillar, product and time. This sets your frequency and split, and repeats every week of the month. The AI keeps every slot exactly where you put it and writes the ideas.</p><div id="sched-box">${schedHTML(b)}</div></div>
+      <div id="mode-mix" style="display:flex;flex-direction:column;gap:8px" ${mode === 'mix' ? '' : 'hidden'}><div class="pmeta"><h3>Content mix</h3><span class="chip" style="background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700"><b id="mx-total">${tot}</b>&nbsp;posts this month</span></div><p class="muted sm">Set how many of each format you want and where each can go. The AI plans exactly this mix and picks the best platform for every post.</p>
       <div class="tw vis"><table><thead><tr><th>Format</th><th style="width:110px">Posts</th><th>Platforms it can go on</th><th>Products & pillars in focus</th></tr></thead><tbody>${FORMATS.map(f => { const ch = fmtChoices(b, f).length ? fmtChoices(b, f) : FMT_CH[f]; return `<tr><td><b>${f}</b><div class="muted sm">${FMT_HINT[f]}</div></td><td><input class="in" type="number" min="0" max="40" id="mx-${f}" data-chg="mxTotal" value="${esc(mx[f]?.n ?? 0)}" aria-label="${f} posts"></td><td><div class="chips" style="margin:0">${ch.map(c => `<label class="chk chip"><input type="checkbox" id="mxc-${f}-${c}" ${(mx[f]?.ch || []).includes(c) ? 'checked' : ''}> ${esc(c)}</label>`).join('')}</div></td><td><div class="mxcell">${multiSel('msp-' + f, 'product', [['__brand','Brand-level, no product']].concat(arr(b.brain?.products).slice(0, 200).map(x => [x.name, x.name])), fmtProducts(mx[f]))}${arr(b.pillars).length ? multiSel('msl-' + f, 'pillar', arr(b.pillars).map(x => [x.name, x.name]), arr(mx[f]?.pillars)) : ''}</div></td></tr>`; }).join('')}</tbody></table></div></div>`; })() : ''}
     ${hasCh ? vPlanPillars(b) : ''}
     ${hasCh ? vPlanHero(b) : ''}
@@ -1048,6 +1095,45 @@ function vPlans(b){
   <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c1)"></span>Plans</h2></header>
     <div class="tw"><table><thead><tr><th>Month</th><th>Status</th><th>Posts</th><th>Progress</th><th>Approved</th></tr></thead><tbody>${rows.join('') || '<tr><td colspan="5" class="muted">No plans yet.</td></tr>'}</tbody></table></div></section>`;
 }
+const WK = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const WKL = {Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday',Sun:'Sunday'};
+const wkOf = d => WK[(pdate(d).getDay() + 6) % 7];
+function defaultSched(b){
+  if (b.scheduleDefault) return clone(b.scheduleDefault);
+  const ig = activeCh(b).includes('Instagram') ? 'Instagram' : activeCh(b)[0] || 'Instagram';
+  const li = activeCh(b).includes('LinkedIn');
+  const s = {Mon:[{format:'Carousel', channel:ig}], Tue:[{format:'Reel', channel:ig}], Wed:[{format:'Static', channel:ig}], Thu:[{format:'Reel', channel:ig}], Fri:[{format:'Carousel', channel:ig}], Sat:[{format:'Story', channel:ig}], Sun:[]};
+  if (li){ s.Tue.push({format:'Text', channel:'LinkedIn'}); s.Thu.push({format:'Carousel', channel:'LinkedIn'}); }
+  return s;
+}
+function slotHTML(b, day, i, sl){
+  const chs = (fmtChoices(b, sl.format).length ? fmtChoices(b, sl.format) : FMT_CH[sl.format] || CH);
+  const ch = chs.includes(sl.channel) ? sl.channel : chs[0];
+  const id = `sc-${day}-${i}`;
+  return `<div class="slot" style="--chc:${CHC[ch] || 'var(--accent)'}"><div class="top"><select class="in" id="${id}-f" data-chg="scFmt" aria-label="Format">${opts(FORMATS, sl.format)}</select><button class="x" data-act="scRm" data-day="${day}" data-i="${i}" aria-label="Remove slot">×</button></div>
+    <select class="in" id="${id}-c" aria-label="Platform">${opts(chs, ch)}</select>
+    <select class="in" id="${id}-p" aria-label="Pillar">${opts([['','Any pillar']].concat(arr(b.pillars).map(x => [x.name, x.name])), sl.pillar || '')}</select>
+    <select class="in" id="${id}-r" aria-label="Product">${opts([['','Any product'],['__brand','Brand-level']].concat(arr(b.brain?.products).slice(0, 200).map(x => [x.name, x.name])), sl.product || '')}</select>
+    <input class="in" id="${id}-t" value="${esc(sl.time || '')}" placeholder="Time, e.g. 19:00" aria-label="Time"></div>`;
+}
+function readSched(){
+  const out = {}; WK.forEach(d => { out[d] = []; let i = 0; while ($(`#sc-${d}-${i}-f`)){ out[d].push({format:$(`#sc-${d}-${i}-f`).value, channel:$(`#sc-${d}-${i}-c`).value, pillar:$(`#sc-${d}-${i}-p`).value, product:$(`#sc-${d}-${i}-r`).value, time:$(`#sc-${d}-${i}-t`).value.trim()}); i++; } });
+  return out;
+}
+function schedCounts(sched, ym){
+  const days = /^\d{4}-\d{2}$/.test(ym || '') ? monthDays(ym) : [];
+  const perWeek = WK.reduce((n, d) => n + arr(sched[d]).length, 0);
+  const month = days.reduce((n, d) => n + arr(sched[wkOf(d)]).length, 0);
+  const byF = {}; days.forEach(d => arr(sched[wkOf(d)]).forEach(sl => byF[sl.format] = (byF[sl.format] || 0) + 1));
+  return {perWeek, month, byF};
+}
+function schedHTML(b){
+  const sc = ui.sched || (ui.sched = defaultSched(b));
+  const c = schedCounts(sc, $('#npl-month')?.value || nextMonth());
+  return `<div class="pmeta"><div class="chips" style="margin:0"><span class="chip" style="font-weight:700;border-color:var(--accent);color:var(--accent)">${c.perWeek} posts a week</span><span class="chip" style="font-weight:700">${c.month} this month</span>${Object.entries(c.byF).map(([f,n]) => `<span class="chip">${f} ${n}</span>`).join('')}</div><div class="acts"><button class="btn sm" data-act="scCopy">Copy Monday to all weekdays</button><button class="btn sm ghost" data-act="scClear">Clear week</button></div></div>
+  <div class="week">${WK.map(d => `<div class="dayc"><header><span>${WKL[d]}</span><span class="muted mono">${arr(sc[d]).length}</span></header>${arr(sc[d]).map((sl, i) => slotHTML(b, d, i, sl)).join('')}<button class="btn sm" data-act="scAdd" data-day="${d}">+ Add post</button></div>`).join('')}</div>`;
+}
+function paintSched(){ const box = $('#sched-box'); const b = D.brands[ui.brandId]; if (box && b) box.innerHTML = schedHTML(b); }
 function vPlanPillars(b){
   const P = arr(b.pillars);
   if (!P.length) return `<div style="display:flex;flex-direction:column;gap:6px"><h3>Content pillars</h3><p class="muted sm">No pillars saved for this brand, so the AI will propose them. To choose your own, add pillars in <button class="lnk" data-act="btab" data-k="brain">Brand Brain → Content pillars</button>.</p></div>`;
@@ -1211,8 +1297,8 @@ function vDeck(plan, ps){
   if (!ps.length) return `<div class="empty"><p>No posts yet. ${gen[ui.planId]?.running ? 'The calendar is being planned.' : 'Continue the plan or add a post.'}</p></div>`;
   const mixE = plan.opts?.mix ? Object.entries(plan.opts.mix).filter(([,v]) => +v.n > 0) : [];
   const tracker = mixE.length ? `<section class="panel" style="padding:14px 18px"><div class="pmeta"><h3>Content mix</h3><span class="muted sm">Planned vs in this plan</span></div><div class="chips" style="margin:0">${mixE.map(([f,v]) => { const n = ps.filter(p => p.format === f).length; const ok = n === +v.n; return `<span class="chip" style="font-weight:700;${ok ? 'border-color:var(--s-approved);color:var(--s-approved)' : 'border-color:var(--s-client);color:var(--s-client)'}">${f} ${n}/${v.n}</span>`; }).join('')}${[...new Set(ps.map(p => p.channel))].map(c => `${chBadge(c)}<span class="muted sm" style="margin-right:6px">${ps.filter(p => p.channel === c).length}</span>`).join('')}</div></section>` : '';
-  return tracker + `<div class="filters"><select class="in" data-chg="fch" aria-label="Channel">${opts(chs, f.ch, 'All channels')}</select><select class="in" data-chg="fst" aria-label="Status">${opts(STAT, f.st, 'All statuses')}</select><select class="in" data-chg="fpi" aria-label="Pillar">${opts(pillars, f.pi, 'All pillars')}</select><span class="muted sm">${list.length} of ${ps.length}</span></div>
-  <div class="deck">${list.map(p => { const fl = flags(p); return `<button class="post ${p.hasContent ? '' : 'unwritten'}" data-act="open" data-id="${p.id}">
+  return tracker + `<div class="filters"><select class="in" data-chg="fch" aria-label="Channel">${opts(chs, f.ch, 'All channels')}</select><select class="in" data-chg="fst" aria-label="Status">${opts(STAT, f.st, 'All statuses')}</select><select class="in" data-chg="fpi" aria-label="Pillar">${opts(pillars, f.pi, 'All pillars')}</select><span class="muted sm">${list.length} of ${ps.length} · drag a post onto another to swap their dates</span></div>
+  <div class="deck">${list.map(p => { const fl = flags(p); return `<button class="post ${p.hasContent ? '' : 'unwritten'}" data-act="open" data-id="${p.id}" draggable="true" data-drag="${p.id}" data-drop-post="${p.id}" title="Drag onto another post to swap their dates">
     ${creative(p)}
     <div class="pb"><div class="pmeta"><span class="mono">${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</span>${stPill(p.status)}</div>
     <div class="pmeta" style="justify-content:flex-start">${chBadge(p.channel)}<span class="chip">${esc(p.format)}</span>${p.topical ? `<span class="tday">${esc(p.topical)}</span>` : ''}</div>
@@ -1231,11 +1317,11 @@ function vCal(plan, ps){
   const td = today();
   let cells = '';
   for (let i = 0; i < lead; i++) cells += `<div class="cell off"></div>`;
-  days.forEach(d => { const dw = pdate(d).getDay(); cells += `<div class="cell ${d === td ? 'today' : ''} ${dw === 0 || dw === 6 ? 'we' : ''}" data-drop-date="${d}"><div class="dn"><span>${pdate(d).getDate()}</span><button data-act="addPost" data-date="${d}" aria-label="Add post on ${d}" title="Add post">+</button></div>${(tmap[d] || []).map(t => `<div class="tday">${esc(t)}</div>`).join('')}${(pmap[d] || []).map(p => `<button class="pc" draggable="true" data-drag="${p.id}" data-act="open" data-id="${p.id}" style="--chc:${CHC[p.channel] || '#666'};--c:var(${STC[p.status]})" data-tip="${esc(p.status)} · ${esc(p.channel)} ${esc(p.format)}"><b>${CHA[p.channel] || esc(p.channel)}</b><span>${esc(p.topic || 'Untitled')}</span><i aria-hidden="true"></i></button>`).join('')}</div>`; });
+  days.forEach(d => { const dw = pdate(d).getDay(); cells += `<div class="cell ${d === td ? 'today' : ''} ${dw === 0 || dw === 6 ? 'we' : ''}" data-drop-date="${d}"><div class="dn"><span>${pdate(d).getDate()}</span><button data-act="addPost" data-date="${d}" aria-label="Add post on ${d}" title="Add post">+</button></div>${(tmap[d] || []).map(t => `<div class="tday">${esc(t)}</div>`).join('')}${(pmap[d] || []).map(p => `<button class="pc" draggable="true" data-drag="${p.id}" data-drop-post="${p.id}" data-act="open" data-id="${p.id}" style="--chc:${CHC[p.channel] || '#666'};--c:var(${STC[p.status]})" data-tip="${esc(p.status)} · ${esc(p.channel)} ${esc(p.format)}"><b>${CHA[p.channel] || esc(p.channel)}</b><span>${esc(p.topic || 'Untitled')}</span><i aria-hidden="true"></i></button>`).join('')}</div>`; });
   const tail = (7 - (lead + days.length) % 7) % 7;
   for (let i = 0; i < tail; i++) cells += `<div class="cell off"></div>`;
   const rows = ps.map(p => [`<span class="mono">${fmtD(p.date)}</span>`, esc(p.time), chBadge(p.channel), esc(p.format), `<span class="pil" style="--pc:${pillarColor(plan, p.pillar)}">${esc(p.pillar)}</span>`, `<b>${esc(p.topic)}</b>`, esc(p.hook), esc(p.topical), stPill(p.status)]);
-  return `<p class="muted sm">Drag a post to another day to reschedule it. Due dates move with it. The dot on each post shows its status.</p>
+  return `<p class="muted sm">Drag a post onto an empty part of a day to move it, or onto another post to swap them. Due dates move too. The dot on each post shows its status.</p>
   <div class="calw"><div class="cal">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="hd">${d}</div>`).join('')}${cells}</div></div>
   <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c6)"></span>Calendar table</h2><button class="btn sm" data-act="copyCal">Copy for Google Sheets</button></header>${tbl(['Date','Time','Channel','Format','Pillar','Topic','Hook','Topical day','Status'], rows)}</section>`;
 }
@@ -1433,7 +1519,7 @@ function vPresent(plan, ps){
     <section class="panel" style="padding:18px"><h3>Deck type</h3><div class="acts">${pre.map(([k, l]) => `<button class="btn sm ${DECK_PRESETS[k].length === ui.deckSec.size && DECK_PRESETS[k].every(x => ui.deckSec.has(x)) ? 'pri' : ''}" data-act="deckPreset" data-k="${k}">${l}</button>`).join('')}</div>
       <h3 style="margin-top:6px">Sections</h3><div class="secs">${DECK_SECS.map(([k, l]) => `<label><input type="checkbox" data-chg="dsec" value="${k}" ${ui.deckSec.has(k) ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div></section>
   </aside>
-  <div class="slides">${M.length ? M.map((m, i) => `<div class="sl-wrap"><div class="sl-cap"><span>Slide ${i + 1}${m.k === 'post' ? ` · ${esc(m.post.channel)} ${esc(m.post.format)}` : ''}</span><span class="acts">${m.k === 'post' ? `<button class="lnk" data-act="open" data-id="${m.post.id}" style="font-size:12px">Edit post</button>` : ''}<button class="lnk" data-act="present" data-i="${i}" style="font-size:12px">Present from here</button></span></div>${slideHTML(m, i, M.length, plan2)}</div>`).join('') : '<div class="empty"><p>Nothing to show yet. Generate the plan or tick some sections.</p></div>'}</div></div>`;
+  <div class="slides">${M.length ? M.map((m, i) => `<div class="sl-wrap" ${m.k === 'post' ? `draggable="true" data-drag="${m.post.id}" data-drop-post="${m.post.id}"` : ''}><div class="sl-cap"><span>Slide ${i + 1}${m.k === 'post' ? ` · ${esc(m.post.channel)} ${esc(m.post.format)}` : ''}</span><span class="acts">${m.k === 'post' ? `<button class="lnk" data-act="open" data-id="${m.post.id}" style="font-size:12px">Edit post</button>` : ''}<button class="lnk" data-act="present" data-i="${i}" style="font-size:12px">Present from here</button></span></div>${slideHTML(m, i, M.length, plan2)}</div>`).join('') : '<div class="empty"><p>Nothing to show yet. Generate the plan or tick some sections.</p></div>'}</div></div>`;
 }
 let pIdx = 0;
 function startPresent(i){
@@ -1701,6 +1787,12 @@ function nextStatus(p){
   const m = {'Idea':'Copy in progress','Copy in progress':'Copy review','Copy review': txt ? 'Sent to client' : 'Design in progress','Design in progress':'Design review','Design review':'Sent to client','Sent to client':'Approved','Changes requested':'Copy in progress','Approved':'Scheduled','Scheduled':'Published'};
   return m[p.status] || null;
 }
+function swapPosts(a, b){
+  if (!a || !b || a === b) return; const A = D.posts[a], B = D.posts[b]; if (!A || !B) return;
+  if (A.date === B.date && A.time === B.time){ toast('Those posts are already in the same slot'); return; }
+  patch('posts', a, {date:B.date, time:B.time}); patch('posts', b, {date:A.date, time:A.time});
+  toast(`Swapped: now ${fmtD(B.date)} and ${fmtD(A.date)}`);
+}
 function setStatus(id, s){
   const p = D.posts[id]; if (!p || p.status === s) return;
   const part = {status:s};
@@ -1796,6 +1888,18 @@ async function runPlan(pid){
       await patch('plans', pid, {strategy:r.strategy, topical});
     }
     plan = D.plans[pid];
+    if (!postsOf(pid).length && plan.opts.mode === 'schedule' && plan.opts.schedule){
+      const slots = []; monthDays(plan.month).forEach(d => arr(plan.opts.schedule[wkOf(d)]).forEach(sl => slots.push({...sl, date:d})));
+      step(pid, `Writing ideas for your ${slots.length} scheduled posts…`);
+      const res = await ai(promptC2(b, plan, slots), {signal});
+      const list = Array.isArray(res) ? res : arr(res?.slots || res?.posts);
+      step(pid, `Adding ${slots.length} posts to the calendar…`);
+      await pool(slots.map((sl, i) => ({sl, r:list.find(x => +x?.i === i) || list[i] || {}})), 4, async ({sl, r}) => {
+        const id = uid();
+        const prod = sl.product === '__brand' ? '' : sl.product || (r.product && !/^(brand-level|choose)$/i.test(r.product) ? str(r.product) : '');
+        await put('posts', id, newPost(b, pid, {id, date:sl.date, time:sl.time || str(r.time) || '19:00', channel:sl.channel, format:sl.format, pillar:sl.pillar || str(r.pillar), topic:str(r.topic) || `${sl.format} for ${sl.channel}`, hook:str(r.hook), topical:str(r.topical), objective:str(r.objective), product:prod}));
+      });
+    }
     if (!postsOf(pid).length){
       step(pid, 'Planning the content calendar…');
       const slots = await ai(promptC(b, plan), {signal});
@@ -1954,7 +2058,7 @@ const ACT = {
   pNext: () => movePresent(1), pPrev: () => movePresent(-1), pClose: () => closePresent(),
   pptx: () => downloadPptx(),
   pdf: () => printDeck(),
-  goBrand: a => { ui.view = 'brand'; ui.brandId = a.dataset.id; ui.btab = 'plans'; ui.answer = ''; ui.postId = null; renderAll(); window.scrollTo(0,0); },
+  goBrand: a => { ui.sched = null; ui.planMode = null; ui.view = 'brand'; ui.brandId = a.dataset.id; ui.btab = 'plans'; ui.answer = ''; ui.postId = null; renderAll(); window.scrollTo(0,0); },
   goPlan: a => { ui.view = 'plan'; ui.planId = a.dataset.id; ui.tab = 'present'; ui.f = {ch:'',st:'',pi:''}; renderAll(); window.scrollTo(0,0); },
   btab: a => { ui.btab = a.dataset.k; renderAll(); },
   tab: a => { ui.tab = a.dataset.k; renderAll(); },
@@ -1981,6 +2085,10 @@ const ACT = {
     if (!add.length){ toast('Nothing to add'); return; }
     patch('brands', ui.brandId, {brain:{products:arr(b.brain?.products).concat(add)}}); toast(`${add.length} products added`);
   },
+  scAdd: a => { ui.sched = readSched(); const b = D.brands[ui.brandId]; const last = arr(ui.sched[a.dataset.day]).slice(-1)[0]; ui.sched[a.dataset.day].push(last ? {...last} : {format:'Static', channel:fmtChoices(b, 'Static')[0] || activeCh(b)[0] || 'Instagram'}); paintSched(); },
+  scRm: a => { ui.sched = readSched(); ui.sched[a.dataset.day].splice(+a.dataset.i, 1); paintSched(); },
+  scCopy: () => { ui.sched = readSched(); ['Tue','Wed','Thu','Fri'].forEach(d => ui.sched[d] = clone(ui.sched.Mon)); paintSched(); toast('Monday copied to Tuesday–Friday'); },
+  scClear: () => { ui.sched = {Mon:[],Tue:[],Wed:[],Thu:[],Fri:[],Sat:[],Sun:[]}; paintSched(); },
   addPillar: () => { const b = D.brands[ui.brandId]; const n = ($('#npi-name')?.value || '').trim(); if (!n){ toast('Name the pillar first'); return; } patch('brands', ui.brandId, {pillars:arr(b.pillars).concat([{name:n, purpose:($('#npi-purpose')?.value || '').trim(), active:true}])}); toast('Pillar added'); },
   rmPillar: a => { const b = D.brands[ui.brandId]; const l = arr(b.pillars).slice(); l.splice(+a.dataset.i, 1); patch('brands', ui.brandId, {pillars:l}); },
   aiPillars: async () => {
@@ -2055,12 +2163,21 @@ const ACT = {
     if (pls.length && !psum){ pls.forEach(x => x.mix = Math.round(100 / pls.length)); }
     else if (pls.length && psum !== 100){ pls.forEach(x => x.mix = Math.round(x.mix / psum * 100)); }
     const hero = arr(b0.brain?.products).map((x, i) => ({...x, i})).filter(x => $('#hp-' + x.i)?.checked).map(x => ({name:x.name, note:($('#hpn-' + x.i)?.value || '').trim()}));
+    const mode = document.querySelector('input[name="npl-mode"]:checked')?.value || 'mix';
+    let schedule = null;
+    if (mode === 'schedule'){
+      schedule = readSched(); const c = schedCounts(schedule, month);
+      if (!c.month){ toast('Add at least one post to the weekly schedule'); return; }
+      if (c.month > 90){ toast('That schedule makes more than 90 posts this month. Trim it a little.'); return; }
+      FORMATS.forEach(f => { mix[f] = {n:c.byF[f] || 0, ch:[...new Set(WK.flatMap(d => arr(schedule[d]).filter(x => x.format === f).map(x => x.channel)))], products:[], pillars:[]}; });
+      bad = '';
+    }
     if (bad){ toast(`Pick at least one platform for ${bad}`); return; }
     if (!mixTotal(mix)){ toast('Set how many posts you want'); return; }
-    if (mixTotal(mix) > 60){ toast('Keep it to 60 posts or fewer per month'); return; }
-    patch('brands', ui.brandId, {mixDefault:mix, lastHero:hero});
+    if (mode === 'mix' && mixTotal(mix) > 60){ toast('Keep it to 60 posts or fewer per month'); return; }
+    patch('brands', ui.brandId, mode === 'schedule' ? {scheduleDefault:schedule, planMode:'schedule', lastHero:hero} : {mixDefault:mix, planMode:'mix', lastHero:hero});
     if (pls.length) patch('brands', ui.brandId, {pillars:arr(b0.pillars).map((x, i) => { const s2 = pls.find(y => y.name === x.name); return s2 ? {...x, mix:s2.mix} : x; })});
-    const o = {mix, pillars:pls, hero, cd:$('#npl-cd').checked, region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
+    const o = {mode, schedule, mix, pillars:pls, hero, cd:$('#npl-cd').checked, region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
     const doc = {brandId:ui.brandId, month, opts:o, status:'generating', createdAt:Date.now(), createdBy:me};
     if (reuse){ doc.snapshot = reuse.snapshot; doc.research = reuse.research; }
     await put('plans', id, doc);
@@ -2168,6 +2285,8 @@ const CHG = {
   ck: t => patch('posts', ui.postId, {checklist:{[t.dataset.k]:t.checked}}),
   obj: t => { const b = D.brands[ui.brandId]; let l = arr(b.objectives?.list).slice(); if (t.checked){ if (!l.includes(t.value)) l.push(t.value); } else l = l.filter(x => x !== t.value); const part = {objectives:{list:l}}; if (!l.includes(b.objectives?.primary)) part.objectives.primary = l[0] || ''; patch('brands', ui.brandId, part); },
   pillarOn: t => { const b = D.brands[ui.brandId]; const l = clone(arr(b.pillars)); if (l[+t.dataset.i]) l[+t.dataset.i].active = t.checked; patch('brands', ui.brandId, {pillars:l}); },
+  planMode: t => { ui.planMode = t.value; $('#mode-sched').hidden = t.value !== 'schedule'; $('#mode-mix').hidden = t.value !== 'mix'; },
+  scFmt: () => { ui.sched = readSched(); paintSched(); },
   ms: t => { const d = t.closest('.ms'); const sel = [...d.querySelectorAll('input:checked')].map(x => x.value); const sm = d.querySelector('summary'); sm.textContent = msText(d.dataset.kind, sel); sm.classList.toggle('on', sel.length > 0); },
   mxTotal: () => { const t = FORMATS.reduce((s, f) => s + (parseInt($('#mx-' + f)?.value || '0', 10) || 0), 0); const el = $('#mx-total'); if (el) el.textContent = t; },
   dsec: t => { if (!ui.deckSec) ui.deckSec = new Set(DECK_PRESETS.full); if (t.checked) ui.deckSec.add(t.value); else ui.deckSec.delete(t.value); renderAll(); },
@@ -2182,6 +2301,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('change', e => {
   const t = e.target;
+  if (t.id === 'npl-month' && $('#sched-box')){ ui.sched = readSched(); paintSched(); }
   if (t.dataset.chg && CHG[t.dataset.chg]) return CHG[t.dataset.chg](t);
   if (t.dataset.mf){ const id = t.dataset.id; if (D.posts[id]) patch('posts', id, {metrics:{[t.dataset.mf]:t.value === '' ? '' : num(t.value)}}); return; }
   if (t.dataset.bf){
@@ -2195,13 +2315,15 @@ document.addEventListener('change', e => {
   if (t.dataset.pf && ui.postId) setField(ui.postId, t.dataset.pf, t.value);
 });
 document.addEventListener('keydown', e => { if (!$('#present').hidden){ if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown'){ e.preventDefault(); movePresent(1); } else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); movePresent(-1); } else if (e.key === 'Escape') closePresent(); return; } if (e.key === 'Escape'){ if (!$('#copybox').hidden) ACT.closeCopy(); else if (ui.postId) ACT.close(); } });
-document.addEventListener('dragstart', e => { const t = e.target.closest && e.target.closest('[data-drag]'); if (!t) return; e.dataTransfer.setData('text/plain', t.dataset.drag); e.dataTransfer.effectAllowed = 'move'; });
-document.addEventListener('dragover', e => { const c = e.target.closest && e.target.closest('[data-drop-date],[data-drop-status]'); if (!c) return; e.preventDefault(); document.querySelectorAll('.drop-on').forEach(x => x !== c && x.classList.remove('drop-on')); c.classList.add('drop-on'); });
-document.addEventListener('dragleave', e => { const c = e.target.closest && e.target.closest('[data-drop-date],[data-drop-status]'); if (c && !c.contains(e.relatedTarget)) c.classList.remove('drop-on'); });
+document.addEventListener('dragend', () => document.querySelectorAll('.dragging,.drop-on').forEach(x => x.classList.remove('dragging','drop-on')));
+document.addEventListener('dragstart', e => { const t = e.target.closest && e.target.closest('[data-drag]'); if (!t) return; t.classList.add('dragging'); e.dataTransfer.setData('text/plain', t.dataset.drag); e.dataTransfer.effectAllowed = 'move'; });
+document.addEventListener('dragover', e => { const c = e.target.closest && e.target.closest('[data-drop-post],[data-drop-date],[data-drop-status]'); if (!c) return; e.preventDefault(); document.querySelectorAll('.drop-on').forEach(x => x !== c && x.classList.remove('drop-on')); c.classList.add('drop-on'); });
+document.addEventListener('dragleave', e => { const c = e.target.closest && e.target.closest('[data-drop-post],[data-drop-date],[data-drop-status]'); if (c && !c.contains(e.relatedTarget)) c.classList.remove('drop-on'); });
 document.addEventListener('drop', e => {
-  const c = e.target.closest && e.target.closest('[data-drop-date],[data-drop-status]'); if (!c) return;
-  e.preventDefault(); c.classList.remove('drop-on');
+  const c = e.target.closest && e.target.closest('[data-drop-post],[data-drop-date],[data-drop-status]'); if (!c) return;
+  e.preventDefault(); c.classList.remove('drop-on'); document.querySelectorAll('.dragging').forEach(x => x.classList.remove('dragging'));
   const id = e.dataTransfer.getData('text/plain'); if (!D.posts[id]) return;
+  if (c.dataset.dropPost){ swapPosts(id, c.dataset.dropPost); return; }
   if (c.dataset.dropDate){ patch('posts', id, {date:c.dataset.dropDate}); toast('Moved to ' + fmtD(c.dataset.dropDate)); }
   else setStatus(id, c.dataset.dropStatus);
 });
