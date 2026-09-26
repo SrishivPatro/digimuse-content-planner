@@ -495,7 +495,7 @@ const chBadge = c => `<span class="chb" style="--chc:${CHC[c] || '#555'}">${esc(
 const D = { brands:{}, team:{}, plans:{}, posts:{} };
 let DB = null, S = null, DL = null;
 const HOSTED = !(window.claude && window.claude.use) && /^https?:$/.test(location.protocol);
-const ui = { view:'home', brandId:null, planId:null, tab:'deck', btab:'plans', postId:null, f:{ch:'', st:'', pi:''}, confirm:null, answer:'', asking:false, ideaBusy:false, replyBusy:false, repBusy:false };
+const ui = { importBusy:false, view:'home', brandId:null, planId:null, tab:'deck', btab:'plans', postId:null, f:{ch:'', st:'', pi:''}, confirm:null, answer:'', asking:false, ideaBusy:false, replyBusy:false, repBusy:false };
 let me = lsGet('mp_me') || '';
 const gen = {}, busy = {}, variants = {}, undo = {};
 
@@ -555,7 +555,8 @@ function brandCtx(b, max=14000){
   L.push('=== BRAND BRAIN ===');
   const P = arr(br.products);
   L.push('Products / services:' + (P.length ? '' : ' none added'));
-  P.forEach(p => L.push(`- ${p.name}: ${p.what||''} | Benefits: ${p.benefits||''} | Price: ${p.price||'n/a'} | Offer: ${p.offer||'none'}`));
+  P.slice(0, 40).forEach(p => L.push(`- ${p.name}: ${p.what||''} | Benefits: ${str(p.benefits).slice(0, 160)} | Price: ${p.price||'n/a'} | Offer: ${p.offer||'none'}`));
+  if (P.length > 40) L.push(`- …plus ${P.length - 40} more products: ${P.slice(40, 120).map(p => p.name).join(', ')}`);
   const R = arr(br.rules);
   L.push('Brand rules:' + (R.length ? '' : ' none added'));
   R.forEach(r => L.push(`- [${r.type}${r.source==='feedback' ? ', learned from client feedback' : ''}] ${r.text}`));
@@ -912,8 +913,10 @@ function vBrain(b){
       ${ui.answer ? `<div class="answer">${esc(ui.answer)}</div>` : ''}${aiNote()}
     </section>
   </div>
-  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Products & services</h2><p>Every post is anchored to one of these. Paste a catalogue in bulk: one per line, "Name | what it is | benefits | price | offer" (tabs from Excel work too).</p></div></header>
-    ${tbl(['Name','What it is','Benefits','Price','Offer',''], prod.map((p,i) => [`<b>${esc(p.name)}</b>`, esc(p.what), esc(p.benefits), esc(p.price), esc(p.offer), `<button class="btn sm ghost" data-act="rmItem" data-k="products" data-i="${i}">Remove</button>`]))}
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Products & services <span class="muted mono" style="font-size:13px">${prod.length}</span></h2><p>Every post is anchored to one of these. Import them from the brand's website, add one by one, or paste a catalogue.</p></div><div class="acts"><button class="btn sm pri" data-act="importSite" ${ui.importBusy ? 'disabled' : ''}>${ui.importBusy ? '<span class="spin"></span> Reading website…' : 'Import from website'}</button>${prod.some(p => p.source === 'website') ? '<button class="btn sm ghost" data-act="clearImported">Remove imported</button>' : ''}</div></header>
+    ${b.website ? `<p class="muted sm">Website: ${linkOK(b.website) ? `<a href="${esc(b.website)}" target="_blank" rel="noopener">${esc(b.website)}</a>` : esc(b.website)}${HOSTED ? '' : ' · Website import works on the Vercel version of the planner.'}</p>` : '<p class="muted sm">Add the brand website in Profile & team, and products are pulled in automatically.</p>'}
+    ${tbl(['Name','What it is','Benefits','Price','Offer',''], prod.slice(0, ui.allProd ? 1000 : 25).map((p,i) => [`<b>${p.url && linkOK(p.url) ? `<a href="${esc(p.url)}" target="_blank" rel="noopener" style="color:inherit">${esc(p.name)}</a>` : esc(p.name)}</b>`, esc(p.what), esc(str(p.benefits).slice(0, 140)), esc(p.price), esc(p.offer), `<button class="btn sm ghost" data-act="rmItem" data-k="products" data-i="${i}">Remove</button>`]))}
+    ${prod.length > 25 ? `<div><button class="btn sm" data-act="toggleProd">${ui.allProd ? 'Show fewer' : `Show all ${prod.length}`}</button></div>` : ''}
     <div class="fg">
       <label class="f">Name<input class="in" id="np-name"></label>
       <label class="f">What it is<input class="in" id="np-what"></label>
@@ -955,7 +958,7 @@ function vProfile(b){
   const ta = (label, path, val, rows=2, cls='') => `<label class="f ${cls}">${label}<textarea class="in" rows="${rows}" data-bf="${path}" id="bf-${path.replace(/\./g,'-')}">${esc(val)}</textarea></label>`;
   const rng = (path, l, r, val) => `<div class="range"><span>${l}</span><input type="range" min="1" max="5" step="1" data-bf="${path}" id="bf-${path.replace(/\./g,'-')}" value="${esc(val || 3)}" aria-label="${l} to ${r}"><span>${r}</span></div>`;
   return `<section class="panel"><header><h2><span class="dotc" style="--dc:var(--c1)"></span>Brand basics</h2></header><div class="fg">
-      ${f('Brand name','name',b.name)}${f('Website','website',b.website,'url')}
+      ${f('Brand name','name',b.name)}${f('Website <span class="hint">Products import automatically</span>','website',b.website,'url','placeholder="https://brand.com"')}
       ${sel('Industry','industry',INDUSTRIES,b.industry,'Choose industry')}${f('Sub-category','sub',b.sub)}
       ${sel('Brand type','type',BTYPES,b.type)}${sel('Stage','stage',STAGES,b.stage)}${sel('Price positioning','price',PRICE,b.price)}
       ${ta('One-line description','desc',b.desc,2,'span2')}${ta('Products / services summary','offerings',b.offerings,2,'span2')}
@@ -1577,6 +1580,9 @@ const ACT = {
     if (!add.length){ toast('Nothing to add'); return; }
     patch('brands', ui.brandId, {brain:{products:arr(b.brain?.products).concat(add)}}); toast(`${add.length} products added`);
   },
+  importSite: () => importSite(ui.brandId, false),
+  toggleProd: () => { ui.allProd = !ui.allProd; renderAll(); },
+  clearImported: () => { const b = D.brands[ui.brandId]; patch('brands', ui.brandId, {brain:{products:arr(b.brain?.products).filter(p => p.source !== 'website')}}); toast('Imported products removed'); },
   addRule: () => { const b = D.brands[ui.brandId]; const t = ($('#nr-text')?.value || '').trim(); if (!t){ toast('Write the rule first'); return; } patch('brands', ui.brandId, {brain:{rules:arr(b.brain?.rules).concat([{type:$('#nr-type').value, text:t, source:'manual', at:Date.now()}])}}); toast('Rule added'); },
   addRef: () => { const b = D.brands[ui.brandId]; const u = ($('#nf-url')?.value || '').trim(); if (!u){ toast('Paste a link or describe the reference'); return; } patch('brands', ui.brandId, {brain:{refs:arr(b.brain?.refs).concat([{tag:$('#nf-tag').value, url:u, notes:($('#nf-notes')?.value || '').trim(), by:me, at:Date.now()}])}}); toast('Reference saved'); },
   addReply: () => { const b = D.brands[ui.brandId]; const c = ($('#nrp-c')?.value || '').trim(), r = ($('#nrp-r')?.value || '').trim(); if (!c || !r){ toast('Add both the comment and the reply'); return; } patch('brands', ui.brandId, {brain:{replies:arr(b.brain?.replies).concat([{comment:c, reply:r}])}}); toast('Reply saved'); },
@@ -1752,6 +1758,7 @@ document.addEventListener('change', e => {
     if (t.type === 'number' || t.type === 'range') v = Number(v);
     patch('brands', ui.brandId, setPath({}, t.dataset.bf, v));
     if (t.dataset.bf === 'name') toast('Saved');
+    if (t.dataset.bf === 'website' && String(v).trim() && HOSTED) importSite(ui.brandId, true);
     return;
   }
   if (t.dataset.pf && ui.postId) setField(ui.postId, t.dataset.pf, t.value);
@@ -1770,6 +1777,54 @@ document.addEventListener('drop', e => {
 const tip = $('#tip');
 document.addEventListener('mouseover', e => { const t = e.target.closest && e.target.closest('[data-tip]'); if (!t){ tip.hidden = true; return; } tip.textContent = t.dataset.tip; tip.hidden = false; });
 document.addEventListener('mousemove', e => { if (tip.hidden) return; const x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8); tip.style.left = x + 'px'; tip.style.top = (e.clientY + 16) + 'px'; });
+
+/* ---------- website product import ---------- */
+async function importSite(bid, auto){
+  const b = D.brands[bid]; const url = str(b?.website).trim();
+  if (!url){ toast('Add the brand website in Profile & team first'); return; }
+  if (!HOSTED){ toast('Website import works on the Vercel version of the planner'); return; }
+  if (ui.importBusy) return;
+  ui.importBusy = true; renderAll(); toast('Reading ' + url.replace(/^https?:\/\//, '') + ' for products…');
+  try {
+    const r = await fetch('/api/scrape', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({url})});
+    if (r.status === 401){ showLogin(); return; }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw {message:j.error || 'Could not read the website'};
+    let prods = arr(j.products), desc = '', offerings = '';
+    if (!prods.length && (j.text || arr(j.jsonld).length)){
+      toast('Found the site. Picking out products with AI…');
+      const x = await ai(`You are reading a brand's website to build its product and service catalogue for a social media team.
+
+WEBSITE: ${url}
+TITLE: ${j.title || ''}
+META DESCRIPTION: ${j.description || ''}
+STRUCTURED PRODUCT DATA: ${JSON.stringify(arr(j.jsonld)).slice(0, 6000)}
+PAGE TEXT:
+${str(j.text).slice(0, 22000)}
+
+TASK: List every distinct product, product range or service this brand sells, using only what is on these pages. Do not invent prices or offers; leave them empty if not shown. Also write a one-line description of the brand and a one-sentence summary of what it offers.
+
+Reply with only JSON: {"description":"","offerings":"","products":[{"name":"","what":"what it is / category","benefits":"key benefits or features from the site","price":"as shown or empty","offer":"any offer shown or empty"}]}`);
+      prods = arr(x?.products); desc = str(x?.description); offerings = str(x?.offerings);
+    }
+    if (!prods.length){ toast('No products found on that site. Add them by hand or paste the catalogue.'); return; }
+    const cur = D.brands[bid];
+    const have = new Set(arr(cur.brain?.products).map(p => str(p.name).toLowerCase().trim()));
+    const add = [];
+    for (const p of prods){
+      const n = str(p.name).trim().slice(0, 120); if (!n || have.has(n.toLowerCase())) continue; have.add(n.toLowerCase());
+      add.push({name:n, what:str(p.what).slice(0, 160), benefits:str(p.benefits).slice(0, 240), price:str(p.price).slice(0, 40), offer:str(p.offer).slice(0, 120), url:linkOK(p.url) ? p.url : '', source:'website'});
+      if (add.length >= 300) break;
+    }
+    const part = {brain:{products:arr(cur.brain?.products).concat(add)}};
+    if (!str(cur.desc).trim() && (desc || j.description)) part.desc = desc || j.description;
+    if (!str(cur.offerings).trim() && offerings) part.offerings = offerings;
+    await patch('brands', bid, part);
+    toast(add.length ? `Imported ${add.length} products from the ${j.source}` : 'Products already up to date');
+  } catch (e){
+    toast(e?.code ? errCopy(e) : ('Import failed: ' + (e?.message || 'try again')));
+  } finally { ui.importBusy = false; renderAll(); }
+}
 
 /* ---------- hosted (Vercel) adapters ---------- */
 function showLogin(msg){ const l = $('#login'); l.hidden = false; const e = $('#lg-err'); e.hidden = !msg; e.textContent = msg || ''; setTimeout(() => $('#lg-pw')?.focus(), 30); }

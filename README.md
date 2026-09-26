@@ -2,7 +2,7 @@
 
 Internal social media planning tool for the Digimuse team.
 
-- **Brand Brain** for every client: products, rules, references, reply bank, brand kit
+- **Brand Brain** for every client: products (auto-imported from the brand website), rules, references, reply bank, brand kit
 - **AI monthly plans**: research, strategy, topical days, calendar and a written content deck
 - **Content deck** with brand-coloured previews, hooks, captions, carousel slides and reel scripts
 - **Design briefs** for designers, creative versions, publish checklist
@@ -35,5 +35,6 @@ Internal social media planning tool for the Digimuse team.
 - `api/db.js`: saves, updates and deletes records.
 - `api/ai.js`: sends prompts to Gemini or Claude. Keys never reach the browser.
 - `api/login.js`: team password sign-in (30-day cookie).
+- `api/scrape.js`: imports a brand's products from its website (Shopify and WooCommerce stores directly; any other site is read and the AI picks out products and services).
 
 Data lives in Upstash Redis under keys starting with `dcp:`. Clients poll for changes every 30 seconds.
