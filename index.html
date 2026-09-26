@@ -443,6 +443,20 @@ th{background:var(--surface-2)}
 #present .pbar{display:flex;gap:10px;align-items:center;margin-top:16px;color:#C9D3F5;font-weight:600}
 #present .pbar .btn{background:#1A2342;border-color:#2A3560;color:#fff}
 #printdeck{display:none}
+.ms{position:relative;min-width:0}
+.ms summary{list-style:none;cursor:pointer;border:1px solid var(--line-2);border-radius:9px;padding:7px 30px 7px 11px;background:var(--surface);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}
+.ms summary::-webkit-details-marker{display:none}
+.ms summary::after{content:'▾';position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.ms[open] summary{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.ms summary.on{border-color:var(--accent);color:var(--accent);font-weight:700}
+.ms-pop{position:absolute;z-index:25;top:calc(100% + 4px);right:0;min-width:260px;max-width:340px;max-height:280px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;gap:2px}
+.ms-pop label{display:flex;gap:9px;align-items:center;padding:6px 8px;border-radius:8px;font-size:13px;cursor:pointer}
+.ms-pop label:hover{background:var(--surface-2)}
+.ms-pop input{accent-color:var(--accent);width:15px;height:15px;flex:none}
+.ms-pop .ms-h{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700;padding:6px 8px 2px}
+.tw.vis{overflow:visible}
+@media (max-width:760px){.tw.vis{overflow-x:auto}}
+.mxcell{display:flex;flex-direction:column;gap:6px;min-width:200px}
 @media print{
   @page{size:13.333in 7.5in;margin:0}
   body *{visibility:hidden}
@@ -612,6 +626,13 @@ function defaultMix(b){
   const m = {}; FORMATS.forEach(f => { const ch = fmtChoices(b, f); m[f] = {n: ch.length ? Math.round(total * pct[f]) : 0, ch}; });
   return m;
 }
+function msText(kind, sel){ if (!sel.length) return kind === 'product' ? 'Any product (AI decides)' : 'Any pillar (AI decides)'; if (sel.length === 1) return sel[0] === '__brand' ? 'Brand-level, no product' : sel[0]; return `${sel.length} ${kind}s`; }
+function multiSel(id, kind, options, selected){
+  const sel = options.filter(o => selected.includes(o[0])).map(o => o[0]);
+  return `<details class="ms" id="${id}" data-kind="${kind}"><summary class="${sel.length ? 'on' : ''}">${esc(msText(kind, sel))}</summary><div class="ms-pop"><div class="ms-h">Tick one or more</div>${options.map(([v, l]) => `<label><input type="checkbox" data-chg="ms" value="${esc(v)}" ${selected.includes(v) ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div></details>`;
+}
+const msVals = id => [...document.querySelectorAll(`#${id} input:checked`)].map(x => x.value);
+function fmtProducts(v){ return arr(v?.products).length ? arr(v.products) : v?.product ? [v.product] : []; }
 function mixTotal(mix){ return Object.values(mix || {}).reduce((s, v) => s + (+v.n || 0), 0); }
 function activeCh(b){ return CH.filter(c => b?.channels?.[c]?.on); }
 function brandCtx(b, max=14000){
@@ -756,7 +777,7 @@ Format mix: ${arr(st.formatMix).map(f => `${f.format} ${f.pct}%`).join(', ')}
 Products to feature: ${products}
 ${arr(plan.opts.pillars).length ? 'PILLAR SPLIT (exact post counts): ' + allocPillars(plan.opts.pillars, (plan.opts.mix ? mixTotal(plan.opts.mix) : splitCounts(b, plan.month).total)).map(x => `${x.name} ${x.n}`).join(', ') : ''}
 ${arr(plan.opts.hero).length ? 'HERO PRODUCTS THIS MONTH (feature these most, in this priority order): ' + plan.opts.hero.map(h => `${h.name}${h.note ? ' — must say: ' + h.note : ''}`).join(' | ') : ''}
-${plan.opts.mix && Object.entries(plan.opts.mix).some(([,v]) => v.product) ? 'PRODUCT PER FORMAT: ' + Object.entries(plan.opts.mix).filter(([,v]) => +v.n > 0 && v.product).map(([f,v]) => `${f} posts → ${v.product === '__brand' ? 'brand-level, no product' : v.product}`).join('; ') : ''}
+${plan.opts.mix && Object.values(plan.opts.mix).some(v => fmtProducts(v).length || arr(v.pillars).length) ? 'FOCUS PER FORMAT (spread each format\'s posts across all the listed products and pillars so each gets at least one post where the count allows; "brand-level" means no product):\n' + Object.entries(plan.opts.mix).filter(([,v]) => +v.n > 0 && (fmtProducts(v).length || arr(v.pillars).length)).map(([f,v]) => `- ${v.n} ${f} posts${fmtProducts(v).length ? ' → products: ' + fmtProducts(v).map(x => x === '__brand' ? 'brand-level' : x).join(', ') : ''}${arr(v.pillars).length ? ' → pillars: ' + v.pillars.join(', ') : ''}`).join('\n') : ''}
 ${plan.creative?.references?.length ? 'CREATIVE REFERENCES TO BORROW FROM: ' + plan.creative.references.slice(0, 10).map(r => `${r.brand}: ${r.piece} → ${r.borrow}`).join(' | ') : ''}
 ${ideas ? 'TEAM IDEAS BANK (use the strong ones):\n' + ideas : ''}
 
@@ -1010,7 +1031,7 @@ function vPlans(b){
       <label class="f span2">Focus for this month <span class="hint">Launches, offers, campaigns, client asks</span><textarea class="in" id="npl-brief" rows="2">${esc(b.brain?.brief || '')}</textarea></label>
     </div>
     ${hasCh ? (() => { const mx = defaultMix(b); const tot = mixTotal(mx); return `<div style="display:flex;flex-direction:column;gap:8px"><div class="pmeta"><h3>Content mix</h3><span class="chip" style="background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700"><b id="mx-total">${tot}</b>&nbsp;posts this month</span></div><p class="muted sm">Set how many of each format you want and where each can go. The AI plans exactly this mix and picks the best platform for every post.</p>
-      <div class="tw"><table><thead><tr><th>Format</th><th style="width:110px">Posts</th><th>Platforms it can go on</th><th style="width:220px">Product focus</th></tr></thead><tbody>${FORMATS.map(f => { const ch = fmtChoices(b, f).length ? fmtChoices(b, f) : FMT_CH[f]; return `<tr><td><b>${f}</b><div class="muted sm">${FMT_HINT[f]}</div></td><td><input class="in" type="number" min="0" max="40" id="mx-${f}" data-chg="mxTotal" value="${esc(mx[f]?.n ?? 0)}" aria-label="${f} posts"></td><td><div class="chips" style="margin:0">${ch.map(c => `<label class="chk chip"><input type="checkbox" id="mxc-${f}-${c}" ${(mx[f]?.ch || []).includes(c) ? 'checked' : ''}> ${esc(c)}</label>`).join('')}</div></td><td><select class="in" id="mxp-${f}" aria-label="${f} product focus">${opts([['','Mix of products (AI decides)'],['__brand','Brand-level, no product']].concat(arr(b.brain?.products).slice(0, 200).map(x => [x.name, x.name])), mx[f]?.product || '')}</select></td></tr>`; }).join('')}</tbody></table></div></div>`; })() : ''}
+      <div class="tw vis"><table><thead><tr><th>Format</th><th style="width:110px">Posts</th><th>Platforms it can go on</th><th>Products & pillars in focus</th></tr></thead><tbody>${FORMATS.map(f => { const ch = fmtChoices(b, f).length ? fmtChoices(b, f) : FMT_CH[f]; return `<tr><td><b>${f}</b><div class="muted sm">${FMT_HINT[f]}</div></td><td><input class="in" type="number" min="0" max="40" id="mx-${f}" data-chg="mxTotal" value="${esc(mx[f]?.n ?? 0)}" aria-label="${f} posts"></td><td><div class="chips" style="margin:0">${ch.map(c => `<label class="chk chip"><input type="checkbox" id="mxc-${f}-${c}" ${(mx[f]?.ch || []).includes(c) ? 'checked' : ''}> ${esc(c)}</label>`).join('')}</div></td><td><div class="mxcell">${multiSel('msp-' + f, 'product', [['__brand','Brand-level, no product']].concat(arr(b.brain?.products).slice(0, 200).map(x => [x.name, x.name])), fmtProducts(mx[f]))}${arr(b.pillars).length ? multiSel('msl-' + f, 'pillar', arr(b.pillars).map(x => [x.name, x.name]), arr(mx[f]?.pillars)) : ''}</div></td></tr>`; }).join('')}</tbody></table></div></div>`; })() : ''}
     ${hasCh ? vPlanPillars(b) : ''}
     ${hasCh ? vPlanHero(b) : ''}
     <div class="acts">
@@ -1781,9 +1802,12 @@ async function runPlan(pid){
       const list = (Array.isArray(slots) ? slots : arr(slots?.posts)).filter(s => s && validD(s.date));
       if (!list.length) throw {code:'invalid_json'};
       step(pid, `Adding ${list.length} posts to the calendar…`);
+      const rr = {}; const used = {};
+      const pick = (f, kind, want, pool0) => { if (!pool0.length) return want; const key = f + kind; used[key] = used[key] || {}; if (pool0.includes(want) && !used[key][want]){ used[key][want] = 1; return want; } const free = pool0.filter(x => !used[key][x]); const v = free.length ? free[0] : pool0[(rr[key] = ((rr[key] ?? -1) + 1)) % pool0.length]; used[key][v] = 1; return v; };
+      list.forEach(s => { const f = FORMATS.includes(s.format) ? s.format : 'Static'; const m = plan.opts.mix?.[f]; const prods = fmtProducts(m); if (prods.length){ const v = pick(f, 'p', str(s.product) || '__brand', prods); s._product = v === '__brand' ? '' : v; } else s._product = str(s.product); if (arr(m?.pillars).length) s.pillar = pick(f, 'l', str(s.pillar), m.pillars); });
       await pool(list, 4, async s => {
         const id = uid();
-        await put('posts', id, newPost(b, pid, {id, date:s.date, time:str(s.time) || '19:00', format:FORMATS.includes(s.format) ? s.format : 'Static', product:(() => { const f = FORMATS.includes(s.format) ? s.format : 'Static'; const fp = plan.opts.mix?.[f]?.product; return fp === '__brand' ? '' : fp || str(s.product); })(), channel:(() => { const f = FORMATS.includes(s.format) ? s.format : 'Static'; const allow = plan.opts.mix?.[f]?.ch; return CH.includes(s.channel) && (!allow || !allow.length || allow.includes(s.channel)) ? s.channel : (allow && allow[0]) || activeCh(b)[0]; })(), pillar:str(s.pillar), topic:str(s.topic), hook:str(s.hook), topical:str(s.topical), objective:str(s.objective)}));
+        await put('posts', id, newPost(b, pid, {id, date:s.date, time:str(s.time) || '19:00', format:FORMATS.includes(s.format) ? s.format : 'Static', product:s._product, channel:(() => { const f = FORMATS.includes(s.format) ? s.format : 'Static'; const allow = plan.opts.mix?.[f]?.ch; return CH.includes(s.channel) && (!allow || !allow.length || allow.includes(s.channel)) ? s.channel : (allow && allow[0]) || activeCh(b)[0]; })(), pillar:str(s.pillar), topic:str(s.topic), hook:str(s.hook), topical:str(s.topical), objective:str(s.objective)}));
       });
     }
     const todo = postsOf(pid).filter(p => !p.hasContent);
@@ -2025,7 +2049,7 @@ const ACT = {
     if (D.plans[id]){ ui.view = 'plan'; ui.planId = id; ui.tab = 'deck'; renderAll(); window.scrollTo(0,0); if (D.plans[id].status !== 'ready' || postsOf(id).some(p => !p.hasContent)){ toast('Picking up this month\'s plan where it stopped'); runPlan(id); } else toast('This month already has a plan'); return; }
     const reuse = $('#npl-reuse')?.checked ? plansOf(ui.brandId)[0]?.[1] : null;
     const b0 = D.brands[ui.brandId]; const mix = {}; let bad = '';
-    FORMATS.forEach(f => { const n = Math.max(0, Math.min(40, parseInt($('#mx-' + f)?.value || '0', 10) || 0)); const ch = FMT_CH[f].filter(c => $(`#mxc-${f}-${c}`)?.checked); mix[f] = {n, ch, product:$('#mxp-' + f)?.value || ''}; if (n > 0 && !ch.length) bad = f; });
+    FORMATS.forEach(f => { const n = Math.max(0, Math.min(40, parseInt($('#mx-' + f)?.value || '0', 10) || 0)); const ch = FMT_CH[f].filter(c => $(`#mxc-${f}-${c}`)?.checked); mix[f] = {n, ch, products:msVals('msp-' + f), pillars:msVals('msl-' + f)}; if (n > 0 && !ch.length) bad = f; });
     const pls = arr(b0.pillars).map((x, i) => ({...x, i})).filter(x => $('#pp-' + x.i)?.checked).map(x => ({name:x.name, purpose:x.purpose || '', mix:Math.max(0, parseInt($('#ppm-' + x.i)?.value || '0', 10) || 0)}));
     const psum = pls.reduce((s, x) => s + x.mix, 0);
     if (pls.length && !psum){ pls.forEach(x => x.mix = Math.round(100 / pls.length)); }
@@ -2144,11 +2168,13 @@ const CHG = {
   ck: t => patch('posts', ui.postId, {checklist:{[t.dataset.k]:t.checked}}),
   obj: t => { const b = D.brands[ui.brandId]; let l = arr(b.objectives?.list).slice(); if (t.checked){ if (!l.includes(t.value)) l.push(t.value); } else l = l.filter(x => x !== t.value); const part = {objectives:{list:l}}; if (!l.includes(b.objectives?.primary)) part.objectives.primary = l[0] || ''; patch('brands', ui.brandId, part); },
   pillarOn: t => { const b = D.brands[ui.brandId]; const l = clone(arr(b.pillars)); if (l[+t.dataset.i]) l[+t.dataset.i].active = t.checked; patch('brands', ui.brandId, {pillars:l}); },
+  ms: t => { const d = t.closest('.ms'); const sel = [...d.querySelectorAll('input:checked')].map(x => x.value); const sm = d.querySelector('summary'); sm.textContent = msText(d.dataset.kind, sel); sm.classList.toggle('on', sel.length > 0); },
   mxTotal: () => { const t = FORMATS.reduce((s, f) => s + (parseInt($('#mx-' + f)?.value || '0', 10) || 0), 0); const el = $('#mx-total'); if (el) el.textContent = t; },
   dsec: t => { if (!ui.deckSec) ui.deckSec = new Set(DECK_PRESETS.full); if (t.checked) ui.deckSec.add(t.value); else ui.deckSec.delete(t.value); renderAll(); },
   topInc: t => { const plan = D.plans[ui.planId]; const l = clone(arr(plan.topical)); if (l[+t.dataset.i]) l[+t.dataset.i].include = t.checked; patch('plans', ui.planId, {topical:l}); }
 };
 
+document.addEventListener('click', e => { document.querySelectorAll('details.ms[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }); });
 document.addEventListener('click', e => {
   const a = e.target.closest('[data-act]'); if (!a || a.disabled) return;
   const fn = ACT[a.dataset.act]; if (!fn) return;
