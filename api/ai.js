@@ -51,16 +51,22 @@ async function gemini(prompt, tier, json, search){
   const envModel = tier === 'quick' ? (process.env.GEMINI_MODEL_FAST || process.env.GEMINI_MODEL) : process.env.GEMINI_MODEL;
   let model = picked[tier] || envModel || 'gemini-flash-latest';
   const tried = new Set();
-  for (let attempt = 0; attempt < 3; attempt++){
+  let useSearch = search, waits = 0, searchDropped = false;
+  for (let attempt = 0; attempt < 6; attempt++){
     tried.add(model);
-    const { r, j } = await callGemini(model, prompt, json, search);
+    const { r, j } = await callGemini(model, prompt, json, useSearch);
+    const emsg = j?.error?.message || '';
+    // Free keys cannot use Google Search grounding: carry on without it.
+    if (!r.ok && useSearch && (r.status === 400 || r.status === 403) && /ground|google_search|search|tool|billing|free tier|not supported|not available/i.test(emsg)){ useSearch = false; searchDropped = true; continue; }
+    // Rate limit (free tier is ~10 requests/minute): wait and retry a couple of times.
+    if (r.status === 429 && waits < 2){ const ra = +(r.headers.get('retry-after') || 0); await new Promise(res => setTimeout(res, Math.min(30, ra || 12 * (waits + 1)) * 1000)); waits++; attempt--; continue; }
     if (r.ok){
       picked[tier] = model;
       const c = j.candidates?.[0];
       const text = (c?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
       if (!text) throw Object.assign(new Error(`Gemini returned nothing (${c?.finishReason || j.promptFeedback?.blockReason || 'unknown'})`), { status: 502 });
       const sources = (c?.groundingMetadata?.groundingChunks || []).map(g => g.web).filter(Boolean).map(w => ({ title: w.title || '', uri: w.uri || '' }));
-      return { text, sources };
+      return { text, sources, searchDropped };
     }
     const msg = j.error?.message || `Gemini error ${r.status}`;
     const retired = r.status === 404 || /no longer available|not found|deprecated|not supported|retired/i.test(msg);
