@@ -1,4 +1,4 @@
-# Digimuse Content Engine™
+# Digimuse Content Engine
 
 Internal social media planning tool for the Digimuse team.
 
