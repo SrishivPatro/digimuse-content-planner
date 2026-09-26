@@ -5,25 +5,28 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light">
 <meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 40%27%3E%3Crect width=%2740%27 height=%2740%27 rx=%2712%27 fill=%27%230F1E4A%27/%3E%3Ccircle cx=%2717.5%27 cy=%2722.5%27 r=%277%27 fill=%27none%27 stroke=%27%23fff%27 stroke-width=%273.6%27/%3E%3Crect x=%2723.2%27 y=%278%27 width=%273.6%27 height=%2721.5%27 rx=%271.8%27 fill=%27%23fff%27/%3E%3Ccircle cx=%279%27 cy=%2710%27 r=%272.6%27 fill=%27%23FF5A5F%27/%3E%3Ccircle cx=%2716%27 cy=%2710%27 r=%272.6%27 fill=%27%23FFA41B%27/%3E%3C/svg%3E">
 <title>Digimuse Content Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
 html{color-scheme:light}
+html{color-scheme:light}
 :root{
-  --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F6F7F9; --ink:#0A0A0B; --ink-2:#3A3D46; --muted:#7A7E8A;
-  --line:#E8E8EA; --line-2:#D4D6DC;
-  --side:#FFFFFF; --side-2:#F2F3F6; --side-ink:#0A0A0B; --side-muted:#6B6F7A;
-  --accent:#0F2350; --accent-ink:#FFFFFF; --accent-soft:#EEF1F7;
-  --c1:#0F2350; --c2:#0A0A0B; --c3:#34466E; --c4:#8C96AB; --c5:#1C3A7A; --c6:#5B6B8C;
-  --c1s:#F4F5F8; --c2s:#F4F5F8; --c3s:#F4F5F8; --c4s:#F1F3F8; --c5s:#F4F5F8; --c6s:#F4F5F8;
-  --s-idea:#8A8F9C; --s-copy:#2B4C8C; --s-design:#5A4A8A; --s-client:#94681E; --s-changes:#A23B3B; --s-approved:#2F6B4F; --s-live:#2D5F6B;
-  --warn:#A23B3B; --bar:#0F2350;
-  --shadow:0 1px 2px rgba(10,10,11,.04),0 12px 32px rgba(10,10,11,.06);
-  --fd:'Instrument Serif','Iowan Old Style','Palatino Linotype',Georgia,serif;
-  --fb:'Instrument Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --bg:#F5F7FC; --surface:#FFFFFF; --surface-2:#F7F8FC; --ink:#131A33; --ink-2:#444C66; --muted:#7A8199;
+  --line:#E6E9F2; --line-2:#D3D8E6;
+  --side:#FFFFFF; --side-2:#F1F4FB; --side-ink:#131A33; --side-muted:#6B7290;
+  --accent:#2F5BEA; --accent-ink:#FFFFFF; --accent-soft:#ECF0FE; --navy:#0F1E4A;
+  --c1:#2F5BEA; --c2:#FF5A5F; --c3:#FFA41B; --c4:#10B9A0; --c5:#7C5CFF; --c6:#1FA2FF;
+  --c1s:#ECF0FE; --c2s:#FFEEEF; --c3s:#FFF4E4; --c4s:#E4F7F3; --c5s:#F1EEFF; --c6s:#E6F5FF;
+  --s-idea:#8B91A7; --s-copy:#2F5BEA; --s-design:#7C5CFF; --s-client:#E08600; --s-changes:#E5484D; --s-approved:#12A26B; --s-live:#0E9AA7;
+  --warn:#E5484D; --bar:#2F5BEA;
+  --shadow:0 1px 2px rgba(19,26,51,.05),0 10px 28px rgba(19,26,51,.07);
+  --fd:'Montserrat',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --fb:'Montserrat',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   --fm:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 *{box-sizing:border-box}
@@ -321,89 +324,132 @@ tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
   .hero{padding:20px 18px}
   .rv{grid-template-columns:1fr}
 }
-/* ===== luxury layer: white, black, deep navy ===== */
-h1,h2,h3,h4{font-weight:400;letter-spacing:-.005em}
-h1{font-size:42px;line-height:1.05;font-weight:400}
-h2{font-size:23px;line-height:1.15}
-h3{font-family:var(--fb);font-size:14px;font-weight:600;letter-spacing:.01em}
-h1 em,h2 em{font-style:italic}
-.eyebrow{letter-spacing:.16em;font-weight:600;font-size:10.5px}
-.logo .wm{font-weight:400;font-size:32px;letter-spacing:-.01em;font-style:italic}
-.logo .wm span{color:var(--side-muted)}
-.logo small{text-transform:uppercase;letter-spacing:.22em;font-size:10px}
-.spectrum{height:1px;border-radius:0;background:var(--side-2)} .spectrum i{display:none}
-.nav button,.bitem{border-radius:6px;font-weight:500}
-.nav button.on,.bitem.on{box-shadow:inset 2px 0 0 var(--side-ink)}
-.nav .ico{background:transparent!important;border:1px solid var(--side-2);color:var(--side-ink);font-size:10px;border-radius:50%}
-.nav .count{background:var(--side-ink);color:var(--side);font-weight:700}
-.lnk{color:var(--side-ink);text-decoration:underline;text-underline-offset:3px;font-weight:500}
-.bav{border-radius:50%;font-family:var(--fb);font-weight:600;letter-spacing:.02em}
-.me{border-radius:8px;background:transparent;border:1px solid var(--side-2)}
-.hero{border-radius:4px;padding:34px 36px;border:1px solid var(--line)}
-.hero::before{background:var(--accent);height:3px}
-.hero.brand::before{width:3px;height:100%}
-.hero .blob{opacity:.05}
-.panel{border-radius:4px;padding:24px 26px}
-.panel h2 .dotc{background:var(--accent);width:6px;height:6px;border-radius:50%;vertical-align:5px;margin-right:10px}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:20px 22px}
-.stat i{background:var(--accent);height:2px;width:22px;border-radius:0;margin-bottom:10px}
-.stat b{font-weight:400;font-size:46px;letter-spacing:-.01em}
-.stat span{text-transform:uppercase;letter-spacing:.12em;font-size:10.5px;color:var(--muted)}
-.btn{border-radius:6px;font-weight:600;letter-spacing:.01em}
-.btn.pri{box-shadow:none}
-.btn.pri:hover{filter:none;background:var(--ink);border-color:var(--ink)}
-.in{border-radius:6px}
-.tabs{border-radius:6px;padding:3px;background:var(--surface-2);border-color:var(--line)}
-.tabs button{border-radius:4px;font-weight:600;letter-spacing:.01em}
-.tabs button.on{background:var(--accent);color:var(--accent-ink)}
-.tw{border-radius:4px}
-th{letter-spacing:.12em;font-size:10.5px;font-weight:600;color:var(--muted);background:var(--surface)}
-.chip{border-radius:99px;background:transparent}
-.chb{background:transparent;color:var(--ink);border:1px solid var(--line-2);border-radius:99px;font-weight:600;letter-spacing:.04em}
-.meter{border-radius:0;height:3px;border:0;background:var(--line)}
-.meter i{background:var(--accent)}
-.bar{border-radius:0;height:6px;gap:2px}
-.banner{border-radius:4px}
-.post{border-radius:4px}
-.post:hover{transform:none}
-.cv .deco{background:transparent;border:1px solid var(--cac);opacity:.35;width:150px;height:150px;right:-40px;top:-40px}
-.cv .deco2{display:none}
-.cv .hl{font-weight:400;font-size:26px;line-height:1.02;letter-spacing:-.005em}
-.cv .ct{background:transparent;color:var(--cfg);border:1px solid var(--cfg);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:10.5px}
-.cv .fm{letter-spacing:.14em}
-.phone{border-radius:10px}
-.phone .cv .hl{font-size:34px}
-.tday{background:transparent;border-left:2px solid var(--accent);border-radius:0;padding:1px 6px;color:var(--accent);font-weight:600}
-.pc{background:var(--surface-2);box-shadow:inset 2px 0 0 var(--accent);border-radius:3px}
-.pc:hover{background:var(--accent-soft)}
-.calw,.col,.kc,.sec,.li,.idea,.lu,.rvc,.empty,.answer,.report,.var{border-radius:4px}
-.col{border-top-width:2px}
-.dw-h::before{background:var(--accent)!important;height:3px}
-.sec.ai{background:var(--surface-2);border-color:var(--line)}
-.idea{border-left:2px solid var(--accent)}
-.built span{background:var(--surface-2);border:1px solid var(--line)}
-.hooks button{border-radius:4px}
-.lu .d{font-weight:400;font-size:26px}
-.ring b{font-weight:400;font-size:48px}
-.pil::before{border-radius:50%}
-#login{background:var(--side)}
-#login .box{border-radius:4px;padding:40px 36px}
-#login .wm{font-weight:400;font-style:italic;font-size:40px}
-#login .wm span{color:var(--muted)}
-#toast{border-radius:4px}
-.side{border-right:1px solid var(--line)}
-.logo .wm span{color:var(--accent)}
-.nav button.on,.bitem.on{background:var(--accent-soft);color:var(--accent);box-shadow:inset 2px 0 0 var(--accent)}
-.nav .ico{border-color:var(--line-2)}
-.nav .count{background:var(--accent);color:#fff}
+/* ===== colourful white-base layer ===== */
+body{font-size:13.5px}
+h1{font-weight:800;letter-spacing:-.025em;font-size:30px}
+h2{font-weight:700;font-size:18px;letter-spacing:-.01em}
+h3{font-weight:700;font-size:14px}
+.side{border-right:1px solid var(--line);gap:22px}
+.logo{flex-direction:row;align-items:center;gap:11px;padding:2px 6px}
+.logo svg{width:40px;height:40px;flex:none}
+.logo .wm{font-family:var(--fd);font-weight:800;font-size:21px;letter-spacing:-.03em;line-height:1;color:var(--navy)}
+.logo .wm span{color:var(--c2)}
+.logo small{display:block;color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-top:4px}
+.nav button,.bitem{border-radius:10px;font-weight:600;color:var(--ink-2);padding:8px 10px}
+.nav button:hover,.bitem:hover{background:var(--side-2);color:var(--ink)}
+.nav button.on,.bitem.on{background:var(--accent-soft);color:var(--accent);box-shadow:none}
+.nav .ico{width:30px;height:30px;border-radius:9px;background:var(--ics);color:var(--ic)}
+.nav .ico svg{width:16px;height:16px}
+.nav .count{background:var(--c2);color:#fff}
+.slabel{color:var(--muted)}
 .lnk{color:var(--accent)}
-.me{border-color:var(--line)}
+.bav{border-radius:8px;font-family:var(--fd);font-weight:700}
+.me{background:var(--side-2);border:0}
+.me label{color:var(--muted)}
 .me select{background:#fff;color:var(--ink);border-color:var(--line-2)}
-.mode{border-color:var(--line-2)}
-.spectrum{background:var(--line)}
-#login{background:var(--surface-2)}
-#login .box{border:1px solid var(--line);box-shadow:0 20px 60px rgba(10,10,11,.08)}
-#login .wm span{color:var(--accent)}
+.mode{border-color:var(--line-2);color:var(--muted)}
+.hero{border-radius:20px;padding:28px 30px;border:1px solid var(--line)}
+.hero::before{display:none}
+.hero::after{content:'';position:absolute;right:-80px;top:-120px;width:380px;height:320px;background:radial-gradient(circle at 30% 60%,color-mix(in srgb,var(--c3) 38%,transparent),transparent 55%),radial-gradient(circle at 65% 35%,color-mix(in srgb,var(--c2) 30%,transparent),transparent 55%),radial-gradient(circle at 55% 75%,color-mix(in srgb,var(--c1) 30%,transparent),transparent 60%);pointer-events:none;opacity:.8}
+.hero.brand::after{background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--bc) 30%,transparent),transparent 60%)}
+.hero.brand::before{display:block;width:6px;height:auto;inset:18px auto 18px 0;border-radius:0 6px 6px 0;background:var(--bc)}
+.hero .blob{display:none}
+.hero > div,.hero .acts{position:relative;z-index:1}
+.panel{border-radius:18px}
+.panel h2 .dotc{width:10px;height:10px;border-radius:4px}
+.stat{border-radius:18px;border:0;background:var(--sb);padding:18px 20px;flex-direction:row;align-items:center;gap:14px}
+.stat .si{width:44px;height:44px;border-radius:13px;background:var(--sc);color:#fff;display:grid;place-items:center;flex:none;box-shadow:0 6px 16px color-mix(in srgb,var(--sc) 35%,transparent)}
+.stat .si svg{width:21px;height:21px}
+.stat i{display:none}
+.stat b{font-size:30px;font-weight:800}
+.stat span{font-weight:600;color:var(--ink-2);font-size:12px}
+.stat.warn b{color:var(--warn)}
+.btn{border-radius:10px;font-weight:700}
+.btn.pri{background:var(--accent);border-color:var(--accent);box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 28%,transparent)}
+.btn.pri:hover{filter:brightness(1.07)}
+.btn.hot{background:var(--c2);border-color:var(--c2);color:#fff;box-shadow:0 6px 16px color-mix(in srgb,var(--c2) 28%,transparent)}
+.tabs{background:var(--surface);border-radius:14px}
+.tabs button{border-radius:10px}
+.tabs button.on{background:var(--accent);color:#fff}
+th{background:var(--surface-2)}
+.post{border-radius:16px}
+.cv .hl{font-weight:800}
+.chip{background:var(--surface)}
+.start{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.step{border-radius:18px;padding:18px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden}
+.step .n{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-weight:800;color:#fff;background:var(--sc)}
+.step p{color:var(--ink-2);font-size:13px}
+.step .btn{align-self:flex-start;margin-top:auto}
+/* deck */
+.deckwrap{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:960px){.deckwrap{grid-template-columns:1fr}}
+.deckside{position:sticky;top:12px;display:flex;flex-direction:column;gap:12px}
+.secs{display:flex;flex-direction:column;gap:4px}
+.secs label{display:flex;gap:9px;align-items:center;padding:6px 9px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer}
+.secs label:hover{background:var(--surface-2)}
+.secs input{accent-color:var(--accent);width:15px;height:15px}
+.slides{display:flex;flex-direction:column;gap:18px}
+.sl-wrap{display:flex;flex-direction:column;gap:6px}
+.sl-cap{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-weight:600}
+.slide{--sc1:var(--accent);aspect-ratio:16/9;width:100%;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;position:relative;container-type:inline-size;color:#131A33;font-family:var(--fb);box-shadow:var(--shadow)}
+.slide .sbar{position:absolute;left:0;top:0;right:0;height:1.1cqw;background:linear-gradient(90deg,var(--sc1),var(--c2),var(--c3));border:0;border-radius:0;min-width:0}
+.slide .sbody{position:absolute;inset:4.4cqw 5cqw 5.4cqw 5cqw;display:flex;flex-direction:column;gap:2cqw;border:0;padding:0;background:none;border-radius:0}
+.slide .ey{font-size:1.25cqw;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--sc1)}
+.slide h2{font-size:3.3cqw;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin:0;color:#131A33}
+.slide .ft{position:absolute;left:5cqw;right:5cqw;bottom:2cqw;display:flex;justify-content:space-between;font-size:1.05cqw;color:#8B91A7;font-weight:600}
+.slide table{font-size:1.25cqw;width:100%;border-collapse:collapse}
+.slide th{font-size:1.05cqw;background:#F3F5FB;color:#444C66;padding:.8cqw 1cqw;letter-spacing:.06em;text-transform:uppercase;white-space:normal}
+.slide td{padding:.8cqw 1cqw;border-bottom:1px solid #E6E9F2;color:#252C45;vertical-align:top}
+.slide .kv{display:grid;grid-template-columns:repeat(var(--cols,2),1fr);gap:1.6cqw}
+.slide .kv div{background:#F7F8FC;border-radius:1.2cqw;padding:1.6cqw;border-top:.4cqw solid var(--kc,var(--sc1))}
+.slide .kv b{display:block;font-size:1.15cqw;letter-spacing:.1em;text-transform:uppercase;color:var(--kc,var(--sc1));margin-bottom:.6cqw}
+.slide .kv p{font-size:1.5cqw;line-height:1.4;color:#252C45}
+.slide .cards{display:grid;grid-template-columns:repeat(var(--cols,4),1fr);gap:1.4cqw;flex:1;min-height:0}
+.slide .card{border-radius:1.4cqw;padding:1.6cqw;background:color-mix(in srgb,var(--kc) 10%,#fff);border:1px solid color-mix(in srgb,var(--kc) 25%,#fff);display:flex;flex-direction:column;gap:.8cqw;overflow:hidden}
+.slide .card .big{font-size:3.4cqw;font-weight:800;color:var(--kc);line-height:1}
+.slide .card h4{font-size:1.6cqw;font-weight:800;margin:0}
+.slide .card p{font-size:1.2cqw;line-height:1.4;color:#444C66}
+.slide.cover{background:var(--navy);color:#fff}
+.slide.cover .sbody{justify-content:center;gap:1.6cqw}
+.slide.cover h2{color:#fff;font-size:5.4cqw}
+.slide.cover .sub{font-size:2cqw;font-weight:600;color:#C9D3F5}
+.slide.cover .theme{font-size:2.4cqw;font-weight:700;font-style:italic;color:var(--c3)}
+.slide.cover .ft{color:#8FA0D6}
+.slide.cover .dots{position:absolute;right:6cqw;top:8cqw;display:flex;gap:1.2cqw}
+.slide.cover .dots i{width:3cqw;height:3cqw;border-radius:50%}
+.slide .pgrid{display:grid;grid-template-columns:34cqw 1fr;gap:3cqw;flex:1;min-height:0}
+.slide .pcv{border-radius:1.4cqw;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:2.4cqw;gap:1cqw;position:relative}
+.slide .pcv .hl{font-size:3cqw;font-weight:800;line-height:1.05}
+.slide .pcv .sl{font-size:1.4cqw;opacity:.9}
+.slide .pcv .ct{align-self:flex-start;font-size:1.2cqw;font-weight:800;border-radius:99px;padding:.4cqw 1.2cqw}
+.slide .pcv .o{position:absolute;right:-5cqw;top:-5cqw;width:16cqw;height:16cqw;border-radius:50%;opacity:.9}
+.slide .pmeta2{display:flex;gap:1cqw;flex-wrap:wrap;font-size:1.2cqw;font-weight:700}
+.slide .pmeta2 span{padding:.3cqw 1cqw;border-radius:99px;background:#F1F3FA;color:#444C66}
+.slide .pmeta2 span.ch{color:#fff}
+.slide .hook{font-size:1.9cqw;font-weight:800;line-height:1.25}
+.slide .capt{font-size:1.3cqw;line-height:1.5;white-space:pre-wrap;color:#333A52;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:9}
+.slide .tags{font-size:1.2cqw;color:var(--sc1);font-weight:600}
+.slide .mini{font-size:1.1cqw}
+.slide .mini td{padding:.5cqw .8cqw}
+.slide .calg{display:grid;grid-template-columns:repeat(7,1fr);gap:.5cqw;flex:1;min-height:0}
+.slide .calg div{background:#F7F8FC;border-radius:.6cqw;padding:.5cqw .6cqw;font-size:.95cqw;overflow:hidden;display:flex;flex-direction:column;gap:.3cqw}
+.slide .calg .h{background:none;font-weight:700;color:#8B91A7;text-transform:uppercase;letter-spacing:.08em;padding:0 .6cqw}
+.slide .calg .x{background:none}
+.slide .calg b{font-size:1cqw}
+.slide .calg i{font-style:normal;border-radius:.4cqw;padding:.15cqw .4cqw;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slide ul{margin:0;padding-left:2.2cqw;font-size:1.6cqw;line-height:1.55;display:flex;flex-direction:column;gap:.6cqw}
+#present{position:fixed;inset:0;z-index:95;background:#070B1A;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+#present .slide{width:min(100%,calc((100vh - 110px) * 16 / 9));border:0;border-radius:6px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+#present .pbar{display:flex;gap:10px;align-items:center;margin-top:16px;color:#C9D3F5;font-weight:600}
+#present .pbar .btn{background:#1A2342;border-color:#2A3560;color:#fff}
+#printdeck{display:none}
+@media print{
+  @page{size:13.333in 7.5in;margin:0}
+  body *{visibility:hidden}
+  #printdeck,#printdeck *{visibility:visible}
+  #printdeck{display:block;position:absolute;left:0;top:0;width:13.333in}
+  #printdeck .slide{width:13.333in;border:0;border-radius:0;box-shadow:none;page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 </style>
 
 </head>
@@ -415,7 +461,9 @@ th{letter-spacing:.12em;font-size:10.5px;font-weight:600;color:var(--muted);back
 <div id="drawer" hidden></div>
 <div id="copybox" hidden></div>
 <div id="tip" hidden></div>
-<div id="login" hidden><form class="box" id="loginForm"><div><div class="wm">digimuse<span>.</span></div><p class="muted" style="margin-top:6px;font-weight:600">Content Planner</p></div><label class="f">Team password<input class="in" type="password" id="lg-pw" autocomplete="current-password" required></label><p class="err" id="lg-err" hidden></p><button class="btn pri" type="submit" style="justify-content:center">Sign in</button></form></div>
+<div id="present" hidden></div>
+<div id="printdeck" aria-hidden="true"></div>
+<div id="login" hidden><form class="box" id="loginForm"><div style="display:flex;gap:12px;align-items:center"><span id="lg-logo" style="width:46px;height:46px;display:block"></span><div><div class="wm" style="font-family:var(--fd);font-weight:800;font-size:26px;font-style:normal;letter-spacing:-.03em;color:#0F1E4A">digimuse<span style="color:#FF5A5F">.</span></div><p class="muted" style="font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase">Content Planner</p></div></div><label class="f">Team password<input class="in" type="password" id="lg-pw" autocomplete="current-password" required></label><p class="err" id="lg-err" hidden></p><button class="btn pri" type="submit" style="justify-content:center">Sign in</button></form></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -481,7 +529,7 @@ const linkOK = u => /^https?:\/\//i.test(u||'');
 function lum(hex){ let h = hex.replace('#',''); if (h.length === 3) h = h.split('').map(x => x+x).join(''); const [r,g,b] = [0,2,4].map(i => parseInt(h.substr(i,2),16)/255).map(c => c <= .03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4)); return .2126*r + .7152*g + .0722*b; }
 function brandColors(b){
   const k = kitColors(b);
-  if (!k.length) return {bg:'#0F2350', fg:'#FFFFFF', ac:'#FFFFFF', solid:null};
+  if (!k.length) return {bg:'#2F5BEA', fg:'#FFFFFF', ac:'#FFA41B', solid:null};
   const sorted = k.slice().sort((x,y) => lum(x) - lum(y));
   const bg = k[0], L = lum(bg);
   const fg = L > .45 ? (sorted[0] !== bg ? sorted[0] : '#1A1033') : (sorted[sorted.length-1] !== bg && lum(sorted[sorted.length-1]) > .6 ? sorted[sorted.length-1] : '#FFFFFF');
@@ -489,6 +537,21 @@ function brandColors(b){
   return {bg, fg, ac, solid:bg};
 }
 const initials = n => str(n).replace(/\(.*?\)/g,'').trim().split(/\s+/).slice(0,2).map(w => w[0] || '').join('').toUpperCase() || '·';
+const IC = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  tasks:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>',
+  team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></svg>',
+  rocket:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15c-1.5 1.5-2 5-2 5s3.5-.5 5-2"/><path d="M9 15l-3-3c1-4 5-9 12-9 0 7-5 11-9 12z"/><circle cx="15" cy="9" r="1.5"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  alert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  heart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
+  save:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>'
+};
+const LOGO = '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="12" fill="#0F1E4A"/><circle cx="17.5" cy="22.5" r="7" fill="none" stroke="#fff" stroke-width="3.6"/><rect x="23.2" y="8" width="3.6" height="21.5" rx="1.8" fill="#fff"/><circle cx="9" cy="10" r="2.6" fill="#FF5A5F"/><circle cx="16" cy="10" r="2.6" fill="#FFA41B"/><circle cx="32" cy="29" r="2.6" fill="#10B9A0"/></svg>';
+const statTile = (icon, n, label, col, warn) => `<div class="stat ${warn ? 'warn' : ''}" style="--sb:var(${col}s);--sc:var(${col})"><span class="si">${IC[icon]}</span><div><b>${n}</b><span style="display:block">${label}</span></div></div>`;
 const chBadge = c => `<span class="chb" style="--chc:${CHC[c] || '#555'}">${esc(CHA[c] || c)}</span>`;
 
 /* ---------- state ---------- */
@@ -799,12 +862,12 @@ const spec = '<div class="spectrum" aria-hidden="true"><i></i><i></i><i></i><i><
 /* ---------- sidebar ---------- */
 function myTasks(){ if (!me) return []; return Object.values(D.posts).filter(p => owner(p) === me && group(p.status) !== 'done'); }
 function vSide(){
-  const nb = (v, l, ico, col, c) => `<button class="${ui.view===v?'on':''}" data-act="go" data-v="${v}"><span class="ico" style="background:var(${col})">${ico}</span>${esc(l)}${c ? `<span class="count">${c}</span>` : ''}</button>`;
+  const nb = (v, l, ico, col, c) => `<button class="${ui.view===v?'on':''}" data-act="go" data-v="${v}"><span class="ico" style="--ics:var(${col}s);--ic:var(${col})">${IC[ico]}</span>${esc(l)}${c ? `<span class="count">${c}</span>` : ''}</button>`;
   const team = Object.entries(D.team).sort((a,b) => str(a[1].name).localeCompare(str(b[1].name))).map(([id,m]) => [id, `${m.name} · ${m.role}`]);
-  return `<div class="logo"><div class="wm">digimuse<span>.</span></div><small>Content Planner</small>${spec}</div>
-  <nav class="nav" aria-label="Main">${nb('home','Dashboard','◆','--c1')}${nb('tasks','My tasks','✓','--c5', me ? myTasks().length : 0)}${nb('team','Team','●','--c6')}${nb('live','Go live guide','↗','--c3')}</nav>
+  return `<div class="logo">${LOGO}<div><div class="wm">digimuse<span>.</span></div><small>Content Planner</small></div></div>
+  <nav class="nav" aria-label="Main">${nb('home','Dashboard','home','--c1')}${nb('tasks','My tasks','tasks','--c2', me ? myTasks().length : 0)}${nb('team','Team','team','--c4')}${nb('live','Go live guide','rocket','--c3')}</nav>
   <div><div class="slabel">Brands <button class="lnk" data-act="newBrand">+ New brand</button></div>
-    <div class="blist">${sortedBrands().map(([id,b]) => { const c = brandColors(b); return `<button class="bitem ${ui.brandId===id && (ui.view==='brand'||ui.view==='plan') ? 'on' : ''}" data-act="goBrand" data-id="${id}"><span class="bav" style="background:${c.solid || '#0F2350'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name))}</span>${esc(b.name)}</button>`; }).join('') || '<p class="sm" style="padding:0 10px;color:var(--side-muted)">No brands yet</p>'}</div></div>
+    <div class="blist">${sortedBrands().map(([id,b]) => { const c = brandColors(b); return `<button class="bitem ${ui.brandId===id && (ui.view==='brand'||ui.view==='plan') ? 'on' : ''}" data-act="goBrand" data-id="${id}"><span class="bav" style="background:${c.solid || '#2F5BEA'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name))}</span>${esc(b.name)}</button>`; }).join('') || '<p class="sm" style="padding:0 10px;color:var(--side-muted)">No brands yet</p>'}</div></div>
   <div class="me"><label for="meSel">You are</label><select id="meSel" class="in" data-chg="me">${opts(team, me, 'Pick your name')}</select></div>
   ${DB ? '' : `<p class="mode">${HOSTED ? 'Connecting…' : 'Shared saving is off in this view, so changes stay in this tab only.'}</p>`}`;
 }
@@ -822,24 +885,20 @@ function vHome(){
   const hi = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
   const meName = mName(me);
   const hero = `<section class="hero"><div><p class="eyebrow">${esc(mLabel(ym))} · Studio overview</p><h1>${hi}${meName ? ', ' + esc(meName.replace(/\s*\(.*\)/,'')) : ''}.</h1><p class="muted" style="margin-top:6px">Plan the month, write it with the Brand Brain, and move every post from idea to published in one place.</p></div><div class="acts"><button class="btn pri" data-act="newBrand">+ New brand</button></div></section>`;
-  if (!brands.length) return hero + `<div class="empty"><h2>Add your first brand</h2><p>Set up the brand profile, feed its Brand Brain, then generate a full month of research, strategy, calendar and content.</p><button class="btn pri" data-act="newBrand">New brand</button></div>`;
+  if (!brands.length) return hero + startHere() + `<div class="empty"><h2>Add your first brand</h2><p>Set up the brand profile, feed its Brand Brain, then generate a full month of research, strategy, calendar and content.</p><button class="btn pri" data-act="newBrand">New brand</button></div>`;
   const brandRows = brands.map(([id,b]) => {
     const pl = plansOf(id)[0]; const ps = pl ? postsOf(pl[0]) : [];
     const lt = ps.filter(isLate).length;
     const nd = ps.filter(p => curDue(p)).map(curDue).sort()[0];
     const h = health(b).score; const c = brandColors(b);
-    return `<tr class="click" data-act="goBrand" data-id="${id}"><td><div style="display:flex;gap:10px;align-items:center"><span class="bav" style="width:30px;height:30px;border-radius:9px;background:${c.solid || '#0F2350'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name))}</span><div><b>${esc(b.name)}</b><div class="muted sm">${esc(b.industry || '')}</div></div></div></td><td>${pl ? esc(mLabel(pl[1].month)) + `<div class="muted sm">${ps.length} posts</div>` : '<span class="muted">No plan yet</span>'}</td><td>${ps.length ? progressBar(ps) : ''}</td><td class="num ${lt ? 'late' : ''}">${lt}</td><td class="num">${nd ? shortD(nd) : '—'}</td><td style="min-width:110px"><div class="meter"><i style="width:${h}%"></i></div><span class="muted sm">${h}%</span></td></tr>`;
+    return `<tr class="click" data-act="goBrand" data-id="${id}"><td><div style="display:flex;gap:10px;align-items:center"><span class="bav" style="width:30px;height:30px;border-radius:9px;background:${c.solid || '#2F5BEA'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name))}</span><div><b>${esc(b.name)}</b><div class="muted sm">${esc(b.industry || '')}</div></div></div></td><td>${pl ? esc(mLabel(pl[1].month)) + `<div class="muted sm">${ps.length} posts</div>` : '<span class="muted">No plan yet</span>'}</td><td>${ps.length ? progressBar(ps) : ''}</td><td class="num ${lt ? 'late' : ''}">${lt}</td><td class="num">${nd ? shortD(nd) : '—'}</td><td style="min-width:110px"><div class="meter"><i style="width:${h}%"></i></div><span class="muted sm">${h}%</span></td></tr>`;
   });
   const team = Object.entries(D.team);
   const teamRows = team.map(([id,m]) => { const open = all.filter(p => owner(p) === id && group(p.status) !== 'done'); return [`<b>${esc(m.name)}</b>`, esc(m.role), `<span class="mono">${open.length}</span>`, `<span class="mono ${open.filter(isLate).length ? 'late' : ''}">${open.filter(isLate).length}</span>`, `<span class="mono">${open.filter(p => { const d = curDue(p); return d && d >= td && d <= wk; }).length}</span>`]; });
   const lineup = all.filter(p => p.date >= td && p.date <= wk).sort(byDate).slice(0, 10);
   return hero + `
-  <div class="stats">
-    <div class="stat" style="--sb:var(--c1s);--sc:var(--c1)"><i></i><b>${month.length}</b><span>Posts planned this month</span></div>
-    <div class="stat" style="--sb:var(--c3s);--sc:var(--c3)"><i></i><b>${client.length}</b><span>Waiting on client approval</span></div>
-    <div class="stat ${late.length ? 'warn' : ''}" style="--sb:var(--c2s);--sc:var(--c2)"><i></i><b>${late.length}</b><span>Overdue tasks</span></div>
-    <div class="stat" style="--sb:var(--c5s);--sc:var(--c5)"><i></i><b>${appr}%</b><span>Of this month approved</span></div>
-  </div>
+  <div class="stats">${statTile('cal', month.length, 'Posts planned this month', '--c1')}${statTile('clock', client.length, 'Waiting on client approval', '--c3')}${statTile('alert', late.length, 'Overdue tasks', '--c2', late.length)}${statTile('check', appr + '%', 'Of this month approved', '--c4')}</div>
+  ${startHere()}
   <div class="grid2">
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Going live this week</h2><p>Every brand, next 7 days</p></div></header>${lineup.length ? `<div class="lineup">${lineup.map(p => `<button class="lu" data-act="open" data-id="${p.id}"><span class="d">${pdate(p.date).getDate()}<small>${DOW[pdate(p.date).getDay()]}</small></span><span style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.topic || 'Untitled')}</b><span class="muted sm">${esc(D.brands[p.brandId]?.name || '')} · ${esc(p.format)}</span></span><span class="acts">${chBadge(p.channel)}${stPill(p.status)}</span></button>`).join('')}</div>` : '<p class="muted">Nothing scheduled in the next 7 days.</p>'}</section>
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Waiting on client</h2><p>Chase these in your next client call</p></div></header>${client.length ? `<div class="lineup">${client.sort(byDate).slice(0,10).map(p => `<button class="lu" data-act="open" data-id="${p.id}"><span class="d">${pdate(p.date).getDate()}<small>${MON[pdate(p.date).getMonth()]}</small></span><span style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.topic || 'Untitled')}</b><span class="muted sm">${esc(D.brands[p.brandId]?.name || '')}</span></span><span class="acts">${chBadge(p.channel)}<span class="chip">Round ${p.round || 0}</span></span></button>`).join('')}</div>` : '<p class="muted">Nothing is waiting on a client.</p>'}</section>
@@ -847,6 +906,17 @@ function vHome(){
   <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Brands</h2><p>Progress: copy · design · with client · approved</p></div></header>
     <div class="tw"><table><thead><tr><th>Brand</th><th>Latest plan</th><th>Progress</th><th>Overdue</th><th>Next due</th><th>Brand Brain</th></tr></thead><tbody>${brandRows.join('')}</tbody></table></div></section>
   <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c6)"></span>Team workload</h2><button class="btn sm" data-act="go" data-v="team">Manage team</button></header>${tbl(['Member','Role','Open','Overdue','Due in 7 days'], teamRows)}</section>`;
+}
+
+function startHere(){
+  const lp = Object.entries(D.plans).sort((a,b) => (b[1].createdAt||0) - (a[1].createdAt||0))[0];
+  const st = [
+    ['1','Add the brand','Name, website and channels. Products are pulled from the website automatically.','--c1', `<button class="btn sm" data-act="newBrand">+ New brand</button>`],
+    ['2','Feed the Brand Brain','Add rules, references, brand colours and this month\'s brief so the writing sounds like the brand.','--c5', sortedBrands()[0] ? `<button class="btn sm" data-act="goBrandTab" data-id="${sortedBrands()[0][0]}" data-k="brain">Open Brand Brain</button>` : ''],
+    ['3','Generate the month','Research, strategy, topical days, calendar and every post written in one go.','--c3', sortedBrands()[0] ? `<button class="btn sm" data-act="goBrandTab" data-id="${sortedBrands()[0][0]}" data-k="plans">Generate plan</button>` : ''],
+    ['4','Present the client deck','Pick sections, present in the app, or download PowerPoint for the client.','--c2', lp ? `<button class="btn sm hot" data-act="goDeck" data-id="${lp[0]}">Open latest deck</button>` : '']
+  ];
+  return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Start here</h2><p>From new brand to client-ready deck in four steps</p></div></header><div class="start">${st.map(([n,t,d,c,b]) => `<div class="step" style="--sc:var(${c})"><span class="n">${n}</span><h3>${t}</h3><p>${d}</p>${b}</div>`).join('')}</div></section>`;
 }
 
 /* ---------- brand ---------- */
@@ -996,9 +1066,10 @@ function vPlan(){
   const ps = postsOf(ui.planId);
   const c = brandColors(b);
   const rvN = ps.filter(p => p.status === 'Sent to client').length;
-  const tabs = [['deck','Content deck'],['calendar','Calendar'],['board','Board'],['review','Client review',rvN],['report','Performance'],['strategy','Strategy'],['research','Research'],['topical','Topical days'],['export','Export']];
+  const tabs = [['present','Client deck'],['deck','Posts'],['calendar','Calendar'],['board','Board'],['research','Research'],['strategy','Strategy'],['topical','Topical days'],['review','Client review',rvN],['report','Performance'],['export','Export']];
   let body = '';
   switch (ui.tab){
+    case 'present': body = vPresent(plan, ps); break;
     case 'calendar': body = vCal(plan, ps); break;
     case 'board': body = vBoard(ps); break;
     case 'review': body = vReview(plan, ps); break;
@@ -1095,12 +1166,7 @@ function vReport(plan, ps){
     ${live.length ? `<div class="tw"><table style="min-width:900px"><thead><tr><th>Post</th>${METRICS.map(([,l]) => `<th>${l}</th>`).join('')}<th>ER</th></tr></thead><tbody>${live.map(p => `<tr><td style="min-width:200px"><b>${esc(p.topic || 'Untitled')}</b><div class="muted sm">${shortD(p.date)} · ${esc(p.channel)} ${esc(p.format)}</div></td>${METRICS.map(([k]) => `<td style="min-width:86px"><input class="in" type="number" min="0" data-mf="${k}" data-id="${p.id}" id="m-${p.id}-${k}" value="${esc(p.metrics?.[k] ?? '')}" aria-label="${k}"></td>`).join('')}<td class="num">${er(p) != null ? pct(er(p)) : '—'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Posts appear here once they are approved, scheduled or published.</p>'}
   </section>`;
   if (!withM.length) return entry;
-  return `<div class="stats">
-    <div class="stat" style="--sb:var(--c1s);--sc:var(--c1)"><i></i><b>${fmtN(reach)}</b><span>Total reach · ${withM.length} posts</span></div>
-    <div class="stat" style="--sb:var(--c2s);--sc:var(--c2)"><i></i><b>${fmtN(eng)}</b><span>Engagements</span></div>
-    <div class="stat" style="--sb:var(--c5s);--sc:var(--c5)"><i></i><b>${pct(avgEr)}</b><span>Engagement rate</span></div>
-    <div class="stat" style="--sb:var(--c3s);--sc:var(--c3)"><i></i><b>${fmtN(sum('saves'))}</b><span>Saves · ${fmtN(sum('shares'))} shares</span></div>
-  </div>
+  return `<div class="stats">${statTile('chart', fmtN(reach), 'Total reach · ' + withM.length + ' posts', '--c1')}${statTile('heart', fmtN(eng), 'Engagements', '--c2')}${statTile('check', pct(avgEr), 'Engagement rate', '--c4')}${statTile('save', fmtN(sum('saves')), 'Saves · ' + fmtN(sum('shares')) + ' shares', '--c3')}</div>
   <div class="grid2">
     <section class="panel"><header><h2>Engagement rate by post</h2></header>${hbars(ranked.slice(0,10).map(p => ({l:p.topic || 'Untitled', v:er(p), tip:`${p.topic} · reach ${fmtN(num(p.metrics.reach))}`})), pct)}</section>
     <section class="panel"><header><h2>Average engagement rate by pillar</h2></header>${hbars(pRows, pct)}<h3 style="margin-top:8px">By format</h3>${hbars(fRows, pct)}</section>
@@ -1163,6 +1229,183 @@ function vExport(plan, ps){
   </div>
   ${DL ? '' : '<p class="muted sm">Downloads are not available in this view. Use the copy buttons instead.</p>'}
   <p class="muted sm">${ps.length} posts · ${ps.filter(p => p.hasContent).length} written · ${ps.filter(p => group(p.status) === 'done').length} approved</p>`;
+}
+
+/* ---------- client deck ---------- */
+const DECK_SECS = [['cover','Cover'],['snapshot','Brand snapshot'],['audience','Audience personas'],['trends','Industry & platform trends'],['competitors','Competitor audit'],['opps','Insights & opportunities'],['objectives','Objectives & KPIs'],['pillars','Content pillars'],['channels','Channel plan & format mix'],['theme','Monthly theme & series'],['topical','Topical days'],['calendar','Content calendar'],['posts','Post-by-post content'],['next','Next steps']];
+const DECK_PRESETS = {
+  full: DECK_SECS.map(x => x[0]),
+  research: ['cover','snapshot','audience','trends','competitors','opps','next'],
+  strategy: ['cover','snapshot','objectives','pillars','channels','theme','topical','calendar','next'],
+  content: ['cover','theme','pillars','calendar','posts','next']
+};
+const chunk = (a, n) => { const o = []; for (let i = 0; i < a.length; i += n) o.push(a.slice(i, i + n)); return o.length ? o : [[]]; };
+function deckModel(plan, ps){
+  const on = ui.deckSec || new Set(DECK_PRESETS.full);
+  const sn = plan.snapshot || {}, r = plan.research || {}, st = plan.strategy || {};
+  const M = [];
+  const has = k => on.has(k);
+  if (has('cover')) M.push({k:'cover'});
+  if (has('snapshot') && plan.snapshot) M.push({k:'kv', ey:'Brand snapshot', title:'Where the brand stands', cols:2, items:[['Positioning', sn.positioning, '--c1'], ['USP', sn.usp, '--c2'], ['Brand voice', sn.voice, '--c5'], ['Opportunity', sn.swot?.opportunities || '', '--c4']].filter(x => x[1])});
+  if (has('audience') && arr(sn.personas).length) M.push({k:'table', ey:'Audience', title:'Who we are talking to', head:['Persona','Who','Pain points','Buying triggers','Platforms'], rows:arr(sn.personas).map(p => [p.name, p.who, p.pains, p.triggers, p.platforms])});
+  if (has('trends')){
+    if (arr(r.industryTrends).length) chunk(arr(r.industryTrends), 6).forEach((c, i) => M.push({k:'table', ey:'Research · Industry trends', title:i ? 'Industry trends (cont.)' : 'What is moving in the category', head:['Trend','What it means for us'], rows:c.map(t => [t.trend, t.soWhat])}));
+    if (arr(r.platformTrends).length) chunk(arr(r.platformTrends), 6).forEach((c, i) => M.push({k:'table', ey:'Research · Platform trends', title:i ? 'Platform trends (cont.)' : 'What is working on each platform', head:['Channel','Trend','How we will use it'], rows:c.map(t => [t.channel, t.trend, t.howToUse])}));
+  }
+  if (has('competitors') && arr(r.competitors).length) chunk(arr(r.competitors), 5).forEach((c, i) => M.push({k:'table', ey:'Research · Competitors', title:i ? 'Competitor audit (cont.)' : 'Competitor audit', head:['Competitor','Content pillars','Formats','What works','Gap for us'], rows:c.map(x => [x.name, x.pillars, x.formats, x.whatWorks, x.gap])}));
+  if (has('opps')){
+    if (arr(r.opportunities).length) M.push({k:'cards', ey:'Research · Opportunities', title:'White space we can own', cols:Math.min(5, arr(r.opportunities).length), cards:arr(r.opportunities).slice(0, 5).map((o, i) => ({title:o.angle, body:o.why, color:PAL[i % PAL.length]}))});
+    if (arr(r.audienceInsights).length) M.push({k:'table', ey:'Research · Audience insights', title:'What the audience tells us', head:['Insight','Content angle'], rows:arr(r.audienceInsights).slice(0, 6).map(x => [x.insight, x.angle])});
+  }
+  if (has('objectives') && arr(st.objectives).length) M.push({k:'table', ey:'Strategy · Objectives', title:'What this month will achieve', head:['Objective','KPI','Target','How we measure'], rows:arr(st.objectives).map(o => [o.objective, o.kpi, o.target, o.measure])});
+  if (has('pillars') && arr(st.pillars).length) M.push({k:'cards', ey:'Strategy · Content pillars', title:'Our content pillars', cols:Math.min(5, arr(st.pillars).length), cards:arr(st.pillars).slice(0, 5).map((p, i) => ({title:p.name, big:(p.mix ?? '') + '%', body:`${p.purpose || ''}${p.framework ? ' · ' + p.framework : ''}`, color:PAL[i % PAL.length]}))});
+  if (has('channels')){
+    if (arr(st.channels).length) M.push({k:'table', ey:'Strategy · Channels', title:'The role of each channel', head:['Channel','Role','Formats','Frequency','Best times'], rows:arr(st.channels).map(c => [c.channel, c.role, c.formats, c.frequency, c.bestTimes])});
+    if (arr(st.formatMix).length) M.push({k:'cards', ey:'Strategy · Format mix', title:'Format mix for the month', cols:Math.min(6, arr(st.formatMix).length), cards:arr(st.formatMix).slice(0, 6).map((f, i) => ({title:f.format, big:(f.pct ?? '') + '%', body:'', color:PAL[i % PAL.length]}))});
+  }
+  if (has('theme') && st.theme){
+    M.push({k:'kv', ey:'Monthly theme', title:st.theme.name || 'Monthly theme', cols:1, items:[['The big idea', st.theme.bigIdea, '--c3']]});
+    if (arr(st.theme.series).length) M.push({k:'cards', ey:'Recurring series', title:'Series that build habit', cols:Math.min(3, arr(st.theme.series).length), cards:arr(st.theme.series).slice(0, 3).map((x, i) => ({title:x.name, big:x.cadence, body:`${x.format ? x.format + ' · ' : ''}${x.description || ''}`, color:PAL[(i + 1) % PAL.length]}))});
+  }
+  if (has('topical')){ const t = arr(plan.topical).filter(x => x.include).sort((a, b) => str(a.date).localeCompare(str(b.date))); if (t.length) chunk(t, 7).forEach((c, i) => M.push({k:'table', ey:'Topical days', title:i ? 'Topical days (cont.)' : 'Moments we will own this month', head:['Date','Occasion','Relevance','Our idea'], rows:c.map(x => [fmtD(x.date), x.occasion, x.relevance, x.idea])})); }
+  if (has('calendar') && ps.length) M.push({k:'calendar', ey:'Content calendar', title:`${mLabel(plan.month)} at a glance · ${ps.length} posts`});
+  if (has('posts')) ps.filter(p => p.hasContent).forEach((p, i, a) => M.push({k:'post', post:p, n:i + 1, of:a.length}));
+  if (has('next')){
+    const first = ps[0]; const d = first ? dues(first) : {};
+    M.push({k:'list', ey:'Next steps', title:'What we need from you', items:[
+      first ? `Approve the calendar and first week of posts by ${fmtD(d.client)}` : 'Approve the calendar and first week of posts',
+      'Share feedback in one consolidated round per batch so we keep to schedule',
+      first ? `Content goes live from ${fmtD(first.date)}: ${ps.length} posts across ${[...new Set(ps.map(p => p.channel))].join(', ')}` : 'Content goes live on approval',
+      'Month-end performance report with learnings that shape next month\'s plan'
+    ]});
+  }
+  return M;
+}
+function deckAccent(b){ const c = brandColors(b); return c.solid && lum(c.solid) < .5 ? c.solid : '#2F5BEA'; }
+function slideHTML(m, i, n, plan){
+  const b = D.brands[plan.brandId] || {};
+  const acc = deckAccent(b);
+  const ft = `<div class="ft"><span>${esc(b.name)} · ${esc(mLabel(plan.month))}</span><span>digimuse. · ${i + 1}/${n}</span></div>`;
+  const head = `<div class="ey">${esc(m.ey || '')}</div><h2>${esc(m.title || '')}</h2>`;
+  const wrap = (inner, cls='') => `<div class="slide ${cls}" style="--sc1:${acc}"><div class="sbar"></div><div class="sbody">${inner}</div>${ft}</div>`;
+  if (m.k === 'cover') return `<div class="slide cover" style="--sc1:${acc}"><div class="dots"><i style="background:var(--c2)"></i><i style="background:var(--c3)"></i><i style="background:var(--c4)"></i></div><div class="sbody"><div class="ey" style="color:#8FA0D6">Social media plan · ${esc(mLabel(plan.month))}</div><h2>${esc(b.name)}</h2>${plan.strategy?.theme?.name ? `<div class="theme">${esc(plan.strategy.theme.name)}</div>` : ''}<div class="sub">Research · Strategy · Content calendar · Post-by-post content</div></div><div class="ft"><span>Prepared by Digimuse</span><span>${i + 1}/${n}</span></div></div>`;
+  if (m.k === 'kv') return wrap(head + `<div class="kv" style="--cols:${m.cols}">${m.items.map(([l, t, c]) => `<div style="--kc:var(${c})"><b>${esc(l)}</b><p>${esc(t)}</p></div>`).join('')}</div>`);
+  if (m.k === 'table') return wrap(head + `<table><thead><tr>${m.head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${m.rows.map(r => `<tr>${r.map((c, j) => `<td${j === 0 ? ' style="font-weight:700"' : ''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
+  if (m.k === 'cards') return wrap(head + `<div class="cards" style="--cols:${m.cols}">${m.cards.map(c => `<div class="card" style="--kc:var(${c.color})">${c.big ? `<div class="big">${esc(c.big)}</div>` : ''}<h4>${esc(c.title)}</h4>${c.body ? `<p>${esc(c.body)}</p>` : ''}</div>`).join('')}</div>`);
+  if (m.k === 'list') return wrap(head + `<ul>${m.items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`);
+  if (m.k === 'calendar'){
+    const ps = postsOf(ui.planId || plan.id); const days = monthDays(plan.month); const lead = (pdate(days[0]).getDay() + 6) % 7;
+    const pm = {}; ps.forEach(p => (pm[p.date] = pm[p.date] || []).push(p));
+    let cells = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="h">${d}</div>`).join('') + '<div class="x"></div>'.repeat(lead);
+    days.forEach(d => { const l = pm[d] || []; cells += `<div><b>${pdate(d).getDate()}</b>${l.slice(0, 3).map(p => `<i style="background:${CHC[p.channel] || '#555'}">${esc(CHA[p.channel] || '')} ${esc(p.topic)}</i>`).join('')}${l.length > 3 ? `<span>+${l.length - 3} more</span>` : ''}</div>`; });
+    return wrap(head + `<div class="calg">${cells}</div>`);
+  }
+  if (m.k === 'post'){
+    const p = m.post; const c = brandColors(b);
+    const extra = arr(p.slides).length ? `<table class="mini"><thead><tr><th>#</th><th>Slide copy</th></tr></thead><tbody>${arr(p.slides).slice(0, 6).map((x, j) => `<tr><td>${j + 1}</td><td>${esc(x.copy)}</td></tr>`).join('')}</tbody></table>` : arr(p.script).length ? `<table class="mini"><thead><tr><th>Time</th><th>On screen</th><th>Voiceover</th></tr></thead><tbody>${arr(p.script).slice(0, 5).map(x => `<tr><td>${esc(x.t)}</td><td>${esc(x.onscreen)}</td><td>${esc(x.vo)}</td></tr>`).join('')}</tbody></table>` : '';
+    return wrap(`<div class="ey">Post ${m.n} of ${m.of}${p.pillar ? ' · ' + esc(p.pillar) : ''}</div><h2>${esc(p.topic)}</h2><div class="pgrid"><div class="pcv" style="background:${c.bg};color:${c.fg}"><span class="o" style="background:${c.ac}"></span>${p.format === 'Text' ? `<div class="hl" style="font-size:2.2cqw">${esc(p.hook)}</div>` : `<div class="hl">${esc(p.onImage?.headline || p.topic)}</div>${p.onImage?.subline ? `<div class="sl">${esc(p.onImage.subline)}</div>` : ''}${p.onImage?.cta ? `<span class="ct" style="background:${c.ac};color:${c.bg}">${esc(p.onImage.cta)}</span>` : ''}`}</div><div style="display:flex;flex-direction:column;gap:1.2cqw;min-width:0;overflow:hidden"><div class="pmeta2"><span>${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</span><span class="ch" style="background:${CHC[p.channel] || '#555'}">${esc(p.channel)}</span><span>${esc(p.format)}</span>${p.topical ? `<span>${esc(p.topical)}</span>` : ''}</div>${p.hook ? `<div class="hook">${esc(p.hook)}</div>` : ''}<div class="capt" style="${extra ? '-webkit-line-clamp:5' : ''}">${esc(p.caption)}</div>${p.hashtags ? `<div class="tags">${esc(p.hashtags)}</div>` : ''}${extra}</div></div>`);
+  }
+  return '';
+}
+function vPresent(plan, ps){
+  if (!ui.deckSec) ui.deckSec = new Set(DECK_PRESETS.full);
+  const M = deckModel({...plan, id:ui.planId}, ps);
+  const plan2 = {...plan, id:ui.planId};
+  const pre = [['full','Full plan'],['research','Research deck'],['strategy','Strategy only'],['content','Content only']];
+  return `<div class="deckwrap"><aside class="deckside">
+    <section class="panel" style="padding:18px"><h3>Present to the client</h3><p class="muted sm">${M.length} slides, built from this plan. Edit any post or section and the deck updates.</p>
+      <div class="acts" style="flex-direction:column;align-items:stretch"><button class="btn pri" data-act="present" ${M.length ? '' : 'disabled'}>▶ Present</button><button class="btn hot" data-act="pptx" ${typeof PptxGenJS === 'undefined' || !DL || !M.length ? 'disabled' : ''}>Download PowerPoint</button>${HOSTED ? `<button class="btn" data-act="pdf" ${M.length ? '' : 'disabled'}>Save as PDF</button>` : ''}</div>
+      ${typeof PptxGenJS === 'undefined' ? '<p class="muted sm">PowerPoint export is still loading or blocked.</p>' : ''}</section>
+    <section class="panel" style="padding:18px"><h3>Deck type</h3><div class="acts">${pre.map(([k, l]) => `<button class="btn sm ${DECK_PRESETS[k].length === ui.deckSec.size && DECK_PRESETS[k].every(x => ui.deckSec.has(x)) ? 'pri' : ''}" data-act="deckPreset" data-k="${k}">${l}</button>`).join('')}</div>
+      <h3 style="margin-top:6px">Sections</h3><div class="secs">${DECK_SECS.map(([k, l]) => `<label><input type="checkbox" data-chg="dsec" value="${k}" ${ui.deckSec.has(k) ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div></section>
+  </aside>
+  <div class="slides">${M.length ? M.map((m, i) => `<div class="sl-wrap"><div class="sl-cap"><span>Slide ${i + 1}</span><button class="lnk" data-act="present" data-i="${i}" style="font-size:12px">Present from here</button></div>${slideHTML(m, i, M.length, plan2)}</div>`).join('') : '<div class="empty"><p>Nothing to show yet. Generate the plan or tick some sections.</p></div>'}</div></div>`;
+}
+let pIdx = 0;
+function startPresent(i){
+  pIdx = i; renderPresent();
+  const el = $('#present'); try { el.requestFullscreen?.().catch(() => {}); } catch (e) {}
+}
+function renderPresent(){
+  const plan = D.plans[ui.planId]; if (!plan) return;
+  const M = deckModel({...plan, id:ui.planId}, postsOf(ui.planId)); if (!M.length) return;
+  pIdx = Math.max(0, Math.min(M.length - 1, pIdx));
+  const el = $('#present'); el.hidden = false;
+  el.innerHTML = `${slideHTML(M[pIdx], pIdx, M.length, {...plan, id:ui.planId})}<div class="pbar"><button class="btn sm" data-act="pPrev">← Prev</button><span>${pIdx + 1} / ${M.length}</span><button class="btn sm" data-act="pNext">Next →</button><button class="btn sm" data-act="pClose">Exit</button></div>`;
+}
+function movePresent(d){ pIdx += d; renderPresent(); }
+function closePresent(){ const el = $('#present'); el.hidden = true; el.innerHTML = ''; try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {} }
+function printDeck(){
+  const plan = D.plans[ui.planId]; const M = deckModel({...plan, id:ui.planId}, postsOf(ui.planId));
+  const pd = $('#printdeck'); pd.innerHTML = M.map((m, i) => slideHTML(m, i, M.length, {...plan, id:ui.planId})).join('');
+  setTimeout(() => { window.print(); }, 150);
+}
+function hx(c, fb='2F5BEA'){ let h = String(c || '').replace('#', ''); if (/^[0-9a-f]{3}$/i.test(h)) h = h.split('').map(x => x + x).join(''); return /^[0-9a-f]{6}$/i.test(h) ? h.toUpperCase() : fb; }
+function tint(h, t){ const n = [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); return n.map(v => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0')).join('').toUpperCase(); }
+const PALHEX = {'--c1':'2F5BEA','--c2':'FF5A5F','--c3':'FFA41B','--c4':'10B9A0','--c5':'7C5CFF','--c6':'1FA2FF'};
+async function downloadPptx(){
+  const plan = D.plans[ui.planId]; const ps = postsOf(ui.planId); const b = D.brands[plan.brandId] || {};
+  const M = deckModel({...plan, id:ui.planId}, ps); if (!M.length) return;
+  toast('Building PowerPoint…');
+  try {
+    const pptx = new PptxGenJS(); pptx.layout = 'LAYOUT_WIDE'; pptx.author = 'Digimuse'; pptx.company = 'Digimuse'; pptx.title = `${b.name} — ${mLabel(plan.month)}`;
+    const F = 'Montserrat', INK = '131A33', GREY = '8B91A7', ACC = hx(deckAccent(b)); const bc = brandColors(b);
+    const BG = hx(bc.solid || '#2F5BEA'), FG = hx(bc.fg, 'FFFFFF'), AC = hx(bc.ac, 'FFA41B');
+    const W = 13.333, X = 0.65, CW = W - 1.3;
+    const foot = (sl, i, dark) => { sl.addText(`${b.name} · ${mLabel(plan.month)}`, {x:X, y:7.05, w:7, h:0.3, fontFace:F, fontSize:9, color:dark ? '8FA0D6' : GREY}); sl.addText(`digimuse. · ${i + 1}/${M.length}`, {x:W - X - 4, y:7.05, w:4, h:0.3, fontFace:F, fontSize:9, color:dark ? '8FA0D6' : GREY, align:'right'}); };
+    const head = (sl, m) => { sl.addShape(pptx.ShapeType.rect, {x:0, y:0, w:W, h:0.09, fill:{color:ACC}, line:{color:ACC}}); sl.addText(str(m.ey).toUpperCase(), {x:X, y:0.35, w:CW, h:0.3, fontFace:F, fontSize:10, bold:true, color:ACC, charSpacing:2}); sl.addText(str(m.title), {x:X, y:0.62, w:CW, h:0.75, fontFace:F, fontSize:26, bold:true, color:INK}); };
+    M.forEach((m, i) => {
+      const sl = pptx.addSlide();
+      if (m.k === 'cover'){
+        sl.background = {color:'0F1E4A'};
+        ['FF5A5F','FFA41B','10B9A0'].forEach((c, j) => sl.addShape(pptx.ShapeType.ellipse, {x:10.6 + j * 0.62, y:0.8, w:0.42, h:0.42, fill:{color:c}, line:{color:c}}));
+        sl.addText(`SOCIAL MEDIA PLAN · ${mLabel(plan.month).toUpperCase()}`, {x:X, y:2.2, w:CW, h:0.4, fontFace:F, fontSize:12, bold:true, color:'8FA0D6', charSpacing:3});
+        sl.addText(str(b.name), {x:X, y:2.65, w:CW, h:1.3, fontFace:F, fontSize:48, bold:true, color:'FFFFFF'});
+        if (plan.strategy?.theme?.name) sl.addText(plan.strategy.theme.name, {x:X, y:3.95, w:CW, h:0.6, fontFace:F, fontSize:22, bold:true, italic:true, color:'FFA41B'});
+        sl.addText('Research · Strategy · Content calendar · Post-by-post content', {x:X, y:4.6, w:CW, h:0.5, fontFace:F, fontSize:15, color:'C9D3F5'});
+        sl.addText('Prepared by Digimuse', {x:X, y:7.05, w:6, h:0.3, fontFace:F, fontSize:9, color:'8FA0D6'});
+        return;
+      }
+      sl.background = {color:'FFFFFF'}; head(sl, m.k === 'post' ? {ey:`Post ${m.n} of ${m.of}${m.post.pillar ? ' · ' + m.post.pillar : ''}`, title:m.post.topic} : m); foot(sl, i);
+      if (m.k === 'table'){
+        const rows = [m.head.map(h => ({text:h.toUpperCase(), options:{bold:true, fontSize:9, color:'444C66', fill:{color:'F3F5FB'}}}))].concat(m.rows.map(r => r.map((c, j) => ({text:str(c), options:{bold:j === 0}}))));
+        sl.addTable(rows.map((r, j) => j ? r : r), {x:X, y:1.6, w:CW, fontFace:F, fontSize:m.rows.length <= 4 ? 14 : m.rows.length <= 6 ? 12.5 : 11, color:'252C45', valign:'top', border:{type:'solid', pt:0.5, color:'E6E9F2'}, margin:0.12});
+      } else if (m.k === 'kv'){
+        const cols = m.cols, gap = 0.3, w = (CW - gap * (cols - 1)) / cols, rowsN = Math.ceil(m.items.length / cols), h = Math.min(2.6, (5.2 - gap * (rowsN - 1)) / rowsN);
+        m.items.forEach(([l, t, c], j) => { const x = X + (j % cols) * (w + gap), y = 1.6 + Math.floor(j / cols) * (h + gap); const col = PALHEX[c] || ACC;
+          sl.addShape(pptx.ShapeType.rect, {x, y, w, h, fill:{color:'F7F8FC'}, line:{color:'F7F8FC'}}); sl.addShape(pptx.ShapeType.rect, {x, y, w, h:0.07, fill:{color:col}, line:{color:col}});
+          sl.addText([{text:str(l).toUpperCase(), options:{bold:true, fontSize:10, color:col, charSpacing:2, breakLine:true}}, {text:str(t), options:{fontSize:cols === 1 ? 24 : 16, color:'252C45'}}], {x:x + 0.2, y:y + 0.2, w:w - 0.4, h:h - 0.3, fontFace:F, valign:'top', paraSpaceAfter:6}); });
+      } else if (m.k === 'cards'){
+        const cols = m.cols, gap = 0.25, w = (CW - gap * (cols - 1)) / cols, h = 4.9;
+        m.cards.forEach((c, j) => { const x = X + j * (w + gap), col = PALHEX[c.color] || ACC;
+          sl.addShape(pptx.ShapeType.roundRect, {x, y:1.65, w, h, fill:{color:tint(col, .88)}, line:{color:tint(col, .7)}, rectRadius:0.12});
+          const parts = []; if (c.big) parts.push({text:str(c.big), options:{bold:true, fontSize:30, color:col, breakLine:true}}); parts.push({text:str(c.title), options:{bold:true, fontSize:cols > 4 ? 15 : 18, color:INK, breakLine:true}}); if (c.body) parts.push({text:str(c.body), options:{fontSize:cols > 4 ? 12 : 14, color:'444C66'}});
+          sl.addText(parts, {x:x + 0.2, y:1.85, w:w - 0.4, h:h - 0.4, fontFace:F, valign:'top', paraSpaceAfter:8}); });
+      } else if (m.k === 'list'){
+        sl.addText(m.items.map(t => ({text:t, options:{bullet:{indent:18}, breakLine:true}})), {x:X, y:1.7, w:CW, h:4.8, fontFace:F, fontSize:18, color:'252C45', valign:'top', paraSpaceAfter:14});
+      } else if (m.k === 'calendar'){
+        const days = monthDays(plan.month), lead = (pdate(days[0]).getDay() + 6) % 7; const pm = {}; ps.forEach(p => (pm[p.date] = pm[p.date] || []).push(p));
+        const cells = Array(lead).fill({text:''}).concat(days.map(d => ({text:[pdate(d).getDate() + ''].concat((pm[d] || []).slice(0, 3).map(p => `${CHA[p.channel] || ''} ${str(p.topic).slice(0, 26)}`)).join('\n')})));
+        while (cells.length % 7) cells.push({text:''});
+        const rows = [['MON','TUE','WED','THU','FRI','SAT','SUN'].map(d => ({text:d, options:{bold:true, fill:{color:'F3F5FB'}, color:'444C66'}}))].concat(chunk(cells, 7));
+        sl.addTable(rows, {x:X, y:1.5, w:CW, fontFace:F, fontSize:7.5, color:'252C45', valign:'top', border:{type:'solid', pt:0.5, color:'E6E9F2'}, margin:0.05, rowH:[0.3].concat(Array(rows.length - 1).fill((5.3 - 0.3) / (rows.length - 1)))});
+      } else if (m.k === 'post'){
+        const p = m.post;
+        sl.addShape(pptx.ShapeType.roundRect, {x:X, y:1.55, w:4.5, h:5.3, fill:{color:BG}, line:{color:BG}, rectRadius:0.12});
+        sl.addShape(pptx.ShapeType.ellipse, {x:X + 3.0, y:1.8, w:1.2, h:1.2, fill:{color:AC}, line:{color:AC}});
+        const cv = p.format === 'Text' ? [{text:str(p.hook), options:{bold:true, fontSize:18, color:FG}}] : [{text:str(p.onImage?.headline || p.topic), options:{bold:true, fontSize:24, color:FG, breakLine:true}}].concat(p.onImage?.subline ? [{text:p.onImage.subline, options:{fontSize:12, color:FG, breakLine:true}}] : []).concat(p.onImage?.cta ? [{text:' ' + p.onImage.cta.toUpperCase() + ' ', options:{bold:true, fontSize:11, color:AC}}] : []);
+        sl.addText(cv, {x:X + 0.3, y:3.3, w:3.9, h:3.3, fontFace:F, valign:'bottom', paraSpaceAfter:6});
+        const RX = X + 4.85, RW = CW - 4.85;
+        sl.addText(`${fmtD(p.date)}${p.time ? ' · ' + p.time : ''}   |   ${p.channel} ${p.format}${p.topical ? '   |   ' + p.topical : ''}`, {x:RX, y:1.55, w:RW, h:0.35, fontFace:F, fontSize:11, bold:true, color:ACC});
+        if (p.hook) sl.addText(str(p.hook), {x:RX, y:1.95, w:RW, h:0.75, fontFace:F, fontSize:16, bold:true, color:INK, valign:'top'});
+        const extra = arr(p.slides).length ? [['#','Slide copy']].concat(arr(p.slides).slice(0, 6).map((x, j) => [String(j + 1), str(x.copy)])) : arr(p.script).length ? [['Time','On screen','Voiceover']].concat(arr(p.script).slice(0, 5).map(x => [str(x.t), str(x.onscreen), str(x.vo)])) : null;
+        sl.addText(str(p.caption) + (p.hashtags ? '\n\n' + p.hashtags : ''), {x:RX, y:2.75, w:RW, h:extra ? 1.95 : 4.1, fontFace:F, fontSize:extra ? 10.5 : 12.5, color:'333A52', valign:'top', fit:'shrink'});
+        if (extra) sl.addTable(extra.map((r, j) => r.map(c => ({text:c, options:j ? {} : {bold:true, fill:{color:'F3F5FB'}}}))), {x:RX, y:4.8, w:RW, fontFace:F, fontSize:8, color:'252C45', border:{type:'solid', pt:0.5, color:'E6E9F2'}, margin:0.04, colW:extra[0].length === 2 ? [0.4, RW - 0.4] : [0.8, (RW - 0.8) / 2, (RW - 0.8) / 2]});
+      }
+    });
+    const out = await pptx.write({outputType:'arraybuffer'});
+    await save(fname(plan, 'pptx'), out);
+  } catch (e){ console.error(e); toast('Could not build the PowerPoint'); }
 }
 
 /* ---------- tasks, team, go-live ---------- */
@@ -1553,8 +1796,15 @@ const fname = (plan, ext) => `${str(D.brands[plan.brandId]?.name || 'plan').repl
 let cT;
 const ACT = {
   go: a => { ui.view = a.dataset.v; ui.postId = null; renderAll(); window.scrollTo(0,0); },
+  goBrandTab: a => { ui.view = 'brand'; ui.brandId = a.dataset.id; ui.btab = a.dataset.k; ui.postId = null; renderAll(); window.scrollTo(0,0); },
+  goDeck: a => { ui.view = 'plan'; ui.planId = a.dataset.id; ui.tab = 'present'; renderAll(); window.scrollTo(0,0); },
+  deckPreset: a => { ui.deckSec = new Set(DECK_PRESETS[a.dataset.k]); renderAll(); },
+  present: a => startPresent(+(a.dataset.i || 0)),
+  pNext: () => movePresent(1), pPrev: () => movePresent(-1), pClose: () => closePresent(),
+  pptx: () => downloadPptx(),
+  pdf: () => printDeck(),
   goBrand: a => { ui.view = 'brand'; ui.brandId = a.dataset.id; ui.btab = 'plans'; ui.answer = ''; ui.postId = null; renderAll(); window.scrollTo(0,0); },
-  goPlan: a => { ui.view = 'plan'; ui.planId = a.dataset.id; ui.tab = 'deck'; ui.f = {ch:'',st:'',pi:''}; renderAll(); window.scrollTo(0,0); },
+  goPlan: a => { ui.view = 'plan'; ui.planId = a.dataset.id; ui.tab = 'present'; ui.f = {ch:'',st:'',pi:''}; renderAll(); window.scrollTo(0,0); },
   btab: a => { ui.btab = a.dataset.k; renderAll(); },
   tab: a => { ui.tab = a.dataset.k; renderAll(); },
   open: a => { ui.postId = a.dataset.id; renderDrawer(); },
@@ -1741,6 +1991,7 @@ const CHG = {
   role: t => patch('team', t.dataset.id, {role:t.value}),
   ck: t => patch('posts', ui.postId, {checklist:{[t.dataset.k]:t.checked}}),
   obj: t => { const b = D.brands[ui.brandId]; let l = arr(b.objectives?.list).slice(); if (t.checked){ if (!l.includes(t.value)) l.push(t.value); } else l = l.filter(x => x !== t.value); const part = {objectives:{list:l}}; if (!l.includes(b.objectives?.primary)) part.objectives.primary = l[0] || ''; patch('brands', ui.brandId, part); },
+  dsec: t => { if (!ui.deckSec) ui.deckSec = new Set(DECK_PRESETS.full); if (t.checked) ui.deckSec.add(t.value); else ui.deckSec.delete(t.value); renderAll(); },
   topInc: t => { const plan = D.plans[ui.planId]; const l = clone(arr(plan.topical)); if (l[+t.dataset.i]) l[+t.dataset.i].include = t.checked; patch('plans', ui.planId, {topical:l}); }
 };
 
@@ -1763,7 +2014,7 @@ document.addEventListener('change', e => {
   }
   if (t.dataset.pf && ui.postId) setField(ui.postId, t.dataset.pf, t.value);
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape'){ if (!$('#copybox').hidden) ACT.closeCopy(); else if (ui.postId) ACT.close(); } });
+document.addEventListener('keydown', e => { if (!$('#present').hidden){ if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown'){ e.preventDefault(); movePresent(1); } else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); movePresent(-1); } else if (e.key === 'Escape') closePresent(); return; } if (e.key === 'Escape'){ if (!$('#copybox').hidden) ACT.closeCopy(); else if (ui.postId) ACT.close(); } });
 document.addEventListener('dragstart', e => { const t = e.target.closest && e.target.closest('[data-drag]'); if (!t) return; e.dataTransfer.setData('text/plain', t.dataset.drag); e.dataTransfer.effectAllowed = 'move'; });
 document.addEventListener('dragover', e => { const c = e.target.closest && e.target.closest('[data-drop-date],[data-drop-status]'); if (!c) return; e.preventDefault(); document.querySelectorAll('.drop-on').forEach(x => x !== c && x.classList.remove('drop-on')); c.classList.add('drop-on'); });
 document.addEventListener('dragleave', e => { const c = e.target.closest && e.target.closest('[data-drop-date],[data-drop-status]'); if (c && !c.contains(e.relatedTarget)) c.classList.remove('drop-on'); });
@@ -1827,7 +2078,7 @@ Reply with only JSON: {"description":"","offerings":"","products":[{"name":"","w
 }
 
 /* ---------- hosted (Vercel) adapters ---------- */
-function showLogin(msg){ const l = $('#login'); l.hidden = false; const e = $('#lg-err'); e.hidden = !msg; e.textContent = msg || ''; setTimeout(() => $('#lg-pw')?.focus(), 30); }
+function showLogin(msg){ const lg = $('#lg-logo'); if (lg && !lg.innerHTML) lg.innerHTML = LOGO; const l = $('#login'); l.hidden = false; const e = $('#lg-err'); e.hidden = !msg; e.textContent = msg || ''; setTimeout(() => $('#lg-pw')?.focus(), 30); }
 function parseLoose(t){
   const s = String(t || '').trim();
   try { return JSON.parse(s); } catch (e) {}

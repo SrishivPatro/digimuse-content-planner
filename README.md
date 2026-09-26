@@ -8,6 +8,7 @@ Internal social media planning tool for the Digimuse team.
 - **Design briefs** for designers, creative versions, publish checklist
 - **Workflow**: board, due dates, My tasks, client review, feedback routed back to writer or designer
 - **Performance**: log results, charts and an AI-written monthly report
+- **Client deck**: research, strategy and post-by-post slides built from each plan. Present in the app, download PowerPoint, or save as PDF. Presets for full plan, research, strategy or content decks.
 - **Exports**: Excel workbook, CSV, Markdown document, design briefs
 
 ## Deploy on Vercel
