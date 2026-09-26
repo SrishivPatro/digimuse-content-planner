@@ -595,7 +595,8 @@ Rules:
 - Ground everything in the BRAND PROFILE and BRAND BRAIN below: real products, offers, audience, voice, rules and saved references. Mirror the structure and style of saved references; never copy them.
 - Never invent statistics, prices, awards, customer counts or claims that are not in the brand brain.
 - Respect every banned word, must-use phrase and mandatory disclaimer.
-- No generic filler or AI clichés (elevate, unlock, game-changer, delve, seamless, "in today's fast-paced world", "look no further").
+- No generic filler or AI clichés. Banned: elevate, unlock, game-changer, delve, seamless, level up, "look no further", "in today's fast-paced world", "we've got you covered", "say goodbye to", "your new favourite", "treat yourself", "because you deserve it", "Did you know?" openers, ✨, emoji walls.
+- Think like a creative director at a top agency: every idea must come from a specific audience insight and could not be posted unchanged by a competitor. If a line could belong to any brand in the category, rewrite it.
 - Vary hooks and openers; each post must feel different.
 - Use Indian cultural context where it fits. Be sensitive with solemn days.`;
 
@@ -641,6 +642,8 @@ function brandCtx(b, max=14000){
   F.forEach(r => L.push(`- [${r.tag} reference] ${r.url||''} ${r.notes ? '— ' + r.notes : ''}`));
   if (str(br.pastPosts).trim()) L.push('Past best-performing posts:\n' + str(br.pastPosts).trim());
   L.push(`Brand kit: colours ${k.colors||'n/a'}; fonts ${k.fonts||'n/a'}; logo rule ${k.logo||'n/a'}`);
+  const PL = arr(b.pillars).filter(x => x.active !== false);
+  if (PL.length) L.push('Brand content pillars: ' + PL.map(x => `${x.name}${x.purpose ? ' (' + x.purpose + ')' : ''}`).join('; '));
   if (str(br.brief).trim()) L.push('Current campaign brief / focus:\n' + str(br.brief).trim());
   let s = L.join('\n');
   if (s.length > max) s = s.slice(0, max) + '\n[brand brain truncated]';
@@ -658,11 +661,35 @@ ${brandCtx(b)}
 PLAN MONTH: ${mLabel(plan.month)} · Region: ${plan.opts.region} · Language: ${plan.opts.lang}
 ${plan.opts.brief ? 'THIS MONTH\'S BRIEF: ' + plan.opts.brief : ''}
 
-TASK: Write the brand snapshot and the creative research for this month's social media plan. You cannot browse the web, so base trends on what you know and add "(verify)" to anything time-sensitive.
+TASK: Write the brand snapshot and the creative research for this month's social media plan. ${HOSTED ? 'Use web search to find what is actually happening now: current category trends, recent competitor campaigns and posts (name them, with month/year), platform format trends and real audience conversations. Be specific: names, numbers and examples from what you find, never generic statements.' : 'You cannot browse the web, so base trends on what you know and add "(verify)" to anything time-sensitive.'}
 Counts: 2-3 personas; 5 industryTrends; 1-2 platformTrends per active channel; one competitors entry per competitor listed (or the 3 most likely competitors if none are listed); 5 audienceInsights; 8 searchQueries; 5 opportunities (white-space angles competitors miss); 5-8 hashtags per hashtag group.
 
 Reply with only JSON in exactly this shape:
 ${JSON_A}`;
+}
+function promptR(b, plan){
+  return `${PRE}
+
+${brandCtx(b, 7000)}
+
+PLAN MONTH: ${mLabel(plan.month)} · Channels: ${activeCh(b).join(', ')}
+${plan.opts.brief ? 'THIS MONTH\'S BRIEF: ' + plan.opts.brief : ''}
+
+TASK: Build a creative reference board the team can steal mechanisms from (never copy). ${HOSTED ? 'Use web search to find REAL, specific pieces: named campaigns, social posts, ad films, Pinterest boards/pins and Behance projects.' : 'Use real campaigns you know well; leave url empty because you cannot browse.'}
+- 4 from this category (Indian and global brands), 3 from adjacent categories, 3 from completely outside the category that use a transferable mechanism.
+- Include at least 2 Pinterest or Behance references for visual direction.
+- For each: the brand, the exact piece, why it works (the mechanism, not praise), and exactly what we borrow for ${b.name} (a concrete post idea, not advice).
+- Also 5 formats trending right now on ${activeCh(b).join(', ')} with a real example and how ${b.name} would use it.
+- Skip anything you cannot name specifically. No generic advice.
+
+Reply with only JSON:
+{"references":[{"brand":"","piece":"","type":"Campaign|Post|Ad film|Pinterest|Behance|Packaging|OOH","url":"","whyItWorks":"","borrow":""}],"trendingFormats":[{"format":"","example":"","howToUse":""}]}`;
+}
+function allocPillars(pillars, total){
+  const P = pillars.filter(x => (+x.mix || 0) > 0); const sum = P.reduce((s, x) => s + (+x.mix), 0) || 1;
+  const raw = P.map(x => ({name:x.name, v:(+x.mix) / sum * total})); const out = raw.map(x => ({name:x.name, n:Math.floor(x.v), r:x.v - Math.floor(x.v)}));
+  let left = total - out.reduce((s, x) => s + x.n, 0); out.slice().sort((a, b) => b.r - a.r).forEach(x => { if (left > 0){ x.n++; left--; } });
+  return out.filter(x => x.n > 0);
 }
 function promptB(b, plan){
   const o = plan.opts;
@@ -680,7 +707,7 @@ ${o.brief ? 'THIS MONTH\'S BRIEF: ' + o.brief : ''}
 
 TASK: Build this month's social media strategy and list the topical days.
 - objectives: 3-4 rows tied to the brand's objectives; targets are directional, write "Set with client" when unsure.
-- pillars: 4-5 pillars whose mix adds up to 100; framework is one of AIDA, PAS, Hook-Story-Offer, Before/After, Myth vs Fact, Listicle, POV, UGC-style, Founder voice, Meme format.
+- pillars: ${arr(o.pillars).length ? `the team has fixed these pillars and mix, keep the names and mix exactly and write purpose, examples and framework for each: ${arr(o.pillars).map(x => `${x.name} ${x.mix}%${x.purpose ? ' (' + x.purpose + ')' : ''}`).join('; ')}` : '4-5 pillars whose mix adds up to 100'}; framework is one of AIDA, PAS, Hook-Story-Offer, Before/After, Myth vs Fact, Listicle, POV, UGC-style, Founder voice, Meme format.
 - channels: one row per active channel.
 - formatMix: ${o.mix ? `the team has fixed this month's mix as ${Object.entries(o.mix).filter(([,v]) => v.n > 0).map(([f,v]) => `${v.n} ${f} (${v.ch.join('/')})`).join(', ')}; express it as percentages adding to 100` : `percentages adding to 100${o.reels ? '' : '; keep Reels and video low'}`}.
 - theme: a monthly big idea plus 1-2 recurring series with a fixed cadence.
@@ -727,6 +754,10 @@ Series: ${arr(st.theme?.series).map(s => `${s.name} — ${s.cadence}, ${s.format
 Channel roles: ${arr(st.channels).map(x => `${x.channel}: ${x.role}; best times ${x.bestTimes}`).join(' | ')}
 Format mix: ${arr(st.formatMix).map(f => `${f.format} ${f.pct}%`).join(', ')}
 Products to feature: ${products}
+${arr(plan.opts.pillars).length ? 'PILLAR SPLIT (exact post counts): ' + allocPillars(plan.opts.pillars, (plan.opts.mix ? mixTotal(plan.opts.mix) : splitCounts(b, plan.month).total)).map(x => `${x.name} ${x.n}`).join(', ') : ''}
+${arr(plan.opts.hero).length ? 'HERO PRODUCTS THIS MONTH (feature these most, in this priority order): ' + plan.opts.hero.map(h => `${h.name}${h.note ? ' — must say: ' + h.note : ''}`).join(' | ') : ''}
+${plan.opts.mix && Object.entries(plan.opts.mix).some(([,v]) => v.product) ? 'PRODUCT PER FORMAT: ' + Object.entries(plan.opts.mix).filter(([,v]) => +v.n > 0 && v.product).map(([f,v]) => `${f} posts → ${v.product === '__brand' ? 'brand-level, no product' : v.product}`).join('; ') : ''}
+${plan.creative?.references?.length ? 'CREATIVE REFERENCES TO BORROW FROM: ' + plan.creative.references.slice(0, 10).map(r => `${r.brand}: ${r.piece} → ${r.borrow}`).join(' | ') : ''}
 ${ideas ? 'TEAM IDEAS BANK (use the strong ones):\n' + ideas : ''}
 
 INCLUDED TOPICAL DAYS:
@@ -735,7 +766,7 @@ ${tdays}
 DATES IN ${mLabel(plan.month).toUpperCase()}: ${dates}
 
 TASK: Build the content calendar. Create exactly ${total} posts with ${splitLine}.
-Rules: spread posts evenly across the month; honour each channel's format preferences and the format mix${plan.opts.reels ? '' : '; avoid Reels and video'}; run each series on its cadence; put a post on each included topical day on the best-fit channel (these count within the split); rotate pillars by their mix; feature real products across the month ("product" field, empty for brand-level posts); no repeated topics or hooks; post times in IST, 24h.
+Rules: spread posts evenly across the month; honour each channel's format preferences and the format mix${plan.opts.reels ? '' : '; avoid Reels and video'}; run each series on its cadence; put a post on each included topical day on the best-fit channel (these count within the split); follow the pillar split exactly when given, otherwise rotate pillars by their mix; follow the product-per-format and hero product instructions when given; each topic must be a specific idea (not a category like "product showcase"); feature real products across the month ("product" field, empty for brand-level posts); no repeated topics or hooks; post times in IST, 24h.
 format must be one of: ${mixE && mixE.length ? mixE.map(([f]) => f).join(', ') : 'Static, Carousel, Reel, Story, Video, Text'}. channel must be one of: ${chList.join(', ')}.
 
 Reply with only a JSON array of ${total} objects in this shape:
@@ -757,6 +788,15 @@ Brand hashtags: ${arr(plan?.research?.hashtags?.branded).join(' ')}
 Language: ${plan?.opts?.lang || 'English'}
 Hooks already used this month (do not repeat): ${used.join(' / ') || 'none'}
 
+${plan?.creative?.references?.length ? 'CREATIVE REFERENCES (borrow mechanisms, never copy):\n' + plan.creative.references.slice(0, 10).map(r => `- ${r.brand} · ${r.piece}: ${r.whyItWorks} → for us: ${r.borrow}`).join('\n') : ''}
+${arr(plan?.opts?.hero).length ? 'HERO PRODUCTS & MUST-SAY POINTS: ' + plan.opts.hero.map(h => `${h.name}${h.note ? ' — ' + h.note : ''}`).join(' | ') : ''}
+
+HOW TO THINK (do this for every post before writing a single line of copy):
+1. Insight: one specific human truth about this audience around the topic (a tension, habit or feeling), not a category fact.
+2. Idea: the creative twist that dramatises that insight for this brand and product. It must be something a competitor could not post unchanged.
+3. Mechanism: pick one creative reference to borrow a mechanism from, or none.
+4. Write the copy from the idea. Then reread it: delete any line that could belong to any brand in the category, and anything on the banned list.
+
 TASK: Write complete, client-ready content for each post below.${instr ? `\nExtra instruction from the team: ${instr}` : ''}
 
 POSTS:
@@ -775,7 +815,7 @@ Writing rules:
 - compliance: the mandatory disclaimer text if the category or brand rules need one, else "".
 
 Reply with only a JSON array, one object per post, in this shape:
-[{"id":"same id as given","concept":"1-2 lines","hooks":["","","","",""],"hook":"","onImage":{"headline":"","subline":"","cta":""},"slides":[{"n":1,"visual":"","copy":""}],"script":[{"t":"0-3s","visual":"","onscreen":"","vo":"","audio":""}],"caption":"","hashtags":["#tag"],"altText":"","design":{"layout":"","typography":"","palette":"","mood":"","elements":"","dos":"","donts":"","refSearch":""},"builtFrom":[""],"compliance":""}]`;
+[{"id":"same id as given","insight":"the human truth","idea":"the creative twist in one line","inspiredBy":"reference used or empty","concept":"1-2 lines","hooks":["","","","",""],"hook":"","onImage":{"headline":"","subline":"","cta":""},"slides":[{"n":1,"visual":"","copy":""}],"script":[{"t":"0-3s","visual":"","onscreen":"","vo":"","audio":""}],"caption":"","hashtags":["#tag"],"altText":"","design":{"layout":"","typography":"","palette":"","mood":"","elements":"","dos":"","donts":"","refSearch":""},"builtFrom":[""],"compliance":""}]`;
 }
 
 /* ---------- derived ---------- */
@@ -970,8 +1010,11 @@ function vPlans(b){
       <label class="f span2">Focus for this month <span class="hint">Launches, offers, campaigns, client asks</span><textarea class="in" id="npl-brief" rows="2">${esc(b.brain?.brief || '')}</textarea></label>
     </div>
     ${hasCh ? (() => { const mx = defaultMix(b); const tot = mixTotal(mx); return `<div style="display:flex;flex-direction:column;gap:8px"><div class="pmeta"><h3>Content mix</h3><span class="chip" style="background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700"><b id="mx-total">${tot}</b>&nbsp;posts this month</span></div><p class="muted sm">Set how many of each format you want and where each can go. The AI plans exactly this mix and picks the best platform for every post.</p>
-      <div class="tw"><table><thead><tr><th>Format</th><th style="width:120px">Posts</th><th>Platforms it can go on</th></tr></thead><tbody>${FORMATS.map(f => { const ch = fmtChoices(b, f).length ? fmtChoices(b, f) : FMT_CH[f]; return `<tr><td><b>${f}</b><div class="muted sm">${FMT_HINT[f]}</div></td><td><input class="in" type="number" min="0" max="40" id="mx-${f}" data-chg="mxTotal" value="${esc(mx[f]?.n ?? 0)}" aria-label="${f} posts"></td><td><div class="chips" style="margin:0">${ch.map(c => `<label class="chk chip"><input type="checkbox" id="mxc-${f}-${c}" ${(mx[f]?.ch || []).includes(c) ? 'checked' : ''}> ${esc(c)}</label>`).join('')}</div></td></tr>`; }).join('')}</tbody></table></div></div>`; })() : ''}
+      <div class="tw"><table><thead><tr><th>Format</th><th style="width:110px">Posts</th><th>Platforms it can go on</th><th style="width:220px">Product focus</th></tr></thead><tbody>${FORMATS.map(f => { const ch = fmtChoices(b, f).length ? fmtChoices(b, f) : FMT_CH[f]; return `<tr><td><b>${f}</b><div class="muted sm">${FMT_HINT[f]}</div></td><td><input class="in" type="number" min="0" max="40" id="mx-${f}" data-chg="mxTotal" value="${esc(mx[f]?.n ?? 0)}" aria-label="${f} posts"></td><td><div class="chips" style="margin:0">${ch.map(c => `<label class="chk chip"><input type="checkbox" id="mxc-${f}-${c}" ${(mx[f]?.ch || []).includes(c) ? 'checked' : ''}> ${esc(c)}</label>`).join('')}</div></td><td><select class="in" id="mxp-${f}" aria-label="${f} product focus">${opts([['','Mix of products (AI decides)'],['__brand','Brand-level, no product']].concat(arr(b.brain?.products).slice(0, 200).map(x => [x.name, x.name])), mx[f]?.product || '')}</select></td></tr>`; }).join('')}</tbody></table></div></div>`; })() : ''}
+    ${hasCh ? vPlanPillars(b) : ''}
+    ${hasCh ? vPlanHero(b) : ''}
     <div class="acts">
+      <label class="chk"><input type="checkbox" id="npl-cd" checked> Creative director review (sharper, a bit slower)</label>
       <label class="chk"><input type="checkbox" id="npl-top" checked> Topical days</label>
       <label class="chk"><input type="checkbox" id="npl-reels" checked> Reel scripts</label>
       <label class="chk"><input type="checkbox" id="npl-paid"> Paid boost ideas</label>
@@ -983,6 +1026,18 @@ function vPlans(b){
   </section>
   <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c1)"></span>Plans</h2></header>
     <div class="tw"><table><thead><tr><th>Month</th><th>Status</th><th>Posts</th><th>Progress</th><th>Approved</th></tr></thead><tbody>${rows.join('') || '<tr><td colspan="5" class="muted">No plans yet.</td></tr>'}</tbody></table></div></section>`;
+}
+function vPlanPillars(b){
+  const P = arr(b.pillars);
+  if (!P.length) return `<div style="display:flex;flex-direction:column;gap:6px"><h3>Content pillars</h3><p class="muted sm">No pillars saved for this brand, so the AI will propose them. To choose your own, add pillars in <button class="lnk" data-act="btab" data-k="brain">Brand Brain → Content pillars</button>.</p></div>`;
+  return `<div style="display:flex;flex-direction:column;gap:8px"><div class="pmeta"><h3>Content pillars this month</h3><span class="muted sm">Tick the pillars to use and set their share. Leave all unticked to let the AI decide.</span></div>
+  <div class="tw"><table><thead><tr><th style="width:40px">Use</th><th>Pillar</th><th>What it does</th><th style="width:110px">Share %</th></tr></thead><tbody>${P.map((x, i) => `<tr><td><input type="checkbox" id="pp-${i}" ${x.active !== false ? 'checked' : ''} style="accent-color:var(--accent);width:16px;height:16px" aria-label="Use ${esc(x.name)}"></td><td><span class="pil" style="--pc:var(${PAL[i % PAL.length]})"><b>${esc(x.name)}</b></span></td><td class="sm">${esc(x.purpose)}</td><td><input class="in" type="number" min="0" max="100" id="ppm-${i}" value="${esc(x.mix ?? Math.round(100 / P.filter(y => y.active !== false).length || 0))}" aria-label="${esc(x.name)} share"></td></tr>`).join('')}</tbody></table></div><p class="muted sm">Shares are scaled to 100% automatically.</p></div>`;
+}
+function vPlanHero(b){
+  const P = arr(b.brain?.products);
+  if (!P.length) return '';
+  return `<details ${arr(b.lastHero).length ? 'open' : ''}><summary style="cursor:pointer;font-weight:700">Hero products this month <span class="muted sm" style="font-weight:500">optional · what to push and what must be said</span></summary>
+  <div class="tw" style="margin-top:8px;max-height:320px;overflow:auto"><table><thead><tr><th style="width:40px">Push</th><th>Product</th><th>Must-say points, offer or priority</th></tr></thead><tbody>${P.slice(0, 200).map((x, i) => { const h = arr(b.lastHero).find(y => y.name === x.name); return `<tr><td><input type="checkbox" id="hp-${i}" ${h ? 'checked' : ''} style="accent-color:var(--accent);width:16px;height:16px" aria-label="Push ${esc(x.name)}"></td><td><b>${esc(x.name)}</b><div class="muted sm">${esc(x.price || '')}${x.offer ? ' · ' + esc(x.offer) : ''}</div></td><td><input class="in" id="hpn-${i}" value="${esc(h?.note || '')}" placeholder="e.g. launch week offer, mention 12-hour steeping"></td></tr>`; }).join('')}</tbody></table></div></details>`;
 }
 function vIdeas(b){
   const ideas = arr(b.ideas).map((x,i) => ({...x, i})).sort((a,b2) => (a.used?1:0) - (b2.used?1:0) || (b2.at||0) - (a.at||0));
@@ -1008,6 +1063,10 @@ function vBrain(b){
       ${ui.answer ? `<div class="answer">${esc(ui.answer)}</div>` : ''}${aiNote()}
     </section>
   </div>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c5)"></span>Content pillars <span class="muted mono" style="font-size:13px">${arr(b.pillars).length}</span></h2><p>The themes this brand talks about. Pick which ones each monthly plan uses and how much of the month each gets.</p></div><button class="btn sm pri" data-act="aiPillars" ${aiOff() || ui.pillarBusy ? 'disabled' : ''}>${ui.pillarBusy ? '<span class="spin"></span> Thinking…' : '<span class="spark">✦</span> Suggest pillars'}</button></header>
+    <div class="list">${arr(b.pillars).map((x, i) => `<div class="idea" style="--pc:var(${PAL[i % PAL.length]});border-left:4px solid var(${PAL[i % PAL.length]})"><div class="tx"><b>${esc(x.name)}</b>${x.purpose ? `<span class="sm">${esc(x.purpose)}</span>` : ''}${x.examples ? `<span class="muted sm">e.g. ${esc(str(x.examples))}</span>` : ''}${x.why ? `<span class="muted sm">Why: ${esc(x.why)}</span>` : ''}</div><div class="acts"><label class="chk sm"><input type="checkbox" data-chg="pillarOn" data-i="${i}" ${x.active !== false ? 'checked' : ''}> Use by default</label><button class="btn sm ghost" data-act="rmPillar" data-i="${i}">Remove</button></div></div>`).join('') || '<p class="muted">No pillars yet. Add your own or let AI suggest some from the Brand Brain.</p>'}</div>
+    <div class="rowline"><label class="f">Pillar name<input class="in" id="npi-name" placeholder="The 3pm Ritual"></label><label class="f">What it does<input class="in" id="npi-purpose" placeholder="Relatable everyday moments that end with the product"></label><button class="btn" data-act="addPillar">Add pillar</button></div>
+  </section>
   <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Products & services <span class="muted mono" style="font-size:13px">${prod.length}</span></h2><p>Every post is anchored to one of these. Import them from the brand's website, add one by one, or paste a catalogue.</p></div><div class="acts"><button class="btn sm pri" data-act="importSite" ${ui.importBusy ? 'disabled' : ''}>${ui.importBusy ? '<span class="spin"></span> Reading website…' : 'Import from website'}</button>${prod.some(p => p.source === 'website') ? '<button class="btn sm ghost" data-act="clearImported">Remove imported</button>' : ''}</div></header>
     ${b.website ? `<p class="muted sm">Website: ${linkOK(b.website) ? `<a href="${esc(b.website)}" target="_blank" rel="noopener">${esc(b.website)}</a>` : esc(b.website)}${HOSTED ? '' : ' · Website import works on the Vercel version of the planner.'}</p>` : '<p class="muted sm">Add the brand website in Profile & team, and products are pulled in automatically.</p>'}
     ${tbl(['Name','What it is','Benefits','Price','Offer',''], prod.slice(0, ui.allProd ? 1000 : 25).map((p,i) => [`<b>${p.url && linkOK(p.url) ? `<a href="${esc(p.url)}" target="_blank" rel="noopener" style="color:inherit">${esc(p.name)}</a>` : esc(p.name)}</b>`, esc(p.what), esc(str(p.benefits).slice(0, 140)), esc(p.price), esc(p.offer), `<button class="btn sm ghost" data-act="rmItem" data-k="products" data-i="${i}">Remove</button>`]))}
@@ -1139,7 +1198,8 @@ function vDeck(plan, ps){
     <b style="font-size:14px;line-height:1.3">${esc(p.topic || 'Untitled post')}</b>
     <p class="cap">${p.hasContent ? esc(p.caption) : busy[p.id] ? 'Writing…' : 'Not written yet'}</p>
     ${p.hasContent && (p.design?.layout || p.design?.mood) ? `<p class="sm" style="color:var(--ink-2);border-top:1px dashed var(--line);padding-top:7px"><b style="color:var(--accent)">Design ref:</b> ${esc(str(p.design.mood || p.design.layout).slice(0, 90))}</p>` : ''}
-    <div class="pfoot"><span class="pil" style="--pc:${pillarColor(plan, p.pillar)}">${esc(p.pillar || 'No pillar')}</span><span>${fl.length ? `<span class="flag">${fl.length} check${fl.length > 1 ? 's' : ''}</span>` : ''}${p.round ? ` · R${p.round}` : ''}${owner(p) ? ' · ' + esc(mName(owner(p))) : ''}</span></div></div></button>`; }).join('')}</div>`;
+    ${p.product ? `<p class="sm" style="margin-top:-2px"><b>Product:</b> ${esc(p.product)}</p>` : ''}${p.idea ? `<p class="sm" style="color:var(--ink-2)"><b style="color:var(--c5)">Idea:</b> ${esc(str(p.idea).slice(0, 110))}</p>` : ''}
+    <div class="pfoot"><span class="pil" style="--pc:${pillarColor(plan, p.pillar)}">${esc(p.pillar || 'No pillar')}${p.cdRewritten ? ' · CD rewrite' : p.cdScore ? ` · CD ${p.cdScore}/10` : ''}</span><span>${fl.length ? `<span class="flag">${fl.length} check${fl.length > 1 ? 's' : ''}</span>` : ''}${p.round ? ` · R${p.round}` : ''}${owner(p) ? ' · ' + esc(mName(owner(p))) : ''}</span></div></div></button>`; }).join('')}</div>`;
 }
 function vCal(plan, ps){
   const days = monthDays(plan.month);
@@ -1222,7 +1282,10 @@ function vStrategy(plan){
 function vResearch(plan){
   const sn = plan.snapshot, r = plan.research;
   if (!sn) return `<div class="empty"><p>Research hasn't been written yet.</p></div>`;
-  return `<p class="muted sm">Written from Claude's knowledge, not a live web search. Check anything marked "(verify)" before it goes to a client.</p>
+  const cr = plan.creative || {};
+  const srcs = arr(r?.sources).concat(arr(cr.sources)).filter((x, i, a) => x.uri && a.findIndex(y => y.uri === x.uri) === i).slice(0, 24);
+  const refPanel = arr(cr.references).length ? `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Creative references</h2><p>Real work to borrow mechanisms from. Posts use these as inspiration, never copies.</p></div></header>${tbl(['Brand & piece','Type','Why it works','What we borrow',''], arr(cr.references).map(x => [`<b>${esc(x.brand)}</b><div class="sm">${esc(x.piece)}</div>`, `<span class="chip">${esc(x.type)}</span>`, esc(x.whyItWorks), esc(x.borrow), linkOK(x.url) ? `<a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">Open ↗</a>` : `<a class="btn sm" href="https://www.google.com/search?q=${encodeURIComponent((x.brand || '') + ' ' + (x.piece || ''))}" target="_blank" rel="noopener">Search ↗</a>`]))}${arr(cr.trendingFormats).length ? `<h3>Formats working right now</h3>${tbl(['Format','Real example','How we use it'], arr(cr.trendingFormats).map(x => [`<b>${esc(x.format)}</b>`, esc(x.example), esc(x.howToUse)]))}` : ''}</section>` : '';
+  return `<p class="muted sm">${srcs.length ? `Researched on the web: ${srcs.length} sources, listed at the bottom.` : `Written from the AI's knowledge, not a live web search. Check anything marked "(verify)" before it goes to a client.`}</p>${refPanel}
   <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c1)"></span>Brand snapshot</h2></header>
     <dl class="dl"><dt>Positioning</dt><dd>${esc(sn.positioning)}</dd><dt>USP</dt><dd>${esc(sn.usp)}</dd><dt>Voice</dt><dd>${esc(sn.voice)}</dd></dl>
     ${tbl(['Persona','Who','Pain points','Triggers','Platforms'], arr(sn.personas).map(p => [`<b>${esc(p.name)}</b>`, esc(p.who), esc(p.pains), esc(p.triggers), esc(p.platforms)]))}
@@ -1239,7 +1302,8 @@ function vResearch(plan){
   <div class="grid2">
     <section class="panel"><header><h2>What people search</h2></header><div class="chips">${arr(r?.searchQueries).map(q => `<span class="chip">${esc(q)}</span>`).join('')}</div></section>
     <section class="panel"><header><h2>Hashtags</h2><button class="btn sm" data-act="copyTags">Copy all</button></header>${['branded','niche','broad'].map(k => `<div><p class="eyebrow">${k}</p><p class="sm" style="color:var(--accent)">${esc(arr(r?.hashtags?.[k]).join(' '))}</p></div>`).join('')}</section>
-  </div>`;
+  </div>
+  ${srcs.length ? `<section class="panel"><header><h2>Sources</h2></header><div class="list">${srcs.map(x => `<a class="li" href="${esc(x.uri)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="tx"><b>${esc(x.title || x.uri)}</b></span><span class="muted sm">Open ↗</span></a>`).join('')}</div></section>` : ''}`;
 }
 function vTopical(plan){
   const t = arr(plan.topical).map((x,i) => ({...x, i})).sort((a,b) => str(a.date).localeCompare(str(b.date)));
@@ -1260,10 +1324,10 @@ function vExport(plan, ps){
 }
 
 /* ---------- client deck ---------- */
-const DECK_SECS = [['cover','Cover'],['snapshot','Brand snapshot'],['audience','Audience personas'],['trends','Industry & platform trends'],['competitors','Competitor audit'],['opps','Insights & opportunities'],['objectives','Objectives & KPIs'],['pillars','Content pillars'],['channels','Channel plan & format mix'],['theme','Monthly theme & series'],['topical','Topical days'],['calendar','Content calendar'],['posts','Post-by-post content'],['next','Next steps']];
+const DECK_SECS = [['cover','Cover'],['snapshot','Brand snapshot'],['audience','Audience personas'],['trends','Industry & platform trends'],['competitors','Competitor audit'],['refs','Creative references'],['opps','Insights & opportunities'],['objectives','Objectives & KPIs'],['pillars','Content pillars'],['channels','Channel plan & format mix'],['theme','Monthly theme & series'],['topical','Topical days'],['calendar','Content calendar'],['posts','Post-by-post content'],['next','Next steps']];
 const DECK_PRESETS = {
   full: DECK_SECS.map(x => x[0]),
-  research: ['cover','snapshot','audience','trends','competitors','opps','next'],
+  research: ['cover','snapshot','audience','trends','competitors','refs','opps','next'],
   strategy: ['cover','snapshot','objectives','pillars','channels','theme','topical','calendar','next'],
   content: ['cover','theme','pillars','calendar','posts','next']
 };
@@ -1281,6 +1345,7 @@ function deckModel(plan, ps){
     if (arr(r.platformTrends).length) chunk(arr(r.platformTrends), 6).forEach((c, i) => M.push({k:'table', ey:'Research · Platform trends', title:i ? 'Platform trends (cont.)' : 'What is working on each platform', head:['Channel','Trend','How we will use it'], rows:c.map(t => [t.channel, t.trend, t.howToUse])}));
   }
   if (has('competitors') && arr(r.competitors).length) chunk(arr(r.competitors), 5).forEach((c, i) => M.push({k:'table', ey:'Research · Competitors', title:i ? 'Competitor audit (cont.)' : 'Competitor audit', head:['Competitor','Content pillars','Formats','What works','Gap for us'], rows:c.map(x => [x.name, x.pillars, x.formats, x.whatWorks, x.gap])}));
+  if (has('refs') && arr(plan.creative?.references).length) chunk(arr(plan.creative.references), 5).forEach((c, i) => M.push({k:'table', ey:'Research · Creative references', title:i ? 'Creative references (cont.)' : 'Work we are borrowing from', head:['Brand & piece','Why it works','What we borrow'], rows:c.map(x => [`${x.brand}: ${x.piece}`, x.whyItWorks, x.borrow])}));
   if (has('opps')){
     if (arr(r.opportunities).length) M.push({k:'cards', ey:'Research · Opportunities', title:'White space we can own', cols:Math.min(5, arr(r.opportunities).length), cards:arr(r.opportunities).slice(0, 5).map((o, i) => ({title:o.angle, body:o.why, color:PAL[i % PAL.length]}))});
     if (arr(r.audienceInsights).length) M.push({k:'table', ey:'Research · Audience insights', title:'What the audience tells us', head:['Insight','Content angle'], rows:arr(r.audienceInsights).slice(0, 6).map(x => [x.insight, x.angle])});
@@ -1331,7 +1396,7 @@ function slideHTML(m, i, n, plan){
   if (m.k === 'post'){
     const p = m.post; const c = brandColors(b);
     const extra = arr(p.slides).length ? `<table class="mini"><thead><tr><th>#</th><th>Slide copy</th></tr></thead><tbody>${arr(p.slides).slice(0, 6).map((x, j) => `<tr><td>${j + 1}</td><td>${esc(x.copy)}</td></tr>`).join('')}</tbody></table>` : arr(p.script).length ? `<table class="mini"><thead><tr><th>Time</th><th>On screen</th><th>Voiceover</th></tr></thead><tbody>${arr(p.script).slice(0, 5).map(x => `<tr><td>${esc(x.t)}</td><td>${esc(x.onscreen)}</td><td>${esc(x.vo)}</td></tr>`).join('')}</tbody></table>` : '';
-    return wrap(`<div class="ey">Post ${m.n} of ${m.of}${p.pillar ? ' · ' + esc(p.pillar) : ''}</div><h2>${esc(p.topic)}</h2><div class="pgrid"><div class="pcv" style="background:${c.bg};color:${c.fg}"><span class="o" style="background:${c.ac}"></span>${p.format === 'Text' ? `<div class="hl" style="font-size:2.2cqw">${esc(p.hook)}</div>` : `<div class="hl">${esc(p.onImage?.headline || p.topic)}</div>${p.onImage?.subline ? `<div class="sl">${esc(p.onImage.subline)}</div>` : ''}${p.onImage?.cta ? `<span class="ct" style="background:${c.ac};color:${c.bg}">${esc(p.onImage.cta)}</span>` : ''}`}</div><div style="display:flex;flex-direction:column;gap:1.2cqw;min-width:0;overflow:hidden"><div class="pmeta2"><span>${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</span><span class="ch" style="background:${CHC[p.channel] || '#555'}">${esc(p.channel)}</span><span>${esc(p.format)}</span>${p.topical ? `<span>${esc(p.topical)}</span>` : ''}</div>${p.hook ? `<div class="hook">${esc(p.hook)}</div>` : ''}<div class="capt" style="-webkit-line-clamp:${extra ? 4 : 7}">${esc(p.caption)}</div>${p.hashtags ? `<div class="tags">${esc(p.hashtags)}</div>` : ''}${extra}${(p.design?.layout || p.design?.mood) ? `<div style="background:#F3F5FB;border-radius:1cqw;padding:1cqw 1.2cqw;font-size:1.1cqw;line-height:1.45"><b style="color:var(--sc1);text-transform:uppercase;letter-spacing:.08em;font-size:1cqw">Design reference</b><br>${esc([p.design.layout, p.design.mood, p.design.elements].filter(Boolean).join(' · ').slice(0, 260))}${p.design.refSearch ? `<br><span style="color:#7A8199">Look up: ${esc(p.design.refSearch)}</span>` : ''}</div>` : ''}</div></div>`);
+    return wrap(`<div class="ey">Post ${m.n} of ${m.of}${p.pillar ? ' · ' + esc(p.pillar) : ''}</div><h2>${esc(p.topic)}</h2><div class="pgrid"><div class="pcv" style="background:${c.bg};color:${c.fg}"><span class="o" style="background:${c.ac}"></span>${p.format === 'Text' ? `<div class="hl" style="font-size:2.2cqw">${esc(p.hook)}</div>` : `<div class="hl">${esc(p.onImage?.headline || p.topic)}</div>${p.onImage?.subline ? `<div class="sl">${esc(p.onImage.subline)}</div>` : ''}${p.onImage?.cta ? `<span class="ct" style="background:${c.ac};color:${c.bg}">${esc(p.onImage.cta)}</span>` : ''}`}</div><div style="display:flex;flex-direction:column;gap:1.2cqw;min-width:0;overflow:hidden"><div class="pmeta2"><span>${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</span><span class="ch" style="background:${CHC[p.channel] || '#555'}">${esc(p.channel)}</span><span>${esc(p.format)}</span>${p.topical ? `<span>${esc(p.topical)}</span>` : ''}</div>${p.hook ? `<div class="hook">${esc(p.hook)}</div>` : ''}${p.idea ? `<div style="font-size:1.15cqw;color:#444C66"><b style="color:#7C5CFF">The idea:</b> ${esc(p.idea)}</div>` : ''}<div class="capt" style="-webkit-line-clamp:${extra ? 4 : 7}">${esc(p.caption)}</div>${p.hashtags ? `<div class="tags">${esc(p.hashtags)}</div>` : ''}${extra}${(p.design?.layout || p.design?.mood) ? `<div style="background:#F3F5FB;border-radius:1cqw;padding:1cqw 1.2cqw;font-size:1.1cqw;line-height:1.45"><b style="color:var(--sc1);text-transform:uppercase;letter-spacing:.08em;font-size:1cqw">Design reference</b><br>${esc([p.design.layout, p.design.mood, p.design.elements].filter(Boolean).join(' · ').slice(0, 260))}${p.design.refSearch ? `<br><span style="color:#7A8199">Look up: ${esc(p.design.refSearch)}</span>` : ''}</div>` : ''}</div></div>`);
   }
   return '';
 }
@@ -1529,7 +1594,10 @@ function vDrawer(p){
         </div>
         <dl class="dl"><dt>Copy due</dt><dd class="mono ${group(p.status)==='copy' && du.copy < td ? 'late' : ''}">${fmtD(du.copy)}</dd><dt>Design due</dt><dd class="mono ${group(p.status)==='design' && du.design < td ? 'late' : ''}">${fmtD(du.design)}</dd><dt>Client approval due</dt><dd class="mono ${group(p.status)==='client' && du.client < td ? 'late' : ''}">${fmtD(du.client)}</dd></dl>
         ${inp('Topic','topic',p.topic)}
-        <div class="fg">${inp('Objective','objective',p.objective)}${inp('Product featured','product',p.product)}${inp('Topical day','topical',p.topical)}</div>
+        <div class="fg">${inp('Objective','objective',p.objective)}<label class="f">Product featured<select class="in" data-pf="product" id="pf-product">${opts([['','Brand-level (no product)']].concat(arr(b.brain?.products).map(x => [x.name, x.name])).concat(p.product && !arr(b.brain?.products).some(x => x.name === p.product) ? [[p.product, p.product]] : []), p.product || '')}</select></label>${inp('Topical day','topical',p.topical)}</div>
+        ${(p.insight || p.idea) ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${inp('Insight (the human truth)','insight',p.insight)}${inp('Idea (the creative twist)','idea',p.idea)}</div>` : ''}
+        ${p.inspiredBy ? `<p class="sm"><b>Inspired by:</b> ${esc(p.inspiredBy)}</p>` : ''}
+        ${p.cdScore ? `<p class="sm"><span class="chip" style="font-weight:700;border-color:${p.cdScore >= 7 || p.cdRewritten ? 'var(--s-approved)' : 'var(--s-client)'};color:${p.cdScore >= 7 || p.cdRewritten ? 'var(--s-approved)' : 'var(--s-client)'}">${p.cdRewritten ? `Rewritten by creative director · first draft scored ${p.cdScore}/10` : `Creative director ${p.cdScore}/10`}</span> <span class="muted">${esc(p.cdNote || '')}</span></p>` : ''}
         ${p.concept ? `<p class="sm"><b>Concept:</b> ${esc(p.concept)}</p>` : ''}
       </section>
 
@@ -1563,7 +1631,7 @@ function vDrawer(p){
         ${bz && p.hasContent ? `<p class="sm"><span class="spin" style="vertical-align:middle;margin-right:6px"></span>${esc(bz)}</p>` : ''}
         ${undo[p.id] ? `<div><button class="btn sm ghost" data-act="undo">↶ Undo last AI change</button></div>` : ''}
         ${v ? `<div class="list">${v.options.map((o,i) => `<div class="var">${esc(o)}<div><button class="btn sm" data-act="useVar" data-i="${i}">Use this</button></div></div>`).join('')}</div>` : ''}
-        <div class="rowline"><label class="f">Rewrite the whole post<input class="in" id="regen-instr" placeholder="Optional: make it a myth-buster, focus on one product"></label><button class="btn sm" data-act="regen" ${bz || aiOff() ? 'disabled' : ''}>Regenerate post</button></div>
+        <div class="rowline"><label class="f">Rewrite the whole post<input class="in" id="regen-instr" placeholder="Optional: make it a myth-buster, focus on one product"></label><button class="btn sm" data-act="regen" ${bz || aiOff() ? 'disabled' : ''}>Regenerate post</button><button class="btn sm hot" data-act="pushFurther" ${bz || aiOff() ? 'disabled' : ''}>Push it further</button></div>
         <div class="rowline"><label class="f" style="flex:0 0 150px">Repurpose for<select class="in" id="rp-ch">${opts(CH, p.channel === 'LinkedIn' ? 'Instagram' : 'LinkedIn')}</select></label><label class="f" style="flex:0 0 140px">Format<select class="in" id="rp-f">${opts(FORMATS, p.format === 'Reel' ? 'Carousel' : 'Reel')}</select></label><button class="btn sm" data-act="repurpose" ${bz || aiOff() || !p.hasContent ? 'disabled' : ''}>Create adapted post</button></div>
         ${aiNote()}
       </section>
@@ -1629,7 +1697,7 @@ function step(pid, label){ gen[pid].label = label; sched(); }
 function contentPart(r, p){
   const hs = Array.isArray(r.hashtags) ? r.hashtags.join(' ') : str(r.hashtags);
   return {
-    concept:str(r.concept), hooks:arr(r.hooks).map(str).slice(0,6), hook:str(r.hook) || p.hook || '',
+    insight:str(r.insight), idea:str(r.idea), inspiredBy:str(r.inspiredBy), concept:str(r.concept), hooks:arr(r.hooks).map(str).slice(0,6), hook:str(r.hook) || p.hook || '',
     onImage:{headline:str(r.onImage?.headline), subline:str(r.onImage?.subline), cta:str(r.onImage?.cta)},
     slides:arr(r.slides).map((s,i) => ({n:i+1, visual:str(s.visual), copy:str(s.copy)})),
     script:arr(r.script).map(s => ({t:str(s.t), visual:str(s.visual), onscreen:str(s.onscreen), vo:str(s.vo), audio:str(s.audio)})),
@@ -1650,6 +1718,29 @@ async function writePosts(posts, instr, signal){
   }
   if (!n) throw {code:'invalid_json', message:'no posts in reply'};
 }
+function promptCD(b, plan, posts){
+  const slim = posts.map(p => ({id:p.id, channel:p.channel, format:p.format, pillar:p.pillar, product:p.product, topic:p.topic, insight:p.insight, idea:p.idea, hook:p.hook, onImage:p.onImage, caption:p.caption, slides:arr(p.slides).map(x => x.copy), script:arr(p.script).map(x => x.vo || x.onscreen)}));
+  return `${PRE}
+
+${brandCtx(b, 5000)}
+
+You are the Executive Creative Director reviewing your team's posts before they go to the client. You are hard to impress.
+For each post, score 1-10: originality of the idea, specificity to this brand, strength of the hook, and whether copy, visual and CTA tell one story. Average it into "score".
+For every post that scores below 7, rewrite it completely with a sharper, less obvious idea (keep the date, channel, format, pillar and product), and return the full rewritten post.
+
+POSTS:
+${JSON.stringify(slim)}
+
+Reply with only JSON:
+{"reviews":[{"id":"","score":7,"note":"one line: what is weak or strong"}],"rewrites":[{"id":"","insight":"","idea":"","inspiredBy":"","concept":"","hooks":["","","","",""],"hook":"","onImage":{"headline":"","subline":"","cta":""},"slides":[{"n":1,"visual":"","copy":""}],"script":[{"t":"","visual":"","onscreen":"","vo":"","audio":""}],"caption":"","hashtags":["#"],"altText":"","design":{"layout":"","typography":"","palette":"","mood":"","elements":"","dos":"","donts":"","refSearch":""},"builtFrom":[""],"compliance":""}]}`;
+}
+async function cdReview(ids, signal){
+  const posts = ids.map(id => D.posts[id]).filter(p => p && p.hasContent); if (!posts.length) return;
+  const b = D.brands[posts[0].brandId]; const plan = D.plans[posts[0].planId];
+  const r = await ai(promptCD(b, plan, posts), {signal});
+  for (const rv of arr(r?.reviews)){ if (D.posts[rv.id]) await patch('posts', rv.id, {cdScore:+rv.score || null, cdNote:str(rv.note)}); }
+  for (const rw of arr(r?.rewrites)){ const p = D.posts[rw.id]; if (p) await patch('posts', rw.id, {...contentPart(rw, p), cdRewritten:true}); }
+}
 function newPost(b, planId, over){
   return Object.assign({brandId:D.plans[planId]?.brandId || '', planId, date:'', time:'19:00', channel:activeCh(b)[0] || 'Instagram', format:'Static', pillar:'', topic:'', hook:'', topical:'', objective:'', product:'', status:'Idea', writer:b?.team?.writer || '', designer:b?.team?.designer || '', am:b?.team?.am || '', hasContent:false, round:0, comments:[], creatives:[], checklist:{}, metrics:{}, createdAt:Date.now()}, over);
 }
@@ -1663,10 +1754,16 @@ async function runPlan(pid){
     let plan = D.plans[pid]; const b = D.brands[plan.brandId];
     if (!b) throw {message:'Brand not found'};
     if (!plan.snapshot){
-      step(pid, 'Researching the brand, market and competitors…');
-      const r = await ai(promptA(b, plan), {signal});
+      step(pid, HOSTED ? 'Searching the web: market, competitors and trends…' : 'Researching the brand, market and competitors…');
+      const {data:r, sources} = await webJSON(promptA(b, plan), signal);
       if (!r?.snapshot) throw {code:'invalid_json'};
-      await patch('plans', pid, {snapshot:r.snapshot, research:r.research || {}});
+      await patch('plans', pid, {snapshot:r.snapshot, research:{...(r.research || {}), sources}});
+    }
+    plan = D.plans[pid];
+    if (!plan.creative){
+      step(pid, HOSTED ? 'Finding real creative references: campaigns, Pinterest, Behance…' : 'Building the creative reference board…');
+      try { const {data:r, sources} = await webJSON(promptR(b, plan), signal); await patch('plans', pid, {creative:{references:arr(r?.references).slice(0, 14), trendingFormats:arr(r?.trendingFormats).slice(0, 8), sources}}); }
+      catch (e){ if (e?.code === 'cancelled') throw e; await patch('plans', pid, {creative:{references:[], trendingFormats:[], sources:[]}}); }
     }
     plan = D.plans[pid];
     if (!plan.strategy){
@@ -1674,6 +1771,7 @@ async function runPlan(pid){
       const r = await ai(promptB(b, plan), {signal});
       if (!r?.strategy) throw {code:'invalid_json'};
       const topical = arr(r.topicalDays).filter(t => validD(t.date) && str(t.date).startsWith(plan.month)).map(t => ({date:t.date, occasion:str(t.occasion), type:str(t.type), relevance:str(t.relevance), idea:str(t.idea), sensitive:!!t.sensitive, include:!t.sensitive && t.relevance !== 'Low'}));
+      if (arr(plan.opts.pillars).length){ const got = arr(r.strategy.pillars); r.strategy.pillars = plan.opts.pillars.map(x => { const g = got.find(y => str(y.name).toLowerCase() === str(x.name).toLowerCase()) || {}; return {...g, name:x.name, mix:x.mix, purpose:g.purpose || x.purpose || ''}; }); }
       await patch('plans', pid, {strategy:r.strategy, topical});
     }
     plan = D.plans[pid];
@@ -1685,7 +1783,7 @@ async function runPlan(pid){
       step(pid, `Adding ${list.length} posts to the calendar…`);
       await pool(list, 4, async s => {
         const id = uid();
-        await put('posts', id, newPost(b, pid, {id, date:s.date, time:str(s.time) || '19:00', format:FORMATS.includes(s.format) ? s.format : 'Static', channel:(() => { const f = FORMATS.includes(s.format) ? s.format : 'Static'; const allow = plan.opts.mix?.[f]?.ch; return CH.includes(s.channel) && (!allow || !allow.length || allow.includes(s.channel)) ? s.channel : (allow && allow[0]) || activeCh(b)[0]; })(), pillar:str(s.pillar), topic:str(s.topic), hook:str(s.hook), topical:str(s.topical), objective:str(s.objective), product:str(s.product)}));
+        await put('posts', id, newPost(b, pid, {id, date:s.date, time:str(s.time) || '19:00', format:FORMATS.includes(s.format) ? s.format : 'Static', product:(() => { const f = FORMATS.includes(s.format) ? s.format : 'Static'; const fp = plan.opts.mix?.[f]?.product; return fp === '__brand' ? '' : fp || str(s.product); })(), channel:(() => { const f = FORMATS.includes(s.format) ? s.format : 'Static'; const allow = plan.opts.mix?.[f]?.ch; return CH.includes(s.channel) && (!allow || !allow.length || allow.includes(s.channel)) ? s.channel : (allow && allow[0]) || activeCh(b)[0]; })(), pillar:str(s.pillar), topic:str(s.topic), hook:str(s.hook), topical:str(s.topical), objective:str(s.objective)}));
       });
     }
     const todo = postsOf(pid).filter(p => !p.hasContent);
@@ -1696,7 +1794,7 @@ async function runPlan(pid){
     await pool(batches, 2, async bt => {
       if (signal.aborted) return;
       bt.forEach(p => busy[p.id] = 'Writing…'); sched();
-      try { await writePosts(bt, '', signal); }
+      try { await writePosts(bt, '', signal); if (D.plans[pid]?.opts?.cd !== false){ step(pid, `Creative director reviewing posts · ${gen[pid].done} of ${gen[pid].total} done`); try { await cdReview(bt.map(p => p.id), signal); } catch (e){ if (e?.code === 'cancelled') throw e; } } }
       catch (e){ if (e?.code === 'cancelled') throw e; if (['not_granted','rate_limited','session_expired','sampling_disabled'].includes(e?.code)) throw e; failed += bt.length; }
       finally { bt.forEach(p => delete busy[p.id]); }
       gen[pid].done += bt.length; step(pid, `Writing posts · ${gen[pid].done} of ${gen[pid].total} done`);
@@ -1859,6 +1957,19 @@ const ACT = {
     if (!add.length){ toast('Nothing to add'); return; }
     patch('brands', ui.brandId, {brain:{products:arr(b.brain?.products).concat(add)}}); toast(`${add.length} products added`);
   },
+  addPillar: () => { const b = D.brands[ui.brandId]; const n = ($('#npi-name')?.value || '').trim(); if (!n){ toast('Name the pillar first'); return; } patch('brands', ui.brandId, {pillars:arr(b.pillars).concat([{name:n, purpose:($('#npi-purpose')?.value || '').trim(), active:true}])}); toast('Pillar added'); },
+  rmPillar: a => { const b = D.brands[ui.brandId]; const l = arr(b.pillars).slice(); l.splice(+a.dataset.i, 1); patch('brands', ui.brandId, {pillars:l}); },
+  aiPillars: async () => {
+    const b = D.brands[ui.brandId]; ui.pillarBusy = true; renderAll();
+    try {
+      const {data:r} = await webJSON(`${PRE}\n\n${brandCtx(b, 9000)}\n\nTASK: Propose 8 distinct content pillars for this brand's social media. ${HOSTED ? 'Search the web for what this brand and its competitors actually post, and find the gaps.' : ''} Each pillar must be specific to this brand (not "Product showcase" or "Behind the scenes" unless given a sharp brand-specific angle), map to a business objective, and suggest a mix %. Existing pillars to avoid duplicating: ${arr(b.pillars).map(x => x.name).join(', ') || 'none'}.\n\nReply with only JSON: {"pillars":[{"name":"short memorable name","purpose":"what it does for the brand","examples":"2-3 specific post ideas","mix":20,"why":"the insight or gap behind it"}]}`);
+      const add = arr(r?.pillars).filter(x => x && x.name).map(x => ({name:str(x.name), purpose:str(x.purpose), examples:str(x.examples), why:str(x.why), mix:+x.mix || 0, active:false}));
+      if (!add.length) throw {code:'invalid_json'};
+      await patch('brands', ui.brandId, {pillars:arr(D.brands[ui.brandId].pillars).concat(add)}); toast(`${add.length} pillar ideas added. Tick the ones to use.`);
+    } catch (e){ toast(errCopy(e)); }
+    ui.pillarBusy = false; renderAll();
+  },
+  pushFurther: () => { const i = $('#regen-instr'); if (i) i.value = 'Creative director rewrite: find a sharper, less obvious insight and idea. Nothing generic; every line must be specific to this brand and product.'; regen(); },
   importSite: () => importSite(ui.brandId, false),
   toggleProd: () => { ui.allProd = !ui.allProd; renderAll(); },
   clearImported: () => { const b = D.brands[ui.brandId]; patch('brands', ui.brandId, {brain:{products:arr(b.brain?.products).filter(p => p.source !== 'website')}}); toast('Imported products removed'); },
@@ -1914,12 +2025,18 @@ const ACT = {
     if (D.plans[id]){ ui.view = 'plan'; ui.planId = id; ui.tab = 'deck'; renderAll(); window.scrollTo(0,0); if (D.plans[id].status !== 'ready' || postsOf(id).some(p => !p.hasContent)){ toast('Picking up this month\'s plan where it stopped'); runPlan(id); } else toast('This month already has a plan'); return; }
     const reuse = $('#npl-reuse')?.checked ? plansOf(ui.brandId)[0]?.[1] : null;
     const b0 = D.brands[ui.brandId]; const mix = {}; let bad = '';
-    FORMATS.forEach(f => { const n = Math.max(0, Math.min(40, parseInt($('#mx-' + f)?.value || '0', 10) || 0)); const ch = FMT_CH[f].filter(c => $(`#mxc-${f}-${c}`)?.checked); mix[f] = {n, ch}; if (n > 0 && !ch.length) bad = f; });
+    FORMATS.forEach(f => { const n = Math.max(0, Math.min(40, parseInt($('#mx-' + f)?.value || '0', 10) || 0)); const ch = FMT_CH[f].filter(c => $(`#mxc-${f}-${c}`)?.checked); mix[f] = {n, ch, product:$('#mxp-' + f)?.value || ''}; if (n > 0 && !ch.length) bad = f; });
+    const pls = arr(b0.pillars).map((x, i) => ({...x, i})).filter(x => $('#pp-' + x.i)?.checked).map(x => ({name:x.name, purpose:x.purpose || '', mix:Math.max(0, parseInt($('#ppm-' + x.i)?.value || '0', 10) || 0)}));
+    const psum = pls.reduce((s, x) => s + x.mix, 0);
+    if (pls.length && !psum){ pls.forEach(x => x.mix = Math.round(100 / pls.length)); }
+    else if (pls.length && psum !== 100){ pls.forEach(x => x.mix = Math.round(x.mix / psum * 100)); }
+    const hero = arr(b0.brain?.products).map((x, i) => ({...x, i})).filter(x => $('#hp-' + x.i)?.checked).map(x => ({name:x.name, note:($('#hpn-' + x.i)?.value || '').trim()}));
     if (bad){ toast(`Pick at least one platform for ${bad}`); return; }
     if (!mixTotal(mix)){ toast('Set how many posts you want'); return; }
     if (mixTotal(mix) > 60){ toast('Keep it to 60 posts or fewer per month'); return; }
-    patch('brands', ui.brandId, {mixDefault:mix});
-    const o = {mix, region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
+    patch('brands', ui.brandId, {mixDefault:mix, lastHero:hero});
+    if (pls.length) patch('brands', ui.brandId, {pillars:arr(b0.pillars).map((x, i) => { const s2 = pls.find(y => y.name === x.name); return s2 ? {...x, mix:s2.mix} : x; })});
+    const o = {mix, pillars:pls, hero, cd:$('#npl-cd').checked, region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
     const doc = {brandId:ui.brandId, month, opts:o, status:'generating', createdAt:Date.now(), createdBy:me};
     if (reuse){ doc.snapshot = reuse.snapshot; doc.research = reuse.research; }
     await put('plans', id, doc);
@@ -2026,6 +2143,7 @@ const CHG = {
   role: t => patch('team', t.dataset.id, {role:t.value}),
   ck: t => patch('posts', ui.postId, {checklist:{[t.dataset.k]:t.checked}}),
   obj: t => { const b = D.brands[ui.brandId]; let l = arr(b.objectives?.list).slice(); if (t.checked){ if (!l.includes(t.value)) l.push(t.value); } else l = l.filter(x => x !== t.value); const part = {objectives:{list:l}}; if (!l.includes(b.objectives?.primary)) part.objectives.primary = l[0] || ''; patch('brands', ui.brandId, part); },
+  pillarOn: t => { const b = D.brands[ui.brandId]; const l = clone(arr(b.pillars)); if (l[+t.dataset.i]) l[+t.dataset.i].active = t.checked; patch('brands', ui.brandId, {pillars:l}); },
   mxTotal: () => { const t = FORMATS.reduce((s, f) => s + (parseInt($('#mx-' + f)?.value || '0', 10) || 0), 0); const el = $('#mx-total'); if (el) el.textContent = t; },
   dsec: t => { if (!ui.deckSec) ui.deckSec = new Set(DECK_PRESETS.full); if (t.checked) ui.deckSec.add(t.value); else ui.deckSec.delete(t.value); renderAll(); },
   topInc: t => { const plan = D.plans[ui.planId]; const l = clone(arr(plan.topical)); if (l[+t.dataset.i]) l[+t.dataset.i].include = t.checked; patch('plans', ui.planId, {topical:l}); }
@@ -2161,12 +2279,20 @@ function httpDB(){
 }
 async function hostedCall(prompt, o={}){
   let r;
-  try { r = await fetch('/api/ai', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({prompt, tier:o.modelTier || 'default', json:!!o.json}), signal:o.signal}); }
+  try { r = await fetch('/api/ai', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({prompt, tier:o.modelTier || 'default', json:!!o.json, search:!!o.search}), signal:o.signal}); }
   catch (e){ if (e?.name === 'AbortError') throw {code:'cancelled'}; throw {code:'upstream_error', message:'Network error'}; }
   if (r.status === 401){ showLogin(); throw {code:'not_granted', message:'Sign in again'}; }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw {code:j.code || 'upstream_error', message:j.error || ('AI error ' + r.status)};
-  return String(j.text || '');
+  return o.raw ? j : String(j.text || '');
+}
+async function webJSON(prompt, signal){
+  if (HOSTED){
+    const j = await hostedCall(prompt, {search:true, raw:true, signal});
+    const v = parseLoose(j.text); if (v === undefined) throw {code:'invalid_json', text:j.text};
+    return {data:v, sources:arr(j.sources).slice(0, 30)};
+  }
+  return {data:await ai(prompt, {signal}), sources:[]};
 }
 const hostedAI = async (prompt, o={}) => { const text = await hostedCall(prompt, o); if (!text.trim()) throw {code:'empty_completion'}; return {text, truncated:false}; };
 hostedAI.json = async (prompt, o={}) => { const t = await hostedCall(prompt, {...o, json:true}); const v = parseLoose(t); if (v === undefined) throw {code:'invalid_json', text:t}; return v; };

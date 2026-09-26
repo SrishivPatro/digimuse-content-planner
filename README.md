@@ -3,7 +3,7 @@
 Internal social media planning tool for the Digimuse team.
 
 - **Brand Brain** for every client: products (auto-imported from the brand website), rules, references, reply bank, brand kit
-- **AI monthly plans**: research, strategy, topical days, calendar and a written content deck
+- **AI monthly plans**: web-researched trends and competitors, a creative reference board of real campaigns (Pinterest, Behance, other brands), strategy on your chosen content pillars, your exact content mix and product focus, and a creative director review that rewrites weak posts
 - **Content deck** with brand-coloured previews, hooks, captions, carousel slides and reel scripts
 - **Design briefs** for designers, creative versions, publish checklist
 - **Workflow**: board, due dates, My tasks, client review, feedback routed back to writer or designer

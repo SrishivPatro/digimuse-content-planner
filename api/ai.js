@@ -3,15 +3,15 @@ import { authed, deny } from './_lib.js';
 export default async function handler(req, res){
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   if (!authed(req)) return deny(res);
-  const { prompt, tier = 'default', json = false } = req.body || {};
+  const { prompt, tier = 'default', json = false, search = false } = req.body || {};
   if (!prompt || typeof prompt !== 'string') return res.status(400).json({ error: 'Missing prompt' });
   const provider = (process.env.AI_PROVIDER || (process.env.GEMINI_API_KEY ? 'gemini' : process.env.ANTHROPIC_API_KEY ? 'claude' : '')).toLowerCase();
   try {
-    let text;
-    if (provider === 'gemini') text = await gemini(prompt, tier, json);
-    else if (provider === 'claude') text = await claude(prompt, tier);
+    let out;
+    if (provider === 'gemini') out = await gemini(prompt, tier, json, !!search);
+    else if (provider === 'claude') out = await claude(prompt, tier, !!search);
     else return res.status(500).json({ code: 'sampling_disabled', error: 'No AI key set. Add GEMINI_API_KEY (or ANTHROPIC_API_KEY) in Vercel, then redeploy.' });
-    res.status(200).json({ text });
+    res.status(200).json(out);
   } catch (e){
     const limited = e.status === 429;
     res.status(limited ? 429 : 502).json({ code: limited ? 'rate_limited' : 'upstream_error', error: e.message });
@@ -33,32 +33,34 @@ async function latestGemini(kind){
   return ok[0] || null;
 }
 
-async function callGemini(model, prompt, json){
+async function callGemini(model, prompt, json, search){
   const r = await fetch(`${GBASE}/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 32768, ...(json ? { responseMimeType: 'application/json' } : {}) }
+      ...(search ? { tools: [{ google_search: {} }] } : {}),
+      generationConfig: { temperature: 0.9, maxOutputTokens: 32768, ...(json && !search ? { responseMimeType: 'application/json' } : {}) }
     })
   });
   const j = await r.json().catch(() => ({}));
   return { r, j };
 }
 
-async function gemini(prompt, tier, json){
+async function gemini(prompt, tier, json, search){
   const envModel = tier === 'quick' ? (process.env.GEMINI_MODEL_FAST || process.env.GEMINI_MODEL) : process.env.GEMINI_MODEL;
   let model = picked[tier] || envModel || 'gemini-flash-latest';
   const tried = new Set();
   for (let attempt = 0; attempt < 3; attempt++){
     tried.add(model);
-    const { r, j } = await callGemini(model, prompt, json);
+    const { r, j } = await callGemini(model, prompt, json, search);
     if (r.ok){
       picked[tier] = model;
       const c = j.candidates?.[0];
       const text = (c?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
       if (!text) throw Object.assign(new Error(`Gemini returned nothing (${c?.finishReason || j.promptFeedback?.blockReason || 'unknown'})`), { status: 502 });
-      return text;
+      const sources = (c?.groundingMetadata?.groundingChunks || []).map(g => g.web).filter(Boolean).map(w => ({ title: w.title || '', uri: w.uri || '' }));
+      return { text, sources };
     }
     const msg = j.error?.message || `Gemini error ${r.status}`;
     const retired = r.status === 404 || /no longer available|not found|deprecated|not supported|retired/i.test(msg);
@@ -72,14 +74,17 @@ async function gemini(prompt, tier, json){
   throw Object.assign(new Error('No working Gemini model found. Set GEMINI_MODEL in Vercel.'), { status: 502 });
 }
 
-async function claude(prompt, tier){
+async function claude(prompt, tier, search){
   const model = tier === 'quick' ? (process.env.CLAUDE_MODEL_FAST || 'claude-haiku-4-5-20251001') : (process.env.CLAUDE_MODEL || 'claude-sonnet-5');
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify({ model, max_tokens: 16000, messages: [{ role: 'user', content: prompt }] })
+    body: JSON.stringify({ model, max_tokens: 16000, messages: [{ role: 'user', content: prompt }], ...(search ? { tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 8 }] } : {}) })
   });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw Object.assign(new Error(j.error?.message || `Claude error ${r.status}`), { status: r.status });
-  return (j.content || []).filter(x => x.type === 'text').map(x => x.text).join('');
+  const blocks = j.content || [];
+  const text = blocks.filter(x => x.type === 'text').map(x => x.text).join('');
+  const sources = blocks.filter(x => x.type === 'web_search_tool_result' && Array.isArray(x.content)).flatMap(x => x.content).filter(x => x.url).map(x => ({ title: x.title || '', uri: x.url }));
+  return { text, sources };
 }
