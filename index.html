@@ -1354,7 +1354,7 @@ function vLab(b){
       <label class="f" style="flex:0 0 150px">Timeframe<select class="in" id="lab-days">${opts([['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days']], '30')}</select></label>
       <label class="f" style="flex:0 0 190px">Platforms<select class="in" id="lab-pl">${opts([ch.join(' and ') || 'Instagram and LinkedIn'].concat(CH.filter(c => !ch.includes(c) || ch.length > 1)).concat(['All social platforms']))}</select></label>
       <label class="f" style="flex:0 0 150px">Region<input class="in" id="lab-region" value="${esc(b.audience?.geo || 'India')}"></label>
-      <label class="f" style="flex:0 0 110px">Ideas<select class="in" id="lab-n">${opts([['6','6'],['8','8'],['12','12']], '8')}</select></label>
+      <label class="f" style="flex:0 0 150px" title="How many content ideas to create from this research">Post ideas to create<select class="in" id="lab-n">${opts([['6','6 ideas'],['8','8 ideas'],['12','12 ideas']], '8')}</select></label>
       <button class="btn pri" data-act="runLab" ${ui.labBusy || aiOff() ? 'disabled' : ''}>${ui.labBusy ? `<span class="spin"></span> ${esc(ui.labBusy)}` : '<span class="spark">✦</span> Run research'}</button>
     </div>
     ${HOSTED ? '' : '<p class="muted sm">Live web search runs on the hosted version. Here the AI uses what it already knows.</p>'}
