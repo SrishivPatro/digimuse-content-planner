@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
 <meta name="robots" content="noindex">
 <title>Digimuse Content Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,10 +11,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
+html{color-scheme:light}
 :root{
   --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#F6F7F9; --ink:#0A0A0B; --ink-2:#3A3D46; --muted:#7A7E8A;
   --line:#E8E8EA; --line-2:#D4D6DC;
-  --side:#0A0A0B; --side-2:#1B1C21; --side-ink:#F4F4F1; --side-muted:#8B8E97;
+  --side:#FFFFFF; --side-2:#F2F3F6; --side-ink:#0A0A0B; --side-muted:#6B6F7A;
   --accent:#0F2350; --accent-ink:#FFFFFF; --accent-soft:#EEF1F7;
   --c1:#0F2350; --c2:#0A0A0B; --c3:#34466E; --c4:#8C96AB; --c5:#1C3A7A; --c6:#5B6B8C;
   --c1s:#F4F5F8; --c2s:#F4F5F8; --c3s:#F4F5F8; --c4s:#F1F3F8; --c5s:#F4F5F8; --c6s:#F4F5F8;
@@ -23,32 +25,6 @@
   --fd:'Instrument Serif','Iowan Old Style','Palatino Linotype',Georgia,serif;
   --fb:'Instrument Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   --fm:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    color-scheme:dark;
-    --bg:#0A0B0E; --surface:#111318; --surface-2:#171A21; --ink:#F2F2EF; --ink-2:#C2C5CE; --muted:#868A95;
-    --line:#22252D; --line-2:#30343F;
-    --side:#050507; --side-2:#17181D; --side-ink:#F2F2EF; --side-muted:#868A95;
-    --accent:#9DB2E3; --accent-ink:#0A0B0E; --accent-soft:#1A2238;
-    --c1:#9DB2E3; --c2:#F2F2EF; --c3:#7F93C0; --c4:#5E6A86; --c5:#B8C8EE; --c6:#6F7FA6;
-    --c1s:#161A24; --c2s:#161A24; --c3s:#161A24; --c4s:#161A24; --c5s:#161A24; --c6s:#161A24;
-    --s-idea:#9A9FAC; --s-copy:#8FA9E6; --s-design:#B3A5E0; --s-client:#D8AE62; --s-changes:#E38A8A; --s-approved:#7FC3A0; --s-live:#7FC0CC;
-    --warn:#E38A8A; --bar:#9DB2E3;
-    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.35);
-  }
-}
-:root[data-theme="dark"]{
-    color-scheme:dark;
-  --bg:#0A0B0E; --surface:#111318; --surface-2:#171A21; --ink:#F2F2EF; --ink-2:#C2C5CE; --muted:#868A95;
-  --line:#22252D; --line-2:#30343F;
-  --side:#050507; --side-2:#17181D; --side-ink:#F2F2EF; --side-muted:#868A95;
-  --accent:#9DB2E3; --accent-ink:#0A0B0E; --accent-soft:#1A2238;
-  --c1:#9DB2E3; --c2:#F2F2EF; --c3:#7F93C0; --c4:#5E6A86; --c5:#B8C8EE; --c6:#6F7FA6;
-  --c1s:#161A24; --c2s:#161A24; --c3s:#161A24; --c4s:#161A24; --c5s:#161A24; --c6s:#161A24;
-  --s-idea:#9A9FAC; --s-copy:#8FA9E6; --s-design:#B3A5E0; --s-client:#D8AE62; --s-changes:#E38A8A; --s-approved:#7FC3A0; --s-live:#7FC0CC;
-  --warn:#E38A8A; --bar:#9DB2E3;
-  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.35);
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -415,6 +391,19 @@ th{letter-spacing:.12em;font-size:10.5px;font-weight:600;color:var(--muted);back
 #login .wm{font-weight:400;font-style:italic;font-size:40px}
 #login .wm span{color:var(--muted)}
 #toast{border-radius:4px}
+.side{border-right:1px solid var(--line)}
+.logo .wm span{color:var(--accent)}
+.nav button.on,.bitem.on{background:var(--accent-soft);color:var(--accent);box-shadow:inset 2px 0 0 var(--accent)}
+.nav .ico{border-color:var(--line-2)}
+.nav .count{background:var(--accent);color:#fff}
+.lnk{color:var(--accent)}
+.me{border-color:var(--line)}
+.me select{background:#fff;color:var(--ink);border-color:var(--line-2)}
+.mode{border-color:var(--line-2)}
+.spectrum{background:var(--line)}
+#login{background:var(--surface-2)}
+#login .box{border:1px solid var(--line);box-shadow:0 20px 60px rgba(10,10,11,.08)}
+#login .wm span{color:var(--accent)}
 </style>
 
 </head>
