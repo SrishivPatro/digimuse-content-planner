@@ -1301,7 +1301,7 @@ async function runLab(){
   const kind = ui.labKind || 'trends'; const focus = ($('#lab-focus')?.value || '').trim();
   if (kind === 'custom' && !focus){ toast('Type your research question'); $('#lab-focus')?.focus(); return; }
   if (aiOff()){ toast('AI is not available in this view'); return; }
-  const o = {kind, focus, days:+($('#lab-days')?.value || 30), platform:$('#lab-pl')?.value || 'Instagram and LinkedIn', region:($('#lab-region')?.value || '').trim() || b.audience?.geo || 'India', n:+($('#lab-n')?.value || 8)};
+  const o = {kind, focus, days:+($('#lab-days')?.value || 30), platform:$('#lab-pl')?.value || 'Instagram and LinkedIn', region:($('#lab-region')?.value || '').trim() || b.audience?.geo || 'India', n:Math.max(1, Math.min(30, parseInt($('#lab-n')?.value, 10) || 8))};
   ui.labBusy = `Researching: ${rtype(kind)[1]}…`; renderAll();
   try {
     const {data, sources, searched} = await webJSON(promptLab(b, o));
@@ -1354,7 +1354,7 @@ function vLab(b){
       <label class="f" style="flex:0 0 150px">Timeframe<select class="in" id="lab-days">${opts([['7','Last 7 days'],['30','Last 30 days'],['90','Last 90 days']], '30')}</select></label>
       <label class="f" style="flex:0 0 190px">Platforms<select class="in" id="lab-pl">${opts([ch.join(' and ') || 'Instagram and LinkedIn'].concat(CH.filter(c => !ch.includes(c) || ch.length > 1)).concat(['All social platforms']))}</select></label>
       <label class="f" style="flex:0 0 150px">Region<input class="in" id="lab-region" value="${esc(b.audience?.geo || 'India')}"></label>
-      <label class="f" style="flex:0 0 150px" title="How many content ideas to create from this research">Post ideas to create<select class="in" id="lab-n">${opts([['6','6 ideas'],['8','8 ideas'],['12','12 ideas']], '8')}</select></label>
+      <label class="f" style="flex:0 0 150px" title="How many content ideas to create from this research">Post ideas to create<input class="in" id="lab-n" type="number" min="1" max="30" step="1" value="8" inputmode="numeric"></label>
       <button class="btn pri" data-act="runLab" ${ui.labBusy || aiOff() ? 'disabled' : ''}>${ui.labBusy ? `<span class="spin"></span> ${esc(ui.labBusy)}` : '<span class="spark">✦</span> Run research'}</button>
     </div>
     ${HOSTED ? '' : '<p class="muted sm">Live web search runs on the hosted version. Here the AI uses what it already knows.</p>'}
