@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light">
 <meta name="robots" content="noindex">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 40%27%3E%3Crect width=%2740%27 height=%2740%27 rx=%2712%27 fill=%27%230048AC%27/%3E%3Ccircle cx=%2717.5%27 cy=%2722.5%27 r=%277%27 fill=%27none%27 stroke=%27%23fff%27 stroke-width=%273.6%27/%3E%3Crect x=%2723.2%27 y=%278%27 width=%273.6%27 height=%2721.5%27 rx=%271.8%27 fill=%27%23fff%27/%3E%3Ccircle cx=%279%27 cy=%2710%27 r=%272.6%27 fill=%27%23FF5A5F%27/%3E%3Ccircle cx=%2716%27 cy=%2710%27 r=%272.6%27 fill=%27%23FFA41B%27/%3E%3C/svg%3E">
-<title>Digimuse Content Engine</title>
+<title>Digimuse Content Engine™</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -348,6 +348,7 @@ h3{font-weight:700;font-size:14px}
 .logo .wm span{color:var(--c2)}
 .logo small{display:block;color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;margin-top:4px}
 .eng{display:inline-flex;margin-top:-2px!important;align-items:flex-start;gap:1px;font-weight:800!important;letter-spacing:.16em!important;text-transform:uppercase;background:linear-gradient(92deg,#0048AC 0%,#1F5FD6 55%,#3D7BFF 100%);-webkit-background-clip:text;background-clip:text;color:transparent!important;-webkit-text-fill-color:transparent;white-space:nowrap}
+.eng .tm{font-size:.7em;line-height:1;letter-spacing:0;margin:-.15em 0 0 .15em;font-weight:700;color:#1F5FD6!important;-webkit-text-fill-color:#1F5FD6}
 .eng.lg{font-size:11.5px;margin-top:-4px!important}
 .nav button,.bitem{border-radius:10px;font-weight:600;color:var(--ink-2);padding:8px 10px}
 .nav button:hover,.bitem:hover{background:var(--side-2);color:var(--ink)}
@@ -506,7 +507,7 @@ th{background:var(--surface-2)}
 <div id="tip" hidden></div>
 <div id="present" hidden></div>
 <div id="printdeck" aria-hidden="true"></div>
-<div id="login" hidden><form class="box" id="loginForm"><div style="display:flex;gap:12px;align-items:center"><div style="display:flex;flex-direction:column;gap:0"><span id="lg-logo"></span><small class="eng lg">Content Engine</small></div></div><label class="f">Username<input class="in" id="lg-user" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="e.g. priya"></label><label class="f">Password<input class="in" type="password" id="lg-pw" autocomplete="current-password" required></label><p class="err" id="lg-err" hidden></p><button class="btn pri" type="submit" style="justify-content:center">Sign in</button><p class="muted sm">No login yet? Ask your admin to create one for you on the Team page.</p></form></div>
+<div id="login" hidden><form class="box" id="loginForm"><div style="display:flex;gap:12px;align-items:center"><div style="display:flex;flex-direction:column;gap:0"><span id="lg-logo"></span><small class="eng lg">Content Engine<sup class="tm">™</sup></small></div></div><label class="f">Username<input class="in" id="lg-user" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="e.g. priya"></label><label class="f">Password<input class="in" type="password" id="lg-pw" autocomplete="current-password" required></label><p class="err" id="lg-err" hidden></p><button class="btn pri" type="submit" style="justify-content:center">Sign in</button><p class="muted sm">No login yet? Ask your admin to create one for you on the Team page.</p></form></div>
 <div id="pwbox" hidden><form class="box" id="pwForm"><h2 style="font-size:20px" id="pw-title">Change your password</h2><p class="muted sm" id="pw-note"></p><label class="f">Current password<input class="in" type="password" id="pw-old" autocomplete="current-password" required></label><label class="f">New password <span class="hint">at least 8 characters</span><input class="in" type="password" id="pw-new" autocomplete="new-password" minlength="8" required></label><label class="f">Repeat new password<input class="in" type="password" id="pw-new2" autocomplete="new-password" minlength="8" required></label><p class="err" id="pw-err" hidden></p><div class="acts"><button class="btn pri" type="submit">Save password</button><button class="btn ghost" type="button" id="pw-cancel">Cancel</button></div></form></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -1023,7 +1024,7 @@ function myTasks(){ if (!me) return []; return Object.values(D.posts).filter(p =
 function vSide(){
   const nb = (v, l, ico, col, c) => `<button class="${ui.view===v?'on':''}" data-act="go" data-v="${v}"><span class="ico" style="--ics:var(${col}s);--ic:var(${col})">${IC[ico]}</span>${esc(l)}${c ? `<span class="count">${c}</span>` : ''}</button>`;
   const team = Object.entries(D.team).sort((a,b) => str(a[1].name).localeCompare(str(b[1].name))).map(([id,m]) => [id, `${m.name} · ${m.role}`]);
-  return `<div class="logo" style="flex-direction:column;align-items:flex-start;gap:0">${LOGO_IMG}<small class="eng">Content Engine</small></div>
+  return `<div class="logo" style="flex-direction:column;align-items:flex-start;gap:0">${LOGO_IMG}<small class="eng">Content Engine<sup class="tm">™</sup></small></div>
   <nav class="nav" aria-label="Main">${nb('home','Dashboard','home','--c1')}${nb('tasks','My tasks','tasks','--c2', me ? myTasks().length : 0)}${nb('team','Team','team','--c4')}${nb('live','Go live guide','rocket','--c3')}</nav>
   <div><div class="slabel">Brands <button class="lnk" data-act="newBrand">+ New brand</button></div>
     <div class="blist">${sortedBrands().map(([id,b]) => { const c = brandColors(b); return `<button class="bitem ${ui.brandId===id && (ui.view==='brand'||ui.view==='plan') ? 'on' : ''}" data-act="goBrand" data-id="${id}"><span class="bav" style="background:${c.solid || '#2F5BEA'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name || 'Untitled'))}</span>${esc(str(b.name).trim() || 'Untitled brand')}</button>`; }).join('') || '<p class="sm" style="padding:0 10px;color:var(--side-muted)">No brands yet</p>'}</div></div>
@@ -1942,7 +1943,7 @@ async function downloadPptx(Mx, meta={}){
         sl.addText(str(b.name), {x:X, y:2.65, w:CW, h:1.3, fontFace:F, fontSize:48, bold:true, color:'FFFFFF'});
         const TH = meta.theme != null ? meta.theme : plan.strategy?.theme?.name; if (TH) sl.addText(TH, {x:X, y:3.95, w:CW, h:0.6, fontFace:F, fontSize:22, bold:true, italic:true, color:'FFA41B'});
         sl.addText(meta.sub || 'Research · Strategy · Content calendar · Post-by-post content', {x:X, y:4.6, w:CW, h:0.5, fontFace:F, fontSize:15, color:'C9D3F5'});
-        sl.addText('Prepared by Digimuse · Content Engine', {x:X, y:7.05, w:6, h:0.3, fontFace:F, fontSize:9, color:'8FA0D6'});
+        sl.addText('Prepared by Digimuse · Content Engine™', {x:X, y:7.05, w:6, h:0.3, fontFace:F, fontSize:9, color:'8FA0D6'});
         return;
       }
       sl.background = {color:'FFFFFF'}; head(sl, m.k === 'post' ? {ey:`Post ${m.n} of ${m.of}${m.post.pillar ? ' · ' + m.post.pillar : ''}`, title:m.post.topic} : m); foot(sl, i);
@@ -2656,7 +2657,7 @@ const ACT = {
   lgReset: a => loginDo({action:'reset', username:a.dataset.u}, 'Password reset. Share the new temporary password.'),
   lgToggle: a => loginDo({action:'update', username:a.dataset.u, disabled:!!a.dataset.d}, a.dataset.d ? 'Login disabled' : 'Login enabled'),
   lgDelete: a => { ui.confirm = null; loginDo({action:'delete', username:a.dataset.u}, 'Login deleted'); },
-  copyTemp: () => copyText(`Digimuse Content Engine\n${location.origin}\nUsername: ${ui.tempPw.u}\nTemporary password: ${ui.tempPw.pw}\nYou'll be asked to set your own password when you sign in.`),
+  copyTemp: () => copyText(`Digimuse Content Engine™\n${location.origin}\nUsername: ${ui.tempPw.u}\nTemporary password: ${ui.tempPw.pw}\nYou'll be asked to set your own password when you sign in.`),
   hideTemp: () => { ui.tempPw = null; renderAll(); },
   runLab: () => runLab(),
   labIdea: a => { const r = D.reports[a.dataset.id]; const i = +a.dataset.i; const x = labIdea(r, i); if (!x) return; const b = D.brands[r.brandId]; patch('brands', r.brandId, {ideas:arr(b.ideas).concat([x])}); patch('reports', a.dataset.id, {saved:[...new Set(arr(r.saved).concat([i]))]}); toast('Saved to Ideas bank'); },
