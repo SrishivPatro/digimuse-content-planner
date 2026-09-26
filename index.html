@@ -1086,7 +1086,7 @@ function vBrand(){
 function vPlans(b){
   const pls = plansOf(ui.brandId);
   const rows = pls.map(([id,p]) => { const ps = postsOf(id); const ap = ps.filter(x => group(x.status) === 'done').length;
-    return `<tr class="click" data-act="goPlan" data-id="${id}"><td><b>${esc(mLabel(p.month))}</b>${p.strategy?.theme?.name ? `<div class="muted sm">${esc(p.strategy.theme.name)}</div>` : ''}</td><td>${p.status === 'ready' ? '<span class="pill" style="--c:var(--s-approved)">Ready</span>' : gen[id]?.running ? '<span class="pill" style="--c:var(--accent)">Generating</span>' : `<span class="pill" style="--c:var(--s-client)">${p.status === 'generating' ? 'Interrupted' : 'Paused'}</span>`}</td><td class="num">${ps.length}</td><td>${ps.length ? progressBar(ps) : ''}</td><td class="num">${ps.length ? Math.round(ap/ps.length*100) : 0}%</td><td style="width:1%">${confirmBtn('delPlan-' + id, 'Delete', 'delPlanRow', `data-id="${id}"`)}</td></tr>`; });
+    return `<tr class="click" data-act="goPlan" data-id="${id}"><td><b>${esc(mLabel(p.month))}</b>${p.strategy?.theme?.name ? `<div class="muted sm">${esc(p.strategy.theme.name)}</div>` : ''}</td><td>${p.status === 'ready' ? '<span class="pill" style="--c:var(--s-approved)">Ready</span>' : gen[id]?.running ? '<span class="pill" style="--c:var(--accent)">Generating</span>' : `<span class="pill" style="--c:var(--s-client)">${p.status === 'review' ? 'Pick topical days' : p.status === 'generating' ? 'Interrupted' : 'Paused'}</span>`}</td><td class="num">${ps.length}</td><td>${ps.length ? progressBar(ps) : ''}</td><td class="num">${ps.length ? Math.round(ap/ps.length*100) : 0}%</td><td style="width:1%">${confirmBtn('delPlan-' + id, 'Delete', 'delPlanRow', `data-id="${id}"`)}</td></tr>`; });
   const prev = pls[0];
   const hasCh = activeCh(b).length > 0;
   return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Generate a monthly plan</h2><p>Research, strategy, topical days, calendar and a written content deck, built from this brand's profile, Brand Brain and ideas bank.</p></div></header>
@@ -1107,6 +1107,7 @@ function vPlans(b){
     <div class="acts">
       <label class="chk"><input type="checkbox" id="npl-cd" checked> Creative director review (sharper, a bit slower)</label>
       <label class="chk"><input type="checkbox" id="npl-top" checked> Topical days</label>
+      <label class="chk"><input type="checkbox" id="npl-toprev" checked> Let me pick topical days before the calendar is built</label>
       <label class="chk"><input type="checkbox" id="npl-reels" checked> Reel scripts</label>
       <label class="chk"><input type="checkbox" id="npl-paid"> Paid boost ideas</label>
       <label class="chk"><input type="checkbox" id="npl-inf"> Influencer / UGC ideas</label>
@@ -1520,6 +1521,10 @@ function banner(plan, ps){
   const g = gen[ui.planId];
   if (g?.running) return `<div class="banner run"><span class="spin" aria-hidden="true"></span><div class="grow"><b>${esc(g.label)}</b>${g.total ? `<div class="meter"><i style="width:${Math.round(g.done/g.total*100)}%"></i></div>` : ''}</div><button class="btn sm" data-act="stopGen">Stop</button></div>`;
   const unwritten = ps.filter(p => !p.hasContent).length;
+  if (plan.status === 'review'){
+    const n = arr(plan.topical).filter(t => t.include).length;
+    return `<div class="banner run"><div class="grow"><b>Research and strategy are ready. Pick the topical days to post on, then continue.</b><span class="sm">${n} of ${arr(plan.topical).length} days ticked. Posts will be made only for ticked days.</span></div>${ui.tab !== 'topical' ? '<button class="btn sm" data-act="tab" data-k="topical">Review topical days</button>' : ''}<button class="btn pri sm" data-act="topContinue" ${aiOff() ? 'disabled' : ''}>Continue with ${n} day${n === 1 ? '' : 's'} →</button></div>`;
+  }
   if (plan.status !== 'ready'){
     const msg = plan.error ? esc(plan.error) : plan.status === 'generating' ? 'Generation was interrupted, or is running in a teammate’s browser.' : 'This plan is not finished yet.';
     return `<div class="banner err"><div class="grow"><b>${msg}</b><span class="muted sm">Continue picks up from the last finished step.</span></div><button class="btn pri sm" data-act="runPlan" ${aiOff() ? 'disabled' : ''}>Continue</button></div>`;
@@ -1654,8 +1659,13 @@ function vTopical(plan){
   const t = arr(plan.topical).map((x,i) => ({...x, i})).sort((a,b) => str(a.date).localeCompare(str(b.date)));
   if (!t.length) return `<div class="empty"><p>No topical days for this plan.</p></div>`;
   const rc = {High:'--c5', Medium:'--c3', Low:'--s-idea'};
-  return `<p class="muted sm">Ticked days are used when the calendar is planned. Create a post straight from any row.</p>
-  ${tbl(['Use','Date','Occasion','Type','Relevance','Post idea',''], t.map(x => [`<input type="checkbox" data-chg="topInc" data-i="${x.i}" ${x.include ? 'checked' : ''} aria-label="Include ${esc(x.occasion)}" style="accent-color:var(--accent);width:16px;height:16px">`, `<span class="mono">${fmtD(x.date)}</span>`, `<b>${esc(x.occasion)}</b>${x.sensitive ? ' <span class="tag fb">Sensitive</span>' : ''}`, esc(x.type), `<span class="pill" style="--c:var(${rc[x.relevance] || '--s-idea'})">${esc(x.relevance)}</span>`, esc(x.idea), `<button class="btn sm" data-act="topPost" data-i="${x.i}">Create post</button>`]))}`;
+  const ps = postsOf(ui.planId);
+  const has = x => ps.filter(p => p.date === x.date && str(p.topical).toLowerCase() === str(x.occasion).toLowerCase());
+  const built = ps.length > 0;
+  const ask = ui.topAsk && ui.topAsk.plan === ui.planId ? ui.topAsk : null;
+  return `<p class="muted sm">${built ? 'Tick a day to add a post for it (written by AI). Untick a day to remove its post or keep it as a regular post.' : 'Only ticked days get posts when the calendar is built.'}</p>
+  ${ask ? `<div class="banner err"><div class="grow"><b>${esc(ask.occasion)} has ${ask.ids.length} post${ask.ids.length > 1 ? 's' : ''} in this plan. What should happen to ${ask.ids.length > 1 ? 'them' : 'it'}?</b></div><button class="btn sm danger" data-act="topRemove">Remove post${ask.ids.length > 1 ? 's' : ''}</button><button class="btn sm" data-act="topKeep">Keep as regular post${ask.ids.length > 1 ? 's' : ''}</button><button class="btn sm ghost" data-act="topUndo">Undo untick</button></div>` : ''}
+  ${tbl(['Use','Date','Occasion','Type','Relevance','Post idea','Posts',''], t.map(x => [`<input type="checkbox" data-chg="topInc" data-i="${x.i}" ${x.include ? 'checked' : ''} aria-label="Include ${esc(x.occasion)}" style="accent-color:var(--accent);width:16px;height:16px">`, `<span class="mono">${fmtD(x.date)}</span>`, `<b>${esc(x.occasion)}</b>${x.sensitive ? ' <span class="tag fb">Sensitive</span>' : ''}`, esc(x.type), `<span class="pill" style="--c:var(${rc[x.relevance] || '--s-idea'})">${esc(x.relevance)}</span>`, esc(x.idea), `<span class="mono">${has(x).length || '—'}</span>`, `<button class="btn sm" data-act="topPost" data-i="${x.i}">${has(x).length ? 'Add another' : 'Create post'}</button>`]))}`;
 }
 function vExport(plan, ps){
   return `<div class="grid2">
@@ -2166,6 +2176,13 @@ async function runPlan(pid){
       await patch('plans', pid, {strategy:r.strategy, topical});
     }
     plan = D.plans[pid];
+    if (plan.opts.reviewTopical && !plan.topicalReviewed && !postsOf(pid).length && arr(plan.topical).length){
+      await patch('plans', pid, {status:'review', error:''});
+      if (ui.planId === pid){ ui.tab = 'topical'; }
+      toast('Pick the topical days you want, then press Continue');
+      return;
+    }
+    plan = D.plans[pid];
     if (!postsOf(pid).length && plan.opts.mode === 'schedule' && plan.opts.schedule){
       const slots = []; monthDays(plan.month).forEach(d => arr(plan.opts.schedule[wkOf(d)]).forEach(sl => slots.push({...sl, date:d})));
       step(pid, `Writing ideas for your ${slots.length} scheduled posts…`);
@@ -2506,7 +2523,7 @@ const ACT = {
     if (mode === 'mix' && mixTotal(mix) > 60){ toast('Keep it to 60 posts or fewer per month'); return; }
     patch('brands', ui.brandId, mode === 'schedule' ? {scheduleDefault:schedule, planMode:'schedule', lastHero:hero} : {mixDefault:mix, planMode:'mix', lastHero:hero});
     if (pls.length) patch('brands', ui.brandId, {pillars:arr(b0.pillars).map((x, i) => { const s2 = pls.find(y => y.name === x.name); return s2 ? {...x, mix:s2.mix} : x; })});
-    const o = {mode, schedule, mix, pillars:pls, hero, cd:$('#npl-cd').checked, region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
+    const o = {reviewTopical:!!$('#npl-toprev')?.checked && !!$('#npl-top')?.checked, mode, schedule, mix, pillars:pls, hero, cd:$('#npl-cd').checked, region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
     const doc = {brandId:ui.brandId, month, opts:o, status:'generating', createdAt:Date.now(), createdBy:me};
     if (reuse){ doc.snapshot = reuse.snapshot; doc.research = reuse.research; }
     await put('plans', id, doc);
@@ -2521,11 +2538,15 @@ const ACT = {
     addPostModal();
   },
   apClose: () => { $('#modal').hidden = true; $('#modal').innerHTML = ''; ui.addDraft = null; },
+  topContinue: async () => { await patch('plans', ui.planId, {topicalReviewed:true, status:'generating'}); ui.tab = 'deck'; renderAll(); runPlan(ui.planId); },
+  topRemove: () => { const a = ui.topAsk; if (!a) return; a.ids.forEach(id => del('posts', id)); ui.topAsk = null; toast(`Removed ${a.ids.length} post${a.ids.length > 1 ? 's' : ''}`); renderAll(); },
+  topKeep: () => { const a = ui.topAsk; if (!a) return; a.ids.forEach(id => patch('posts', id, {topical:''})); ui.topAsk = null; toast('Kept as regular post'); renderAll(); },
+  topUndo: () => { const a = ui.topAsk; if (!a) return; const plan = D.plans[a.plan]; const l = clone(arr(plan.topical)); if (l[a.i]) l[a.i].include = true; patch('plans', a.plan, {topical:l}); ui.topAsk = null; renderAll(); },
   topPost: async a => {
     const plan = D.plans[ui.planId]; const t = arr(plan.topical)[+a.dataset.i]; if (!t) return;
     const b = D.brands[plan.brandId]; const id = uid();
     await put('posts', id, newPost(b, ui.planId, {id, brandId:plan.brandId, date:t.date, topical:t.occasion, topic:t.idea || t.occasion}));
-    ui.postId = id; renderDrawer();
+    if (!a.quiet){ ui.postId = id; renderDrawer(); } else sched();
     if (S){ busy[id] = 'Writing this post from the Brand Brain…'; sched(); try { await writePosts([D.posts[id]], ''); } catch (e){ toast(errCopy(e)); } finally { delete busy[id]; sched(); } }
   },
   nextStage: () => { const p = D.posts[ui.postId]; const n = nextStatus(p); if (n) setStatus(p.id, n); },
@@ -2624,7 +2645,15 @@ const CHG = {
   ms: t => { const d = t.closest('.ms'); const sel = [...d.querySelectorAll('input:checked')].map(x => x.value); const sm = d.querySelector('summary'); sm.textContent = msText(d.dataset.kind, sel); sm.classList.toggle('on', sel.length > 0); },
   mxTotal: () => { const t = FORMATS.reduce((s, f) => s + (parseInt($('#mx-' + f)?.value || '0', 10) || 0), 0); const el = $('#mx-total'); if (el) el.textContent = t; },
   dsec: t => { if (!ui.deckSec) ui.deckSec = new Set(DECK_PRESETS.full); if (t.checked) ui.deckSec.add(t.value); else ui.deckSec.delete(t.value); renderAll(); },
-  topInc: t => { const plan = D.plans[ui.planId]; const l = clone(arr(plan.topical)); if (l[+t.dataset.i]) l[+t.dataset.i].include = t.checked; patch('plans', ui.planId, {topical:l}); }
+  topInc: t => {
+    const plan = D.plans[ui.planId]; const i = +t.dataset.i; const l = clone(arr(plan.topical)); if (!l[i]) return;
+    l[i].include = t.checked; patch('plans', ui.planId, {topical:l});
+    const ps = postsOf(ui.planId); if (!ps.length) { renderAll(); return; }
+    const x = l[i]; const mine = ps.filter(p => p.date === x.date && str(p.topical).toLowerCase() === str(x.occasion).toLowerCase());
+    if (t.checked && !mine.length){ ACT.topPost({dataset:{i:String(i)}, quiet:true}); toast(`Adding a post for ${x.occasion}…`); }
+    else if (!t.checked && mine.length){ ui.topAsk = {plan:ui.planId, i, occasion:x.occasion, ids:mine.map(p => p.id)}; renderAll(); }
+    else renderAll();
+  }
 };
 
 document.addEventListener('click', e => { document.querySelectorAll('details.ms[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }); });
