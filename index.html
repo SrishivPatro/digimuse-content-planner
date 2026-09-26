@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light">
 <meta name="robots" content="noindex">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 40%27%3E%3Crect width=%2740%27 height=%2740%27 rx=%2712%27 fill=%27%230F1E4A%27/%3E%3Ccircle cx=%2717.5%27 cy=%2722.5%27 r=%277%27 fill=%27none%27 stroke=%27%23fff%27 stroke-width=%273.6%27/%3E%3Crect x=%2723.2%27 y=%278%27 width=%273.6%27 height=%2721.5%27 rx=%271.8%27 fill=%27%23fff%27/%3E%3Ccircle cx=%279%27 cy=%2710%27 r=%272.6%27 fill=%27%23FF5A5F%27/%3E%3Ccircle cx=%2716%27 cy=%2710%27 r=%272.6%27 fill=%27%23FFA41B%27/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 40%27%3E%3Crect width=%2740%27 height=%2740%27 rx=%2712%27 fill=%27%230048AC%27/%3E%3Ccircle cx=%2717.5%27 cy=%2722.5%27 r=%277%27 fill=%27none%27 stroke=%27%23fff%27 stroke-width=%273.6%27/%3E%3Crect x=%2723.2%27 y=%278%27 width=%273.6%27 height=%2721.5%27 rx=%271.8%27 fill=%27%23fff%27/%3E%3Ccircle cx=%279%27 cy=%2710%27 r=%272.6%27 fill=%27%23FF5A5F%27/%3E%3Ccircle cx=%2716%27 cy=%2710%27 r=%272.6%27 fill=%27%23FFA41B%27/%3E%3C/svg%3E">
 <title>Digimuse Content Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,600;0,6..96,700;1,6..96,600&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
@@ -19,13 +19,13 @@ html{color-scheme:light}
   --bg:#F5F7FC; --surface:#FFFFFF; --surface-2:#F7F8FC; --ink:#131A33; --ink-2:#444C66; --muted:#7A8199;
   --line:#E6E9F2; --line-2:#D3D8E6;
   --side:#FFFFFF; --side-2:#F1F4FB; --side-ink:#131A33; --side-muted:#6B7290;
-  --accent:#2F5BEA; --accent-ink:#FFFFFF; --accent-soft:#ECF0FE; --navy:#0F1E4A;
-  --c1:#2F5BEA; --c2:#FF5A5F; --c3:#FFA41B; --c4:#10B9A0; --c5:#7C5CFF; --c6:#1FA2FF;
-  --c1s:#ECF0FE; --c2s:#FFEEEF; --c3s:#FFF4E4; --c4s:#E4F7F3; --c5s:#F1EEFF; --c6s:#E6F5FF;
-  --s-idea:#8B91A7; --s-copy:#2F5BEA; --s-design:#7C5CFF; --s-client:#E08600; --s-changes:#E5484D; --s-approved:#12A26B; --s-live:#0E9AA7;
-  --warn:#E5484D; --bar:#2F5BEA;
+  --accent:#0048AC; --accent-ink:#FFFFFF; --accent-soft:#E8EFFA; --navy:#0A0A0B;
+  --c1:#0048AC; --c2:#FF5A5F; --c3:#FFA41B; --c4:#10B9A0; --c5:#7C5CFF; --c6:#1FA2FF;
+  --c1s:#E8EFFA; --c2s:#FFEEEF; --c3s:#FFF4E4; --c4s:#E4F7F3; --c5s:#F1EEFF; --c6s:#E6F5FF;
+  --s-idea:#8B91A7; --s-copy:#0048AC; --s-design:#7C5CFF; --s-client:#E08600; --s-changes:#E5484D; --s-approved:#12A26B; --s-live:#0E9AA7;
+  --warn:#E5484D; --bar:#0048AC;
   --shadow:0 1px 2px rgba(19,26,51,.05),0 10px 28px rgba(19,26,51,.07);
-  --fd:'Montserrat',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --fd:'Bodoni Moda','Didot','Bodoni 72',Georgia,serif;
   --fb:'Montserrat',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   --fm:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 }
@@ -328,7 +328,12 @@ tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
 }
 /* ===== colourful white-base layer ===== */
 body{font-size:13.5px}
-h1{font-weight:800;letter-spacing:-.025em;font-size:30px}
+h1{font-weight:700;letter-spacing:-.01em;font-size:34px}
+h2{font-weight:700;letter-spacing:0}
+.stat b,.lu .d,.ring b,.cv .hl,.slide h2,.slide .card .big,.slide .pcv .hl,#login .wm,.logo .wm,.post b{font-family:var(--fb)}
+.logo img{height:46px;width:auto;display:block;margin-left:-4px}
+#login .box img{height:44px;width:auto}
+h3{font-family:var(--fb)}
 h2{font-weight:700;font-size:18px;letter-spacing:-.01em}
 h3{font-weight:700;font-size:14px}
 .side{border-right:1px solid var(--line);gap:22px}
@@ -494,7 +499,7 @@ th{background:var(--surface-2)}
 <div id="tip" hidden></div>
 <div id="present" hidden></div>
 <div id="printdeck" aria-hidden="true"></div>
-<div id="login" hidden><form class="box" id="loginForm"><div style="display:flex;gap:12px;align-items:center"><span id="lg-logo" style="width:46px;height:46px;display:block"></span><div><div class="wm" style="font-family:var(--fd);font-weight:800;font-size:26px;font-style:normal;letter-spacing:-.03em;color:#0F1E4A">digimuse<span style="color:#FF5A5F">.</span></div><p class="muted" style="font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase">Content Planner</p></div></div><label class="f">Team password<input class="in" type="password" id="lg-pw" autocomplete="current-password" required></label><p class="err" id="lg-err" hidden></p><button class="btn pri" type="submit" style="justify-content:center">Sign in</button></form></div>
+<div id="login" hidden><form class="box" id="loginForm"><div style="display:flex;gap:12px;align-items:center"><div style="display:flex;flex-direction:column;gap:6px"><span id="lg-logo"></span><p class="muted" style="font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase">Content Planner</p></div></div><label class="f">Team password<input class="in" type="password" id="lg-pw" autocomplete="current-password" required></label><p class="err" id="lg-err" hidden></p><button class="btn pri" type="submit" style="justify-content:center">Sign in</button></form></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -560,7 +565,7 @@ const linkOK = u => /^https?:\/\//i.test(u||'');
 function lum(hex){ let h = hex.replace('#',''); if (h.length === 3) h = h.split('').map(x => x+x).join(''); const [r,g,b] = [0,2,4].map(i => parseInt(h.substr(i,2),16)/255).map(c => c <= .03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4)); return .2126*r + .7152*g + .0722*b; }
 function brandColors(b){
   const k = kitColors(b);
-  if (!k.length) return {bg:'#2F5BEA', fg:'#FFFFFF', ac:'#FFA41B', solid:null};
+  if (!k.length) return {bg:'#0048AC', fg:'#FFFFFF', ac:'#FFA41B', solid:null};
   const sorted = k.slice().sort((x,y) => lum(x) - lum(y));
   const bg = k[0], L = lum(bg);
   const fg = L > .45 ? (sorted[0] !== bg ? sorted[0] : '#1A1033') : (sorted[sorted.length-1] !== bg && lum(sorted[sorted.length-1]) > .6 ? sorted[sorted.length-1] : '#FFFFFF');
@@ -581,6 +586,7 @@ const IC = {
   heart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
   save:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>'
 };
+const LOGO_IMG = '<img src="data:image/png;base64,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" alt="digimuse.">';
 const LOGO = '<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="12" fill="#0F1E4A"/><circle cx="17.5" cy="22.5" r="7" fill="none" stroke="#fff" stroke-width="3.6"/><rect x="23.2" y="8" width="3.6" height="21.5" rx="1.8" fill="#fff"/><circle cx="9" cy="10" r="2.6" fill="#FF5A5F"/><circle cx="16" cy="10" r="2.6" fill="#FFA41B"/><circle cx="32" cy="29" r="2.6" fill="#10B9A0"/></svg>';
 const statTile = (icon, n, label, col, warn) => `<div class="stat ${warn ? 'warn' : ''}" style="--sb:var(${col}s);--sc:var(${col})"><span class="si">${IC[icon]}</span><div><b>${n}</b><span style="display:block">${label}</span></div></div>`;
 const chBadge = c => `<span class="chb" style="--chc:${CHC[c] || '#555'}">${esc(CHA[c] || c)}</span>`;
@@ -898,7 +904,7 @@ Reply with only a JSON array, one object per post, in this shape:
 }
 
 /* ---------- derived ---------- */
-function sortedBrands(){ return Object.entries(D.brands).sort((a,b) => str(a[1].name).localeCompare(str(b[1].name))); }
+function sortedBrands(){ return Object.entries(D.brands).filter(([,b]) => b && typeof b === 'object').sort((a,b) => str(a[1].name).localeCompare(str(b[1].name))); }
 function postsOf(planId){ return Object.values(D.posts).filter(p => p.planId === planId).sort(byDate); }
 function plansOf(brandId){ return Object.entries(D.plans).filter(([,p]) => p.brandId === brandId).sort((a,b) => str(b[1].month).localeCompare(str(a[1].month))); }
 function mName(id){ return D.team[id]?.name || ''; }
@@ -974,7 +980,10 @@ document.addEventListener('focusout', () => { if (pendingR) setTimeout(() => { i
 function renderAll(){
   $('#side').innerHTML = vSide();
   const v = ui.view;
-  $('#main').innerHTML = `<div class="wrap">${v === 'brand' ? vBrand() : v === 'plan' ? vPlan() : v === 'tasks' ? vTasks() : v === 'team' ? vTeam() : v === 'live' ? vLive() : vHome()}</div>`;
+  let html;
+  try { html = v === 'brand' ? vBrand() : v === 'plan' ? vPlan() : v === 'tasks' ? vTasks() : v === 'team' ? vTeam() : v === 'live' ? vLive() : vHome(); }
+  catch (e){ console.error(e); html = `<div class="empty"><h2>This page couldn't load</h2><p class="muted">Something in this ${v === 'plan' ? 'plan' : v === 'brand' ? 'brand' : 'page'}'s saved data is broken. ${e?.message ? '(' + esc(e.message) + ')' : ''}</p><div class="acts">${v === 'brand' && ui.brandId ? confirmBtn('delBrand', 'Delete this brand', 'delBrand') : ''}${v === 'plan' && ui.planId ? confirmBtn('delPlanX', 'Delete this plan', 'delPlan') : ''}<button class="btn" data-act="go" data-v="home">Back to dashboard</button></div></div>`; }
+  $('#main').innerHTML = `<div class="wrap">${html}</div>`;
   renderDrawer();
 }
 let tT;
@@ -1006,10 +1015,10 @@ function myTasks(){ if (!me) return []; return Object.values(D.posts).filter(p =
 function vSide(){
   const nb = (v, l, ico, col, c) => `<button class="${ui.view===v?'on':''}" data-act="go" data-v="${v}"><span class="ico" style="--ics:var(${col}s);--ic:var(${col})">${IC[ico]}</span>${esc(l)}${c ? `<span class="count">${c}</span>` : ''}</button>`;
   const team = Object.entries(D.team).sort((a,b) => str(a[1].name).localeCompare(str(b[1].name))).map(([id,m]) => [id, `${m.name} · ${m.role}`]);
-  return `<div class="logo">${LOGO}<div><div class="wm">digimuse<span>.</span></div><small>Content Planner</small></div></div>
+  return `<div class="logo" style="flex-direction:column;align-items:flex-start;gap:6px">${LOGO_IMG}<small>Content Planner</small></div>
   <nav class="nav" aria-label="Main">${nb('home','Dashboard','home','--c1')}${nb('tasks','My tasks','tasks','--c2', me ? myTasks().length : 0)}${nb('team','Team','team','--c4')}${nb('live','Go live guide','rocket','--c3')}</nav>
   <div><div class="slabel">Brands <button class="lnk" data-act="newBrand">+ New brand</button></div>
-    <div class="blist">${sortedBrands().map(([id,b]) => { const c = brandColors(b); return `<button class="bitem ${ui.brandId===id && (ui.view==='brand'||ui.view==='plan') ? 'on' : ''}" data-act="goBrand" data-id="${id}"><span class="bav" style="background:${c.solid || '#2F5BEA'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name))}</span>${esc(b.name)}</button>`; }).join('') || '<p class="sm" style="padding:0 10px;color:var(--side-muted)">No brands yet</p>'}</div></div>
+    <div class="blist">${sortedBrands().map(([id,b]) => { const c = brandColors(b); return `<button class="bitem ${ui.brandId===id && (ui.view==='brand'||ui.view==='plan') ? 'on' : ''}" data-act="goBrand" data-id="${id}"><span class="bav" style="background:${c.solid || '#2F5BEA'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name || 'Untitled'))}</span>${esc(str(b.name).trim() || 'Untitled brand')}</button>`; }).join('') || '<p class="sm" style="padding:0 10px;color:var(--side-muted)">No brands yet</p>'}</div></div>
   <div class="me"><label for="meSel">You are</label><select id="meSel" class="in" data-chg="me">${opts(team, me, 'Pick your name')}</select></div>
   ${DB ? '' : `<p class="mode">${HOSTED ? 'Connecting…' : 'Shared saving is off in this view, so changes stay in this tab only.'}</p>`}`;
 }
@@ -1077,7 +1086,7 @@ function vBrand(){
 function vPlans(b){
   const pls = plansOf(ui.brandId);
   const rows = pls.map(([id,p]) => { const ps = postsOf(id); const ap = ps.filter(x => group(x.status) === 'done').length;
-    return `<tr class="click" data-act="goPlan" data-id="${id}"><td><b>${esc(mLabel(p.month))}</b>${p.strategy?.theme?.name ? `<div class="muted sm">${esc(p.strategy.theme.name)}</div>` : ''}</td><td>${p.status === 'ready' ? '<span class="pill" style="--c:var(--s-approved)">Ready</span>' : gen[id]?.running ? '<span class="pill" style="--c:var(--accent)">Generating</span>' : `<span class="pill" style="--c:var(--s-client)">${p.status === 'generating' ? 'Interrupted' : 'Paused'}</span>`}</td><td class="num">${ps.length}</td><td>${ps.length ? progressBar(ps) : ''}</td><td class="num">${ps.length ? Math.round(ap/ps.length*100) : 0}%</td></tr>`; });
+    return `<tr class="click" data-act="goPlan" data-id="${id}"><td><b>${esc(mLabel(p.month))}</b>${p.strategy?.theme?.name ? `<div class="muted sm">${esc(p.strategy.theme.name)}</div>` : ''}</td><td>${p.status === 'ready' ? '<span class="pill" style="--c:var(--s-approved)">Ready</span>' : gen[id]?.running ? '<span class="pill" style="--c:var(--accent)">Generating</span>' : `<span class="pill" style="--c:var(--s-client)">${p.status === 'generating' ? 'Interrupted' : 'Paused'}</span>`}</td><td class="num">${ps.length}</td><td>${ps.length ? progressBar(ps) : ''}</td><td class="num">${ps.length ? Math.round(ap/ps.length*100) : 0}%</td><td style="width:1%">${confirmBtn('delPlan-' + id, 'Delete', 'delPlanRow', `data-id="${id}"`)}</td></tr>`; });
   const prev = pls[0];
   const hasCh = activeCh(b).length > 0;
   return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Generate a monthly plan</h2><p>Research, strategy, topical days, calendar and a written content deck, built from this brand's profile, Brand Brain and ideas bank.</p></div></header>
@@ -1107,7 +1116,7 @@ function vPlans(b){
     ${aiNote()}
   </section>
   <section class="panel"><header><h2><span class="dotc" style="--dc:var(--c1)"></span>Plans</h2></header>
-    <div class="tw"><table><thead><tr><th>Month</th><th>Status</th><th>Posts</th><th>Progress</th><th>Approved</th></tr></thead><tbody>${rows.join('') || '<tr><td colspan="5" class="muted">No plans yet.</td></tr>'}</tbody></table></div></section>`;
+    <div class="tw"><table><thead><tr><th>Month</th><th>Status</th><th>Posts</th><th>Progress</th><th>Approved</th><th></th></tr></thead><tbody>${rows.join('') || '<tr><td colspan="6" class="muted">No plans yet.</td></tr>'}</tbody></table></div></section>`;
 }
 const WK = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const WKL = {Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday',Sun:'Sunday'};
@@ -1475,7 +1484,7 @@ function vProfile(b){
       ${f('Copy due (days before post)','sla.copy',s.copy ?? 5,'number','min="0" max="30"')}${f('Design due (days before)','sla.design',s.design ?? 3,'number','min="0" max="30"')}${f('Client approval due (days before)','sla.client',s.client ?? 2,'number','min="0" max="30"')}
     </div>
     <div class="acts"><button class="btn sm" data-act="applyTeam">Apply team to all open posts</button></div></section>
-  <section class="panel"><header><div><h2>Delete brand</h2><p>Removes the brand. Plans and posts stay stored but hidden.</p></div></header><div>${confirmBtn('delBrand','Delete brand','delBrand')}</div></section>`;
+  <section class="panel"><header><div><h2>Delete brand</h2><p>Removes the brand with all its plans, posts, benchmarks and reports.</p></div></header><div>${confirmBtn('delBrand','Delete brand','delBrand')}</div></section>`;
 }
 
 /* ---------- plan ---------- */
@@ -1710,7 +1719,7 @@ function deckModel(plan, ps){
   }
   return M;
 }
-function deckAccent(b){ const c = brandColors(b); return c.solid && lum(c.solid) < .5 ? c.solid : '#2F5BEA'; }
+function deckAccent(b){ const c = brandColors(b); return c.solid && lum(c.solid) < .5 ? c.solid : '#0048AC'; }
 function slideHTML(m, i, n, plan){
   const b = D.brands[plan.brandId] || {};
   const acc = deckAccent(b);
@@ -2342,7 +2351,9 @@ const ACT = {
     ui.view = 'brand'; ui.brandId = id; ui.btab = 'profile'; renderAll(); window.scrollTo(0,0);
     setTimeout(() => { const n = $('#bf-name'); if (n){ n.focus(); n.select(); } }, 50);
   },
-  delBrand: () => { const id = ui.brandId; ui.confirm = null; ui.view = 'home'; ui.brandId = null; del('brands', id); toast('Brand deleted'); },
+  delPlan: () => { const id = ui.planId; ui.confirm = null; postsOf(id).forEach(p => del('posts', p.id)); del('plans', id); ui.view = 'brand'; ui.planId = null; toast('Plan deleted'); },
+  delPlanRow: a => { const id = a.dataset.id; ui.confirm = null; postsOf(id).forEach(p => del('posts', p.id)); del('plans', id); toast('Plan deleted'); },
+  delBrand: () => { const id = ui.brandId; ui.confirm = null; ui.view = 'home'; ui.brandId = null; plansOf(id).forEach(([pid]) => { postsOf(pid).forEach(p => del('posts', p.id)); del('plans', pid); }); Object.entries(D.reports).filter(([,r]) => r.brandId === id).forEach(([rid]) => del('reports', rid)); del('brands', id); toast('Brand deleted'); },
   addProduct: () => {
     const b = D.brands[ui.brandId]; const v = k => ($('#np-' + k)?.value || '').trim();
     if (!v('name')){ toast('Add a product name'); return; }
@@ -2630,6 +2641,7 @@ document.addEventListener('change', e => {
   if (t.dataset.bf){
     let v = t.type === 'checkbox' ? t.checked : t.value;
     if (t.type === 'number' || t.type === 'range') v = Number(v);
+    if (t.dataset.bf === 'name' && !String(v).trim()){ v = 'Untitled brand'; t.value = v; }
     patch('brands', ui.brandId, setPath({}, t.dataset.bf, v));
     if (t.dataset.bf === 'name') toast('Saved');
     if (t.dataset.bf === 'website' && String(v).trim() && HOSTED) importSite(ui.brandId, true);
@@ -2704,7 +2716,7 @@ Reply with only JSON: {"description":"","offerings":"","products":[{"name":"","w
 }
 
 /* ---------- hosted (Vercel) adapters ---------- */
-function showLogin(msg){ const lg = $('#lg-logo'); if (lg && !lg.innerHTML) lg.innerHTML = LOGO; const l = $('#login'); l.hidden = false; const e = $('#lg-err'); e.hidden = !msg; e.textContent = msg || ''; setTimeout(() => $('#lg-pw')?.focus(), 30); }
+function showLogin(msg){ const lg = $('#lg-logo'); if (lg && !lg.innerHTML) lg.innerHTML = LOGO_IMG; const l = $('#login'); l.hidden = false; const e = $('#lg-err'); e.hidden = !msg; e.textContent = msg || ''; setTimeout(() => $('#lg-pw')?.focus(), 30); }
 function parseLoose(t){
   const s = String(t || '').trim();
   try { return JSON.parse(s); } catch (e) {}
