@@ -21,7 +21,7 @@ Internal social media planning tool for the Digimuse team.
    |---|---|
    | `GEMINI_API_KEY` | From aistudio.google.com/apikey |
    | `TEAM_PASSWORD` | The password your team will sign in with |
-   | `GEMINI_MODEL` *(optional)* | Defaults to `gemini-2.5-flash`. Set a newer or Pro model for richer strategy. |
+   | `GEMINI_MODEL` *(optional)* | Leave empty to use Google's latest Flash model. If Google retires a model, the app switches to the replacement automatically. |
    | `ANTHROPIC_API_KEY` *(optional)* | Use Claude instead of Gemini |
    | `AI_PROVIDER` *(optional)* | `gemini` or `claude` if both keys are set |
    | `CLAUDE_MODEL` *(optional)* | Defaults to `claude-sonnet-5` |

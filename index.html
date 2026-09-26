@@ -1882,7 +1882,7 @@ const ACT = {
     const month = $('#npl-month')?.value;
     if (!/^\d{4}-\d{2}$/.test(month || '')){ toast('Pick a month'); return; }
     const id = `${ui.brandId}__${month}`;
-    if (D.plans[id]){ toast('A plan for that month already exists'); ui.view = 'plan'; ui.planId = id; renderAll(); return; }
+    if (D.plans[id]){ ui.view = 'plan'; ui.planId = id; ui.tab = 'deck'; renderAll(); window.scrollTo(0,0); if (D.plans[id].status !== 'ready' || postsOf(id).some(p => !p.hasContent)){ toast('Picking up this month\'s plan where it stopped'); runPlan(id); } else toast('This month already has a plan'); return; }
     const reuse = $('#npl-reuse')?.checked ? plansOf(ui.brandId)[0]?.[1] : null;
     const o = {region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
     const doc = {brandId:ui.brandId, month, opts:o, status:'generating', createdAt:Date.now(), createdBy:me};

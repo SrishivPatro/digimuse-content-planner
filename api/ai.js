@@ -18,9 +18,23 @@ export default async function handler(req, res){
   }
 }
 
-async function gemini(prompt, tier, json){
-  const model = tier === 'quick' ? (process.env.GEMINI_MODEL_FAST || process.env.GEMINI_MODEL || 'gemini-2.5-flash') : (process.env.GEMINI_MODEL || 'gemini-2.5-flash');
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+const GBASE = 'https://generativelanguage.googleapis.com/v1beta';
+const picked = {};
+
+async function latestGemini(kind){
+  const r = await fetch(`${GBASE}/models?pageSize=200`, { headers: { 'x-goog-api-key': process.env.GEMINI_API_KEY } });
+  const j = await r.json().catch(() => ({}));
+  const ver = n => (n.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || '0';
+  const ok = (j.models || [])
+    .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+    .map(m => m.name.replace(/^models\//, ''))
+    .filter(n => new RegExp(`^gemini-[\\d.]+-${kind}$`).test(n))
+    .sort((a, b) => parseFloat(ver(b)) - parseFloat(ver(a)));
+  return ok[0] || null;
+}
+
+async function callGemini(model, prompt, json){
+  const r = await fetch(`${GBASE}/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
     body: JSON.stringify({
@@ -29,11 +43,33 @@ async function gemini(prompt, tier, json){
     })
   });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw Object.assign(new Error(j.error?.message || `Gemini error ${r.status}`), { status: r.status });
-  const c = j.candidates?.[0];
-  const text = (c?.content?.parts || []).map(p => p.text || '').join('');
-  if (!text) throw Object.assign(new Error(`Gemini returned nothing (${c?.finishReason || j.promptFeedback?.blockReason || 'unknown'})`), { status: 502 });
-  return text;
+  return { r, j };
+}
+
+async function gemini(prompt, tier, json){
+  const envModel = tier === 'quick' ? (process.env.GEMINI_MODEL_FAST || process.env.GEMINI_MODEL) : process.env.GEMINI_MODEL;
+  let model = picked[tier] || envModel || 'gemini-flash-latest';
+  const tried = new Set();
+  for (let attempt = 0; attempt < 3; attempt++){
+    tried.add(model);
+    const { r, j } = await callGemini(model, prompt, json);
+    if (r.ok){
+      picked[tier] = model;
+      const c = j.candidates?.[0];
+      const text = (c?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
+      if (!text) throw Object.assign(new Error(`Gemini returned nothing (${c?.finishReason || j.promptFeedback?.blockReason || 'unknown'})`), { status: 502 });
+      return text;
+    }
+    const msg = j.error?.message || `Gemini error ${r.status}`;
+    const retired = r.status === 404 || /no longer available|not found|deprecated|not supported|retired/i.test(msg);
+    if (!retired) throw Object.assign(new Error(msg), { status: r.status });
+    // Google retired this model: use the replacement it names, else the newest flash model on the account.
+    const named = [...msg.matchAll(/models\/(gemini-[\w.\-]+)/g)].map(m => m[1].replace(/[.\-]+$/, '')).find(n => !tried.has(n));
+    const next = named || await latestGemini('flash');
+    if (!next || tried.has(next)) throw Object.assign(new Error(msg + ' Set GEMINI_MODEL in Vercel to a current model name.'), { status: 502 });
+    model = next;
+  }
+  throw Object.assign(new Error('No working Gemini model found. Set GEMINI_MODEL in Vercel.'), { status: 502 });
 }
 
 async function claude(prompt, tier){
