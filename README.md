@@ -44,6 +44,7 @@ Internal social media planning tool for the Digimuse team.
 | `CRON_SECRET` *(needed for weekly trend alerts)* | Any long random string. Vercel sends it to the weekly job so nobody else can trigger it. |
 | `BLOB_READ_WRITE_TOKEN` *(recommended for creatives)* | Added automatically when you create a **Blob** store (Storage → Create → Blob) and connect it. Without it, creatives are stored in Redis (max ~900 KB each). |
 | `GEMINI_IMAGE_MODEL` *(optional)* | Image model for creatives. Defaults to `gemini-2.5-flash-image`. Image generation needs Gemini billing on (about $0.039 per image). |
+| `GEMINI_API_KEY_FREE` *(recommended)* | A second Gemini key from a Google project **without billing** (free tier). Text (plans, posts, research, chat) runs on it first; the paid key covers images, overflow when the free tier is busy or out for the day, and anything the free key can't do. If the paid key runs out of credit, text keeps working on the free key. Admins choose the mode on Team → Free key vs paid key. Note: Google may use free-tier prompts to improve its products. |
 | `GEMINI_MODEL_CHAT` *(optional)* | Model for Chat with Lumi. Defaults to `gemini-flash-lite-latest` (about ₹0.03 a message). |
 | `LUMI_CHAT_DAILY` *(optional)* | Default chat messages per person per day (40). Admins can change it on Team → Lumi usage. |
 | `ANTHROPIC_API_KEY` *(optional)* | Use Claude instead of Gemini |

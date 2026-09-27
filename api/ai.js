@@ -1,6 +1,9 @@
 import { authed, deny, recordUsage, redis, PREFIX } from './_lib.js';
 
 // Chat with Lumi runs on the lite model and has a per-person daily limit (admins set it on the Team page).
+// Free key (GEMINI_API_KEY_FREE, a project without billing) runs text first; the paid key covers images, overflow and fallback.
+// Admin setting freeMode: 'all' (free first for all text), 'light' (free first for chat and quick tasks), 'off'.
+export const freeModeOf = async () => { const v = await redis(['HGET', PREFIX + 'settings', 'freeMode']); return ['all', 'light', 'off'].includes(v) ? v : 'all'; };
 export const chatLimitOf = async () => { const v = +(await redis(['HGET', PREFIX + 'settings', 'chatLimit'])); return Number.isFinite(v) && v >= 0 && v !== 0 ? v : (+process.env.LUMI_CHAT_DAILY || 40); };
 const istDay = () => new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
 
@@ -17,7 +20,8 @@ export default async function handler(req, res){
   }
   const fl = (Array.isArray(files) ? files : []).filter(f => f && /^(application\/pdf|image\/(png|jpe?g|webp))$/.test(f.mime) && typeof f.data === 'string').slice(0, 4);
   try {
-    const out = await runAI(prompt, { tier, json, search: !!search, files: fl });
+    let freeMode = 'off'; if (process.env.GEMINI_API_KEY_FREE){ try { freeMode = await freeModeOf(); } catch (e) { freeMode = 'all'; } }
+    const out = await runAI(prompt, { tier, json, search: !!search, files: fl, freeMode });
     if (!out) return res.status(500).json({ code: 'sampling_disabled', error: 'No AI key set. Add GEMINI_API_KEY (or ANTHROPIC_API_KEY) in Vercel, then redeploy.' });
     try { await recordUsage(brandId, out.usage, out.provider); } catch (e) {}
     delete out.usage; if (chatLeft !== undefined) out.chatLeft = chatLeft;
@@ -28,18 +32,32 @@ export default async function handler(req, res){
   }
 }
 
-export async function runAI(prompt, { tier = 'default', json = false, search = false, files = [] } = {}){
-  const provider = (process.env.AI_PROVIDER || (process.env.GEMINI_API_KEY ? 'gemini' : process.env.ANTHROPIC_API_KEY ? 'claude' : '')).toLowerCase();
-  if (provider === 'gemini') return { ...(await gemini(prompt, tier, json, search, files)), provider };
+export async function runAI(prompt, { tier = 'default', json = false, search = false, files = [], freeMode = 'off' } = {}){
+  const provider = (process.env.AI_PROVIDER || (process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_FREE ? 'gemini' : process.env.ANTHROPIC_API_KEY ? 'claude' : '')).toLowerCase();
+  if (provider === 'gemini') return { ...(await geminiRouted(prompt, tier, json, search, files, freeMode)), provider };
   if (provider === 'claude') return { ...(await claude(prompt, tier, search, files)), provider };
   return null;
 }
 
 const GBASE = 'https://generativelanguage.googleapis.com/v1beta';
 const picked = {};
+const billingErr = e => /prepayment|credit|billing|quota|exceeded|RESOURCE_EXHAUSTED|permission|API key not valid|disabled/i.test(String(e?.message || '')) || [401, 402, 403, 429].includes(e?.status);
 
-async function latestGemini(kind){
-  const r = await fetch(`${GBASE}/models?pageSize=200`, { headers: { 'x-goog-api-key': process.env.GEMINI_API_KEY } });
+async function geminiRouted(prompt, tier, json, search, files, freeMode){
+  const paid = process.env.GEMINI_API_KEY, free = process.env.GEMINI_API_KEY_FREE;
+  const freeFirst = free && freeMode !== 'off' && (freeMode === 'all' || tier === 'chat' || tier === 'quick');
+  const order = freeFirst ? [['free', free], ['paid', paid]] : [['paid', paid], ...(free && freeMode !== 'off' ? [['free', free]] : [])];
+  let last;
+  for (const [kind, key] of order){
+    if (!key) continue;
+    try { const out = await gemini(prompt, tier, json, search, files, key, kind); if (kind === 'free') out.usage.free = true; out.keyUsed = kind; return out; }
+    catch (e){ last = e; if (kind === 'paid' && !billingErr(e)) throw e; }   // free key busy/limited, or paid key out of credit: try the other key
+  }
+  throw last || Object.assign(new Error('No Gemini key set. Add GEMINI_API_KEY in Vercel.'), { status: 500 });
+}
+
+async function latestGemini(kind, key = process.env.GEMINI_API_KEY){
+  const r = await fetch(`${GBASE}/models?pageSize=200`, { headers: { 'x-goog-api-key': key } });
   const j = await r.json().catch(() => ({}));
   const ver = n => (n.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || '0';
   const ok = (j.models || [])
@@ -50,10 +68,10 @@ async function latestGemini(kind){
   return ok[0] || null;
 }
 
-async function callGemini(model, prompt, json, search, files = []){
+async function callGemini(model, prompt, json, search, files = [], key = process.env.GEMINI_API_KEY){
   const r = await fetch(`${GBASE}/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [...files.map(f => ({ inline_data: { mime_type: f.mime, data: f.data } })), { text: prompt }] }],
       ...(search ? { tools: [{ google_search: {} }] } : {}),
@@ -64,21 +82,23 @@ async function callGemini(model, prompt, json, search, files = []){
   return { r, j };
 }
 
-async function gemini(prompt, tier, json, search, files = []){
+async function gemini(prompt, tier, json, search, files = [], key = process.env.GEMINI_API_KEY, kind = 'paid'){
   const envModel = tier === 'chat' ? (process.env.GEMINI_MODEL_CHAT || 'gemini-flash-lite-latest') : tier === 'quick' ? (process.env.GEMINI_MODEL_FAST || process.env.GEMINI_MODEL) : process.env.GEMINI_MODEL;
-  let model = picked[tier] || envModel || 'gemini-flash-latest';
+  const pk = kind + ':' + tier; let model = picked[pk] || envModel || 'gemini-flash-latest';
   const tried = new Set();
   let useSearch = search, waits = 0, searchDropped = false;
   for (let attempt = 0; attempt < 6; attempt++){
     tried.add(model);
-    const { r, j } = await callGemini(model, prompt, json, useSearch, files);
+    const { r, j } = await callGemini(model, prompt, json, useSearch, files, key);
     const emsg = j?.error?.message || '';
     // Free keys cannot use Google Search grounding: carry on without it.
     if (!r.ok && useSearch && (r.status === 400 || r.status === 403) && /ground|google_search|search|tool|billing|free tier|not supported|not available/i.test(emsg)){ useSearch = false; searchDropped = true; continue; }
     // Rate limit (free tier is ~10 requests/minute): wait and retry a couple of times.
+    if (r.status === 429 && kind === 'free') throw Object.assign(new Error(j?.error?.message || 'Free key is busy'), { status: 429 });   // don't wait: the paid key takes over
+    if (r.status === 429 && /prepayment|credit|billing|quota exceeded for .*per ?day|per day/i.test(emsg)) throw Object.assign(new Error(emsg), { status: 429 });   // empty balance or daily cap: waiting won't help
     if (r.status === 429 && waits < 2){ const ra = +(r.headers.get('retry-after') || 0); await new Promise(res => setTimeout(res, Math.min(30, ra || 12 * (waits + 1)) * 1000)); waits++; attempt--; continue; }
     if (r.ok){
-      picked[tier] = model;
+      picked[pk] = model;
       const c = j.candidates?.[0];
       const text = (c?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
       if (!text) throw Object.assign(new Error(`Gemini returned nothing (${c?.finishReason || j.promptFeedback?.blockReason || 'unknown'})`), { status: 502 });
@@ -91,7 +111,7 @@ async function gemini(prompt, tier, json, search, files = []){
     if (!retired) throw Object.assign(new Error(msg), { status: r.status });
     // Google retired this model: use the replacement it names, else the newest flash model on the account.
     const named = [...msg.matchAll(/models\/(gemini-[\w.\-]+)/g)].map(m => m[1].replace(/[.\-]+$/, '')).find(n => !tried.has(n));
-    const next = named || (tier === 'chat' ? (await latestGemini('flash-lite')) || (await latestGemini('flash')) : await latestGemini('flash'));
+    const next = named || (tier === 'chat' ? (await latestGemini('flash-lite', key)) || (await latestGemini('flash', key)) : await latestGemini('flash', key));
     if (!next || tried.has(next)) throw Object.assign(new Error(msg + ' Set GEMINI_MODEL in Vercel to a current model name.'), { status: 502 });
     model = next;
   }

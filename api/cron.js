@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { authed, redis, pipeline, PREFIX, recordUsage, logActivity, safeEq } from './_lib.js';
-import { runAI } from './ai.js';
+import { runAI, freeModeOf } from './ai.js';
 
 // Weekly trend alert. Vercel Cron calls GET /api/cron every Monday (see vercel.json) with
 // "Authorization: Bearer <CRON_SECRET>". A signed-in user can run one brand now with ?brand=<id>.
@@ -30,7 +30,8 @@ Reply with only JSON:
 }
 
 async function runBrand(id, b, by){
-  const out = await runAI(prompt(b), { search: true });
+  let freeMode = 'off'; if (process.env.GEMINI_API_KEY_FREE){ try { freeMode = await freeModeOf(); } catch (e) { freeMode = 'all'; } }
+  const out = await runAI(prompt(b), { search: true, freeMode });
   if (!out) throw new Error('Lumi has no key set (add GEMINI_API_KEY in Vercel)');
   try { await recordUsage(id, out.usage, out.provider); } catch (e) {}
   const data = loose(out.text);

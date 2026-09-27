@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { chatLimitOf } from './ai.js';
+import { chatLimitOf, freeModeOf } from './ai.js';
 import { authed, deny, redis, PREFIX, USERS, getUser, putUser, userCount, hashPw, checkPw, publicUser, sessionCookie, normU } from './_lib.js';
 
 const UNAME = /^[a-z0-9._@+-]{3,60}$/;
@@ -12,8 +12,8 @@ export default async function handler(req, res){
   if (!me) return deny(res);
   try {
     if (req.method === 'GET'){
-      let chatLimit = 40; try { chatLimit = await chatLimitOf(); } catch (e) {}
-      return res.status(200).json({ user: me, users: await userCount(), chatLimit });
+      let chatLimit = 40, freeMode = 'all'; try { chatLimit = await chatLimitOf(); freeMode = await freeModeOf(); } catch (e) {}
+      return res.status(200).json({ user: me, users: await userCount(), chatLimit, freeMode, hasFreeKey: !!process.env.GEMINI_API_KEY_FREE, hasPaidKey: !!process.env.GEMINI_API_KEY });
     }
     if (req.method !== 'POST') return res.status(405).json({ error: 'GET or POST' });
     const b = req.body || {}; const a = b.action;
@@ -44,6 +44,7 @@ export default async function handler(req, res){
       out.sort((x, y) => x.name.localeCompare(y.name));
       return res.status(200).json({ users: out });
     }
+    if (a === 'freeMode'){ if (!['all', 'light', 'off'].includes(b.value)) return res.status(400).json({ error: 'Unknown mode' }); await redis(['HSET', PREFIX + 'settings', 'freeMode', b.value]); return res.status(200).json({ ok: true, freeMode: b.value }); }
     if (a === 'chatLimit'){ const v = Math.round(+b.value); if (!(v >= 1 && v <= 1000)) return res.status(400).json({ error: 'Use a number from 1 to 1000' }); await redis(['HSET', PREFIX + 'settings', 'chatLimit', String(v)]); return res.status(200).json({ ok: true, chatLimit: v }); }
     const username = normU(b.username);
     if (a === 'create'){

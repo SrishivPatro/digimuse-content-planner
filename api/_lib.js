@@ -91,7 +91,7 @@ export async function recordUsage(brandId, u, provider){
   const b = String(brandId || 'other').replace(/[^A-Za-z0-9_\-]/g, '').slice(0, 60) || 'other';
   const k = PREFIX + 'usage:' + monthKey();
   await pipeline([
-    ['HINCRBY', k, b + '|calls', 1], ['HINCRBY', k, b + '|in', Math.round(u.in || 0)], ['HINCRBY', k, b + '|out', Math.round(u.out || 0)],
+    ['HINCRBY', k, b + '|calls', 1], ['HINCRBY', k, b + (u.free ? '|fin' : '|in'), Math.round(u.in || 0)], ['HINCRBY', k, b + (u.free ? '|fout' : '|out'), Math.round(u.out || 0)], ['HINCRBY', k, b + '|free', u.free ? 1 : 0],
     ['HINCRBY', k, b + '|search', Math.round(u.search || 0)], ['HINCRBY', k, b + '|img', Math.round(u.img || 0)], ['HSET', k, b + '|model', String(provider || '') + ':' + String(u.model || '')]
   ]);
 }
