@@ -649,9 +649,9 @@ async function patch(col, id, part){ const cur = D[col][id]; if (!cur) return; D
 async function del(col, id){ delete D[col][id]; sched(); if (DB) return queue(col+'/'+id, () => DB.doc(col+'/'+id).delete()).catch(dbErr); }
 
 /* ---------- AI ---------- */
-async function ai(prompt, {tier='default', json=true, signal}={}){
+async function ai(prompt, {tier='default', json=true, signal, files, brandId}={}){
   if (!S) throw {code:'not_granted', message:'AI unavailable'};
-  const o = {modelTier:tier, cache:false}; if (signal) o.signal = signal;
+  const o = {modelTier:tier, cache:false}; if (signal) o.signal = signal; if (files && HOSTED) o.files = files; if (brandId) o.brandId = brandId;
   if (json) return await S.json(prompt, o);
   return (await S(prompt, o)).text;
 }
@@ -2502,7 +2502,7 @@ function newPost(b, planId, over){
 async function runPlan(pid){
   if (gen[pid]?.running) return;
   if (!S){ toast('AI is not available in this view'); return; }
-  const ctl = new AbortController(); const signal = ctl.signal;
+  const ctl = new AbortController(); const signal = ctl.signal; SIG_BRAND.set(signal, D.plans[pid]?.brandId || '');
   gen[pid] = {running:true, label:'Starting…', done:0, total:0, ctl}; sched();
   try {
     await patch('plans', pid, {status:'generating', error:''});
@@ -3239,9 +3239,12 @@ function httpDB(){
     doc: path => { const [col, id] = path.split('/'); return { set: d => write({op:'set', col, id, data:d}), update: d => write({op:'update', col, id, data:d}), delete: () => write({op:'delete', col, id}) }; }
   };
 }
+const SIG_BRAND = new WeakMap();
+const aiBrand = () => ui.aiBrand || (ui.view === 'pitch' ? 'pitch' : ui.view === 'plan' ? D.plans[ui.planId]?.brandId : ui.view === 'brand' || ui.view === 'briefs' ? ui.brandId : (ui.postId && D.posts[ui.postId]?.brandId)) || 'other';
 async function hostedCall(prompt, o={}){
   let r;
-  try { r = await fetch('/api/ai', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({prompt, tier:o.modelTier || 'default', json:!!o.json, search:!!o.search}), signal:o.signal}); }
+  const brandId = o.brandId || (o.signal && SIG_BRAND.get(o.signal)) || aiBrand();
+  try { r = await fetch('/api/ai', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({prompt, tier:o.modelTier || 'default', json:!!o.json, search:!!o.search, brandId, files:o.files || []}), signal:o.signal}); }
   catch (e){ if (e?.name === 'AbortError') throw {code:'cancelled'}; throw {code:'upstream_error', message:'Network error'}; }
   if (r.status === 401){ showLogin(); throw {code:'not_granted', message:'Sign in again'}; }
   const j = await r.json().catch(() => ({}));

@@ -84,6 +84,35 @@ export async function authed(req){
   return out;
 }
 
+// ---------- AI usage per client (admin-only view) ----------
+export const monthKey = (d = new Date()) => new Date(d.getTime() + 5.5 * 3600e3).toISOString().slice(0, 7);   // IST month
+export async function recordUsage(brandId, u, provider){
+  if (!u) return;
+  const b = String(brandId || 'other').replace(/[^A-Za-z0-9_\-]/g, '').slice(0, 60) || 'other';
+  const k = PREFIX + 'usage:' + monthKey();
+  await pipeline([
+    ['HINCRBY', k, b + '|calls', 1], ['HINCRBY', k, b + '|in', Math.round(u.in || 0)], ['HINCRBY', k, b + '|out', Math.round(u.out || 0)],
+    ['HINCRBY', k, b + '|search', Math.round(u.search || 0)], ['HSET', k, b + '|model', String(provider || '') + ':' + String(u.model || '')]
+  ]);
+}
+
+// ---------- activity log + post version history ----------
+export const HIST_KEYS = ['topic', 'hook', 'caption', 'hashtags', 'onImage', 'slides', 'script', 'design', 'langs', 'shots', 'status'];
+export async function logActivity(user, col, id, op, data, before){
+  const keys = Object.keys(data || {}).slice(0, 14);
+  const entry = { at: Date.now(), by: user?.name || user?.username || 'Someone', un: user?.username || '', col, id, op, keys };
+  if (col === 'posts' && before) entry.title = String(before.topic || '').slice(0, 80);
+  else if (before && (before.name || before.month)) entry.title = String(before.name || before.month).slice(0, 80);
+  else if (data && (data.name || data.topic || data.month)) entry.title = String(data.name || data.topic || data.month).slice(0, 80);
+  const cmds = [['LPUSH', PREFIX + 'log', JSON.stringify(entry)], ['LTRIM', PREFIX + 'log', 0, 2999]];
+  if (col === 'posts' && before && op !== 'delete'){
+    const prev = {}; let changed = false;
+    for (const k of HIST_KEYS) if (data && k in data && JSON.stringify(before[k] ?? null) !== JSON.stringify(data[k] ?? null) && before[k] != null && before[k] !== ''){ prev[k] = before[k]; changed = true; }
+    if (changed && !('status' in prev && Object.keys(prev).length === 1)) cmds.push(['LPUSH', PREFIX + 'hist:' + id, JSON.stringify({ at: Date.now(), by: entry.by, prev })], ['LTRIM', PREFIX + 'hist:' + id, 0, 29]);
+  }
+  await pipeline(cmds);
+}
+
 export const deny = res => res.status(401).json({ error: 'Sign in required' });
 
 export function merge(t, s){
