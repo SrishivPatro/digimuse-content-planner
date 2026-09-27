@@ -31,7 +31,8 @@ html{color-scheme:light}
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-.ctbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 18px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);margin:0 0 12px}.ctbar.none{justify-content:space-between;color:var(--ink-2)}.ctbig{display:flex;align-items:baseline;gap:6px}.ctbig b{font-size:26px;font-weight:800;line-height:1}.ctbig span{color:var(--muted);font-weight:700}.ctbig small{color:var(--muted);margin-left:4px}.ctlab{font-weight:800;padding:4px 10px;border-radius:99px}.ctf{display:flex;gap:6px;flex-wrap:wrap;flex:1}.ctf .chip.lo{color:var(--warn);border-color:currentColor}.ctf .chip.hi{color:var(--c5);border-color:currentColor}.ctf .chip.ok{color:var(--s-approved);border-color:currentColor}
+.optgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.optcol{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}.optcol .eyebrow{margin:0 0 2px}.optcol .chk{align-items:flex-start;line-height:1.4}.tophint{display:block;line-height:1.5;padding-top:6px;border-top:1px dashed var(--line)}
+.ctbar{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:14px 18px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);margin:0 0 12px}.ctbar.none{flex-direction:row;align-items:center;flex-wrap:wrap;gap:10px}.cttop{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.cttop .ctedit{margin-left:auto}.ctf{padding-top:10px;border-top:1px dashed var(--line);align-items:center}.ctbar.none{justify-content:space-between;color:var(--ink-2)}.ctbig{display:flex;align-items:baseline;gap:6px}.ctbig b{font-size:26px;font-weight:800;line-height:1}.ctbig span{color:var(--muted);font-weight:700}.ctbig small{color:var(--muted);margin-left:4px}.ctlab{font-weight:800;padding:4px 10px;border-radius:99px}.ctf{display:flex;gap:6px;flex-wrap:wrap;flex:1}.ctf .chip.lo{color:var(--warn);border-color:currentColor}.ctf .chip.hi{color:var(--c5);border-color:currentColor}.ctf .chip.ok{color:var(--s-approved);border-color:currentColor}
 .ctbar.less{border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}.ctbar.less .ctlab{background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--warn)}.ctbar.par{border-color:color-mix(in srgb,var(--s-approved) 45%,var(--line))}.ctbar.par .ctlab{background:color-mix(in srgb,var(--s-approved) 12%,transparent);color:var(--s-approved)}.ctbar.more{border-color:color-mix(in srgb,var(--c5) 45%,var(--line))}.ctbar.more .ctlab{background:color-mix(in srgb,var(--c5) 12%,transparent);color:var(--c5)}
 .ctmini{font-size:11.5px;font-weight:800;padding:1px 7px;border-radius:99px;margin-left:6px}.ctmini.less{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn)}.ctmini.par{background:color-mix(in srgb,var(--s-approved) 14%,transparent);color:var(--s-approved)}.ctmini.more{background:color-mix(in srgb,var(--c5) 14%,transparent);color:var(--c5)}
 .ltag{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:0 4px;border-radius:4px;background:var(--c5);color:#fff;margin:0 3px 0 0;flex:none}
@@ -166,7 +167,8 @@ label.f .hint{font-weight:400;color:var(--muted)}
 .panel > header p{color:var(--muted);font-size:13px;margin-top:2px}
 .panel h2 .dotc{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:1px;background:var(--dc,var(--c1))}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px}
-@media (max-width:420px){.grid2{grid-template-columns:1fr}}
+@media (max-width:700px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.grid2 > *,.grid3 > *,.fg > *{min-width:0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
 .stat{border-radius:16px;padding:16px 18px;background:var(--sb,var(--c1s));border:1px solid color-mix(in srgb,var(--sc,var(--c1)) 20%,transparent);display:flex;flex-direction:column;gap:4px}
 .stat b{font-family:var(--fd);font-size:34px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
@@ -304,6 +306,13 @@ tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
 .rowline{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
 .rowline > *{flex:1;min-width:140px}
 .rowline > .btn{flex:none}
+.rowline > label.f{min-width:150px}
+.rowline > label.f:not([style*="flex"]){flex:1 1 220px}
+.rowline > .acts,.rowline > .chips{flex:1 1 auto}
+@media (max-width:640px){.rowline > *{flex:1 1 100% !important;max-width:none !important}.rowline > .btn,.rowline > button{flex:1 1 auto !important}}
+.trendbox > .chk{flex-wrap:wrap;row-gap:2px}.trendbox > .chk .muted{flex-basis:100%;margin-left:26px}
+.panel > header > div{min-width:0;flex:1 1 260px}.panel > header > .btn,.panel > header > label.f{flex:0 0 auto}.panel > header > .acts{flex:0 1 auto;flex-wrap:wrap;max-width:100%}
+.li{flex-wrap:wrap;row-gap:6px}.li .tx{min-width:0;flex:1 1 200px}
 .list{display:flex;flex-direction:column;gap:7px}
 .li{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;border:1px solid var(--line);border-radius:11px;padding:9px 12px;background:var(--surface)}
 .li .tx{min-width:0;display:flex;flex-direction:column;gap:3px;overflow-wrap:anywhere}
@@ -351,8 +360,10 @@ tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
 #modal .box{background:var(--surface);border-radius:18px;padding:22px;width:min(620px,100%);max-height:calc(100vh - 32px);overflow:auto;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow)}
 #copybox{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(15,8,32,.45);padding:16px}
 #copybox .box{background:var(--surface);border-radius:14px;padding:18px;width:min(640px,100%);display:flex;flex-direction:column;gap:10px}
-.range{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-weight:600}
-.range input{flex:1;accent-color:var(--accent)}
+.range{display:flex;flex-direction:column;gap:8px;padding:12px 14px 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);min-width:0}
+.range .rt{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.range input{width:100%;margin:0;accent-color:var(--accent)}
+.range .rticks{display:flex;justify-content:space-between;padding:0 6px}.range .rticks i{width:4px;height:4px;border-radius:50%;background:var(--line-2)}.range .rticks i.on{background:var(--accent)}
 .sp{flex:1}
 .idea{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;border:1px solid var(--line);border-radius:13px;padding:12px 14px;background:var(--surface);border-left:4px solid var(--pc,var(--c3))}
 .idea .tx{display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -364,7 +375,7 @@ tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
 .lu .d small{display:block;font-family:var(--fb);font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 
 @media (max-width:860px){
-  .app{grid-template-columns:1fr}
+  .app{grid-template-columns:minmax(0,1fr)}
   .side{position:static;height:auto;padding:16px;gap:12px}
   .nav{flex-direction:row;flex-wrap:wrap}
   .nav button{width:auto}
@@ -1165,9 +1176,8 @@ function contractBar(plan, ps){
   const d = n - c; const st = d < 0 ? 'less' : d > 0 ? 'more' : 'par';
   const lab = {less:`${-d} less than contracted`, par:'At par with contract', more:`${d} more than contracted`}[st];
   const fmts = [...new Set(Object.keys(ct).concat(main.map(p => p.format)))].filter(f => FORMATS.includes(f));
-  return `<div class="ctbar ${st}"><div class="ctbig"><b>${n}</b><span>vs</span><b>${c}</b><small>planned vs contracted</small></div><span class="ctlab">${st === 'less' ? '▼' : st === 'more' ? '▲' : '●'} ${lab}</span>
-    <div class="ctf">${fmts.map(f => { const pn = main.filter(p => p.format === f).length, cn = ct[f] || 0, dd = pn - cn; return `<span class="chip ${dd < 0 ? 'lo' : dd > 0 ? 'hi' : 'ok'}"><b>${esc(f)}</b> ${pn}/${cn}${dd ? ` (${dd > 0 ? '+' : ''}${dd})` : ' ✓'}</span>`; }).join('')}${kids ? `<span class="chip">+ ${kids} language versions (not counted)</span>` : ''}</div>
-    <button class="lnk" data-act="goBrandTab" data-id="${plan.brandId}" data-k="profile">Edit contract</button></div>`;
+  return `<div class="ctbar ${st}"><div class="cttop"><div class="ctbig"><b>${n}</b><span>vs</span><b>${c}</b><small>planned vs contracted</small></div><span class="ctlab">${st === 'less' ? '▼' : st === 'more' ? '▲' : '●'} ${lab}</span><button class="lnk ctedit" data-act="goBrandTab" data-id="${plan.brandId}" data-k="profile">Edit contract</button></div>
+    <div class="ctf"><span class="muted sm" style="margin-right:2px">By format</span>${fmts.map(f => { const pn = main.filter(p => p.format === f).length, cn = ct[f] || 0, dd = pn - cn; return `<span class="chip ${dd < 0 ? 'lo' : dd > 0 ? 'hi' : 'ok'}"><b>${esc(f)}</b> ${pn}/${cn}${dd ? ` (${dd > 0 ? '+' : ''}${dd})` : ' ✓'}</span>`; }).join('')}${kids ? `<span class="chip">+ ${kids} language versions (not counted)</span>` : ''}</div></div>`;
 }
 function vRetainers(brands, ym){
   const list = brands.filter(([, b]) => FORMATS.some(f => +(b.retainer || {})[f] > 0));
@@ -1261,19 +1271,24 @@ function vPlans(b){
       <div class="tw vis"><table><thead><tr><th>Format</th><th style="width:110px">Posts</th><th>Platforms it can go on</th><th>Products & pillars in focus</th></tr></thead><tbody>${FORMATS.map(f => { const ch = fmtChoices(b, f).length ? fmtChoices(b, f) : FMT_CH[f]; return `<tr><td><b>${f}</b><div class="muted sm">${FMT_HINT[f]}</div></td><td><input class="in" type="number" min="0" max="40" id="mx-${f}" data-chg="mxTotal" value="${esc(mx[f]?.n ?? 0)}" aria-label="${f} posts"></td><td><div class="chips" style="margin:0">${ch.map(c => `<label class="chk chip"><input type="checkbox" id="mxc-${f}-${c}" ${(mx[f]?.ch || []).includes(c) ? 'checked' : ''}> ${esc(c)}</label>`).join('')}</div></td><td><div class="mxcell">${multiSel('msp-' + f, 'product', [['__brand','Brand-level, no product']].concat(arr(b.brain?.products).slice(0, 200).map(x => [x.name, x.name])), fmtProducts(mx[f]))}${arr(b.pillars).length ? multiSel('msl-' + f, 'pillar', arr(b.pillars).map(x => [x.name, x.name]), arr(mx[f]?.pillars)) : ''}</div></td></tr>`; }).join('')}</tbody></table></div></div>`; })() : ''}
     ${hasCh ? vPlanPillars(b) : ''}
     ${hasCh ? vPlanHero(b) : ''}
-    <div class="acts">
-      <label class="chk"><input type="checkbox" id="npl-cd" checked> Creative director review (sharper, a bit slower)</label>
-      <label class="chk"><input type="checkbox" id="npl-top" checked> Topical days</label><span class="muted sm" id="npl-tophint">${(() => { const ym = ui.prefillMonth || nextMonth(); const m = topMaster(b, ym); return m ? `Uses ${esc(b.name)}'s topical calendar for ${esc(mLabel(ym))}: ${arr(m.days).filter(d => d.include).length} ticked days (${esc(arr(m.regions).join(', '))}). <button class="lnk" data-act="goTopCal" data-m="${ym}">Edit</button>` : `No topical calendar for ${esc(mLabel(ym))} yet: AI will make one and save it as the brand's master list. <button class="lnk" data-act="goTopCal" data-m="${ym}">Build it first</button>`; })()}</span>
-      <label class="chk"><input type="checkbox" id="npl-toprev" checked> Let me pick topical days before the calendar is built</label>
-      <details class="langpick" ${arr(b.langDefault).length ? 'open' : ''}><summary><b>Regional language versions</b> <span class="muted sm">optional · extra versions of the copy in other languages</span></summary>
+    <div class="optgrid">
+      <div class="optcol"><p class="eyebrow">Content</p>
+        <label class="chk"><input type="checkbox" id="npl-cd" checked> Creative director review (sharper, a bit slower)</label>
+        <label class="chk"><input type="checkbox" id="npl-reels" checked> Reel scripts</label>
+        <label class="chk"><input type="checkbox" id="npl-paid"> Paid boost ideas</label>
+        <label class="chk"><input type="checkbox" id="npl-inf"> Influencer / UGC ideas</label>
+        ${prev && prev[1].research ? `<label class="chk"><input type="checkbox" id="npl-reuse"> Reuse research from ${esc(mLabel(prev[1].month))}</label>` : ''}
+      </div>
+      <div class="optcol"><p class="eyebrow">Topical days</p>
+        <label class="chk"><input type="checkbox" id="npl-top" checked> Topical days</label>
+        <label class="chk"><input type="checkbox" id="npl-toprev" checked> Let me pick topical days before the calendar is built</label>
+        <span class="muted sm tophint" id="npl-tophint">${(() => { const ym = ui.prefillMonth || nextMonth(); const m = topMaster(b, ym); return m ? `Uses ${esc(b.name)}'s topical calendar for ${esc(mLabel(ym))}: ${arr(m.days).filter(d => d.include).length} ticked days (${esc(arr(m.regions).join(', '))}). <button class="lnk" data-act="goTopCal" data-m="${ym}">Edit</button>` : `No topical calendar for ${esc(mLabel(ym))} yet: AI will make one and save it as the brand's master list. <button class="lnk" data-act="goTopCal" data-m="${ym}">Build it first</button>`; })()}</span>
+      </div>
+    </div>
+    <details class="langpick" ${arr(b.langDefault).length ? 'open' : ''}><summary><b>Regional language versions</b> <span class="muted sm">optional · extra versions of the copy in other languages</span></summary>
         <p class="muted sm">Tick each language you want and which posts need it. Every post is written in the main language first, then each version is written for native speakers (not translated word for word). Brand names, prices and registration numbers stay as they are.</p>
         <div class="langgrid">${XLANGS.map(l => { const d = arr(b.langDefault).find(x => x.lang === l); return `<div class="langrow"><label class="chk"><input type="checkbox" class="npl-lang-x" value="${esc(l)}" ${d ? 'checked' : ''}> ${esc(l)}</label><select class="in npl-lang-scope" data-lang="${esc(l)}" aria-label="${esc(l)} applies to">${opts(LSCOPES, d?.scope || 'all')}</select></div>`; }).join('')}</div>
       </details>
-      <label class="chk"><input type="checkbox" id="npl-reels" checked> Reel scripts</label>
-      <label class="chk"><input type="checkbox" id="npl-paid"> Paid boost ideas</label>
-      <label class="chk"><input type="checkbox" id="npl-inf"> Influencer / UGC ideas</label>
-      ${prev && prev[1].research ? `<label class="chk"><input type="checkbox" id="npl-reuse"> Reuse research from ${esc(mLabel(prev[1].month))}</label>` : ''}
-    </div>
     <div class="acts"><button class="btn pri" data-act="createPlan" ${hasCh && !aiOff() ? '' : 'disabled'}><span class="spark">✦</span> Generate plan</button><span class="muted sm">Takes about 3–6 minutes. Keep this tab open while it writes.</span></div>
     ${aiNote()}
   </section>
@@ -1752,7 +1767,7 @@ function vProfile(b){
   const f = (label, path, val, type='text', extra='') => `<label class="f">${label}<input class="in" type="${type}" data-bf="${path}" id="bf-${path.replace(/\./g,'-')}" value="${esc(val)}" ${extra}></label>`;
   const sel = (label, path, list, val, blank) => `<label class="f">${label}<select class="in" data-bf="${path}" id="bf-${path.replace(/\./g,'-')}">${opts(list, val, blank)}</select></label>`;
   const ta = (label, path, val, rows=2, cls='') => `<label class="f ${cls}">${label}<textarea class="in" rows="${rows}" data-bf="${path}" id="bf-${path.replace(/\./g,'-')}">${esc(val)}</textarea></label>`;
-  const rng = (path, l, r, val) => `<div class="range"><span>${l}</span><input type="range" min="1" max="5" step="1" data-bf="${path}" id="bf-${path.replace(/\./g,'-')}" value="${esc(val || 3)}" aria-label="${l} to ${r}"><span>${r}</span></div>`;
+  const rng = (path, l, r, val) => `<div class="range"><div class="rt"><span>${l}</span><span>${r}</span></div><input type="range" min="1" max="5" step="1" data-bf="${path}" id="bf-${path.replace(/\./g,'-')}" value="${esc(val || 3)}" aria-label="${l} to ${r}"><div class="rticks">${[1,2,3,4,5].map(i => `<i class="${+(val || 3) === i ? 'on' : ''}"></i>`).join('')}</div></div>`;
   const rt = b.retainer || {};
   return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c5)"></span>Brand logo</h2><p>Shows in the sidebar, on the dashboard and on client deck covers. PNG with a transparent background works best.</p></div></header>
     <div class="logoup">${bav(b, 64)}<label class="btn sm">Upload logo<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-chg="logoUp" hidden></label>${b.logo ? '<button class="btn sm ghost" data-act="logoDel">Remove</button>' : ''}</div></section>
