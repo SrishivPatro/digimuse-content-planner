@@ -3960,8 +3960,21 @@ function paintLumi(){
   $('#lumi-chips').innerHTML = LUMI.msgs.length ? '' : lumiChips().map(c => `<button class="chip" data-act="lumiChip">${esc(c)}</button>`).join('');
   $('#lumi-send').disabled = LUMI.busy; const box = $('#lumi-msgs'); box.scrollTop = box.scrollHeight;
 }
+function lumiQuick(t){
+  const x = t.toLowerCase().replace(/[^a-z\s']/g, '').replace(/\s+/g, ' ').trim(); if (!x || x.length > 30) return '';
+  const nm0 = str(mName(me) || (ui.user?.name && ui.user.name !== 'Owner' ? ui.user.name : '')); const name = nm0.replace(/\s*\(.*\)/, '').split(' ')[0]; const {b, plan, post} = lumiScope();
+  const where = post ? `I can see the post "${str(post.topic).slice(0, 50)}".` : plan ? `I can see ${b?.name ? b.name + "'s " : ''}${mLabel(plan.month)} plan.` : b ? `I can see ${b.name}'s Brand Brain.` : 'Open a client, plan or post and I\'ll work with what you see.';
+  if (/^(hi+|hey+|hello+|helo|yo|hola|namaste|namaskar|hii+ lumi|hi lumi|hey lumi|hello lumi|good (morning|afternoon|evening)( lumi)?)$/.test(x)) return `Hi${name ? ' ' + name : ''}! ${where} What should we work on — ideas, copy, a critique, or a trend check?`;
+  if (/^(thanks?( a lot| lumi| so much)?|thank you( lumi| so much)?|thx|ty|tysm|cheers)$/.test(x)) return 'Anytime! Ask me whenever you need the next one.';
+  if (/^(ok+|okay|k+|cool|great|nice|perfect|awesome|got it|sure|done|alright)$/.test(x)) return '👍 Tell me what you need next.';
+  if (/^(bye|see you|see ya|good night|gn|tc|take care)$/.test(x)) return 'Bye for now! Your chat is saved here.';
+  return '';
+}
 async function lumiAsk(text){
-  text = str(text).trim(); if (!text || LUMI.busy) return; if (aiOff()){ toast('Lumi is not available in this view'); return; }
+  text = str(text).trim(); if (!text || LUMI.busy) return;
+  // small talk gets an instant reply: no AI call, no cost, doesn't use the daily limit
+  const quick = lumiQuick(text); if (quick){ LUMI.msgs.push({r:'u', t:text, at:Date.now()}, {r:'l', t:quick, at:Date.now()}); lumiSave(); paintLumi(); return; }
+  if (aiOff()){ toast('Lumi is not available in this view'); return; }
   const {b, bid, post} = lumiScope(); const web = !!$('#lumi-web')?.checked && HOSTED;
   const hist = LUMI.msgs.slice(-6).map(m => (m.r === 'u' ? 'USER: ' : 'LUMI: ') + str(m.t).slice(0, 400)).join('\n');
   const howTo = /\b(how|where|tool|feature|button|export|download|upload|setting|login|password|can i|can lumi|can you|creative|deck|plan a|set up|setup|move|reschedule|shift|change|delete|remove|add|create|make|assign|approve|status|schedule|design|generate|duplicate|copy to)\b/i.test(text);

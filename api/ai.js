@@ -1,4 +1,4 @@
-import { authed, deny, recordUsage, redis, PREFIX } from './_lib.js';
+import { authed, deny, recordUsage, redis, pipeline, PREFIX } from './_lib.js';
 
 // Chat with Lumi runs on the lite model and has a per-person daily limit (admins set it on the Team page).
 // Free key (GEMINI_API_KEY_FREE, a project without billing) runs text first; the paid key covers images, overflow and fallback.
@@ -12,20 +12,24 @@ export default async function handler(req, res){
   const me = await authed(req); if (!me) return deny(res);
   const { prompt, tier = 'default', json = false, search = false, brandId = '', files = [] } = req.body || {};
   if (!prompt || typeof prompt !== 'string') return res.status(400).json({ error: 'Missing prompt' });
-  let chatLeft;
-  if (tier === 'chat'){
-    try { const lim = await chatLimitOf(); const k = PREFIX + 'chat:' + String(me.username || 'owner').slice(0, 80) + ':' + istDay(); const n = +(await redis(['INCR', k])) || 1; if (n === 1) await redis(['EXPIRE', k, 172800]);
-      if (n > lim){ return res.status(429).json({ code: 'chat_limit', error: `You've used today's ${lim} Lumi chat messages. The limit resets at midnight; your admin can change it on the Team page.` }); }
-      chatLeft = lim - n; } catch (e) {}
-  }
+  let chatLeft, freeMode = 'off', modeRaw;
+  try {
+    // one round trip: key mode (+ chat limit and today's counter for chat)
+    const k = PREFIX + 'chat:' + String(me.username || 'owner').slice(0, 80) + ':' + istDay();
+    const out = await pipeline(tier === 'chat' ? [['HGET', PREFIX + 'settings', 'freeMode'], ['HGET', PREFIX + 'settings', 'chatLimit'], ['INCR', k], ['EXPIRE', k, 172800]] : [['HGET', PREFIX + 'settings', 'freeMode']]);
+    modeRaw = out[0];
+    if (tier === 'chat'){ const v = +out[1]; const lim = Number.isFinite(v) && v > 0 ? v : (+process.env.LUMI_CHAT_DAILY || 40); const n = +out[2] || 1;
+      if (n > lim) return res.status(429).json({ code: 'chat_limit', error: `You've used today's ${lim} Lumi chat messages. The limit resets at midnight; your admin can change it on the Team page.` });
+      chatLeft = lim - n; }
+  } catch (e) {}
+  if (process.env.GEMINI_API_KEY_FREE) freeMode = ['all', 'light', 'off'].includes(modeRaw) ? modeRaw : 'all';
   const fl = (Array.isArray(files) ? files : []).filter(f => f && /^(application\/pdf|image\/(png|jpe?g|webp))$/.test(f.mime) && typeof f.data === 'string').slice(0, 4);
   try {
-    let freeMode = 'off'; if (process.env.GEMINI_API_KEY_FREE){ try { freeMode = await freeModeOf(); } catch (e) { freeMode = 'all'; } }
     const out = await runAI(prompt, { tier, json, search: !!search, files: fl, freeMode });
     if (!out) return res.status(500).json({ code: 'sampling_disabled', error: 'No AI key set. Add GEMINI_API_KEY (or ANTHROPIC_API_KEY) in Vercel, then redeploy.' });
-    try { await recordUsage(brandId, out.usage, out.provider); } catch (e) {}
-    delete out.usage; if (chatLeft !== undefined) out.chatLeft = chatLeft;
-    res.status(200).json(out);
+    const usage = out.usage; delete out.usage; if (chatLeft !== undefined) out.chatLeft = chatLeft;
+    res.status(200).json(out);   // reply first; bookkeeping after
+    try { await recordUsage(brandId, usage, out.provider); } catch (e) {}
   } catch (e){
     const limited = e.status === 429;
     res.status(limited ? 429 : 502).json({ code: limited ? 'rate_limited' : 'upstream_error', error: e.message });
@@ -68,14 +72,14 @@ async function latestGemini(kind, key = process.env.GEMINI_API_KEY){
   return ok[0] || null;
 }
 
-async function callGemini(model, prompt, json, search, files = [], key = process.env.GEMINI_API_KEY, tier = 'default'){
+async function callGemini(model, prompt, json, search, files = [], key = process.env.GEMINI_API_KEY, tier = 'default', noThink = false){
   const r = await fetch(`${GBASE}/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [...files.map(f => ({ inline_data: { mime_type: f.mime, data: f.data } })), { text: prompt }] }],
       ...(search ? { tools: [{ google_search: {} }] } : {}),
-      generationConfig: { temperature: tier === 'chat' ? 0.3 : 0.9, maxOutputTokens: 32768, ...(json && !search ? { responseMimeType: 'application/json' } : {}) }
+      generationConfig: { temperature: tier === 'chat' ? 0.3 : 0.9, maxOutputTokens: 32768, ...(noThink ? { thinkingConfig: { thinkingBudget: 0 } } : {}), ...(json && !search ? { responseMimeType: 'application/json' } : {}) }
     })
   });
   const j = await r.json().catch(() => ({}));
@@ -86,11 +90,12 @@ async function gemini(prompt, tier, json, search, files = [], key = process.env.
   const envModel = tier === 'chat' ? (process.env.GEMINI_MODEL_CHAT || 'gemini-flash-lite-latest') : tier === 'quick' ? (process.env.GEMINI_MODEL_FAST || process.env.GEMINI_MODEL) : process.env.GEMINI_MODEL;
   const pk = kind + ':' + tier; let model = picked[pk] || envModel || 'gemini-flash-latest';
   const tried = new Set();
-  let useSearch = search, waits = 0, searchDropped = false;
+  let useSearch = search, waits = 0, searchDropped = false, noThink = tier === 'chat';
   for (let attempt = 0; attempt < 6; attempt++){
     tried.add(model);
-    const { r, j } = await callGemini(model, prompt, json, useSearch, files, key, tier);
+    const { r, j } = await callGemini(model, prompt, json, useSearch, files, key, tier, noThink);
     const emsg = j?.error?.message || '';
+    if (!r.ok && noThink && r.status === 400 && /think/i.test(emsg)){ noThink = false; attempt--; continue; }   // model doesn't take the setting: ask again without it
     // Free keys cannot use Google Search grounding: carry on without it.
     if (!r.ok && useSearch && (r.status === 400 || r.status === 403) && /ground|google_search|search|tool|billing|free tier|not supported|not available/i.test(emsg)){ useSearch = false; searchDropped = true; continue; }
     // Rate limit (free tier is ~10 requests/minute): wait and retry a couple of times.
