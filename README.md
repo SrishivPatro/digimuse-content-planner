@@ -13,6 +13,17 @@ Internal social media planning tool for the Digimuse team.
 - **Client deck**: research, strategy and post-by-post slides built from each plan. Present in the app, download PowerPoint, or save as PDF. Presets for full plan, research, strategy or content decks.
 - **Exports**: Excel workbook, CSV, Markdown document, design briefs
 
+## Features
+
+- **Brand Brain** per client: industry-aware products (projects, loans, courses…), must-include lines (RERA, disclaimers), rules, references, hashtag & CTA bank, logo
+- **Monthly plans**: research, strategy, topical days (tick to include), content mix or weekly schedule, regional language versions, creative-director review
+- **Posts**: caption moods and versions, reel shot lists, language versions, version history, design references with thumbnails
+- **Decks**: client deck (4 themes), designer deck (one table slide per post), research, brief, pitch and report decks; platform filter on exports
+- **Research lab** + **weekly trend alert** (Mondays 9 am IST) feeding the Ideas bank; one-click write from any idea
+- **Briefs** (upload PDF / Word / text, AI plans the response and tasks) and **Pitch mode** (sample plan and pitch deck for prospects, convert to client)
+- **Competitors**, **Instagram results import**, **monthly reports**, **retainer tracker**
+- **Team**: personal logins, activity log, AI cost per client (admins only), search everything (Ctrl/⌘ K), light and dark mode
+
 ## Deploy on Vercel
 
 1. **Import**: vercel.com → Add New → Project → import this repo → Framework preset **Other** → Deploy.
@@ -26,6 +37,7 @@ Internal social media planning tool for the Digimuse team.
    | `GEMINI_MODEL` *(optional)* | Leave empty to use Google's latest Flash model. If Google retires a model, the app switches to the replacement automatically. |
    | `META_ACCESS_TOKEN` + `META_IG_USER_ID` *(optional, free)* | Real Instagram competitor data (followers, likes, comments, views) through Instagram's official Business Discovery API. Setup below. |
 | `APIFY_TOKEN` *(optional, paid)* | Only if you later want automated LinkedIn posts. Not needed: LinkedIn posts can be pasted in the Competitors tab. |
+| `CRON_SECRET` *(needed for weekly trend alerts)* | Any long random string. Vercel sends it to the weekly job so nobody else can trigger it. |
 | `ANTHROPIC_API_KEY` *(optional)* | Use Claude instead of Gemini |
    | `AI_PROVIDER` *(optional)* | `gemini` or `claude` if both keys are set |
    | `CLAUDE_MODEL` *(optional)* | Defaults to `claude-sonnet-5` |
@@ -50,6 +62,10 @@ Internal social media planning tool for the Digimuse team.
 - `api/og.js`: checks design reference links (Pinterest, Behance, etc.) really open and returns their preview image for the designer deck.
 - `api/login.js`: sign-in and sign-out (30-day signed session cookie).
 - `api/users.js`: personal logins: create, reset, disable, change password.
+- `api/log.js`: activity log and post version history.
+- `api/usage.js`: AI calls and tokens per client (admins only).
+- `api/cron.js`: weekly trend alert. Scheduled in `vercel.json` for Monday 03:30 UTC (9:00 IST); needs `CRON_SECRET`.
+- `api/og.js`, `api/scrape.js`, `api/bench.js`: reference link checks, website product import, competitor and Instagram data.
 - `api/bench.js`: pulls competitors' recent Instagram and LinkedIn posts through Apify.
 - `api/scrape.js`: imports a brand's products from its website (Shopify and WooCommerce stores directly; any other site is read and the AI picks out products and services).
 
