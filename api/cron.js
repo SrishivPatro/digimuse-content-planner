@@ -13,7 +13,8 @@ function prompt(b){
   const t = b.trendAlert || {};
   const prods = arr(b.brain?.products).slice(0, 15).map(p => p.name).join(', ');
   const pillars = arr(b.pillars).filter(p => p.active !== false).map(p => p.name).join(', ');
-  return `You are the lead social media strategist at a top Indian digital agency. Be specific and brand-true, no clichés.
+  return `Today is ${new Date().toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone:'Asia/Kolkata'})} (India time).
+You are the lead social media strategist at a top Indian digital agency. Be specific and brand-true, no clichés.
 
 BRAND: ${b.name} · ${b.industry || ''} ${b.sub ? '/ ' + b.sub : ''} · ${b.type || ''} · ${b.price || ''}
 About: ${str(b.desc).slice(0, 300)}
