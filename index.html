@@ -3445,7 +3445,7 @@ async function toB64(url){ const r = await fetch(sameOrigin(url), {credentials:'
 async function imgApi(body){
   const r = await fetch('/api/image', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify(body)});
   if (r.status === 401){ showLogin(); throw {message:'Please sign in again'}; }
-  const j = await r.json().catch(() => ({})); if (!r.ok) throw {message:j.error || 'Image service error', code:j.code}; return j;
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw {message:billMsg(j.error) || j.error || 'Image service error', code:j.code}; return j;
 }
 const kitFont = b => str(b?.brain?.kit?.fonts).split(/[,/|]/)[0].replace(/["']/g, '').trim();
 const fontsLoaded = {};
@@ -4752,6 +4752,7 @@ function httpDB(){
 }
 const SIG_BRAND = new WeakMap();
 const aiBrand = () => ui.aiBrand || (ui.view === 'pitch' ? 'pitch' : ui.view === 'plan' ? D.plans[ui.planId]?.brandId : ui.view === 'brand' || ui.view === 'briefs' ? ui.brandId : (ui.postId && D.posts[ui.postId]?.brandId)) || 'other';
+const billMsg = e => /prepayment credits are depleted|credit balance|billing/i.test(str(e)) ? 'Gemini credit is ₹0. Ask the admin to top up in Google AI Studio → Billing (a new payment can take a while to show).' : '';
 async function hostedCall(prompt, o={}){
   let r;
   const brandId = o.brandId || (o.signal && SIG_BRAND.get(o.signal)) || aiBrand();
@@ -4759,7 +4760,7 @@ async function hostedCall(prompt, o={}){
   catch (e){ if (e?.name === 'AbortError') throw {code:'cancelled'}; throw {code:'upstream_error', message:'Network error'}; }
   if (r.status === 401){ showLogin(); throw {code:'not_granted', message:'Sign in again'}; }
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw {code:j.code || 'upstream_error', message:j.error || ('AI error ' + r.status)};
+  if (!r.ok) throw {code:j.code || 'upstream_error', message:billMsg(j.error) || j.error || ('AI error ' + r.status)};
   return o.raw ? j : String(j.text || '');
 }
 async function webJSON(prompt, signal){
