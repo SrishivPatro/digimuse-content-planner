@@ -8,6 +8,9 @@
     },
     "api/og.js": {
       "maxDuration": 60
+    },
+    "api/cron.js": {
+      "maxDuration": 300
     }
   },
   "headers": [
@@ -23,6 +26,12 @@
           "value": "same-origin"
         }
       ]
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "30 3 * * 1"
     }
   ]
 }

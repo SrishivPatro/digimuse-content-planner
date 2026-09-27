@@ -31,6 +31,13 @@ html{color-scheme:light}
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.trendbox{border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--surface-2);display:flex;flex-direction:column;gap:6px;margin:6px 0 10px}
+.slide.t-minimal .sbar,.slide.t-minimal .dots,.slide.t-bold.cover .dots{display:none!important}.slide.t-minimal .ey{color:#111!important}.slide.t-minimal h2{color:#111;letter-spacing:-.02em}.slide.t-minimal th{background:#fff!important;border-bottom:2px solid #111;color:#111!important}.slide.t-minimal .kv div{background:#fff!important;border:1px solid #E4E4E4;border-top:.4cqw solid #111!important}.slide.t-minimal .card{background:#fff!important;border:1px solid #E4E4E4!important}.slide.t-minimal.cover{background:#fff!important;color:#111!important;border-bottom:.6cqw solid #111}.slide.t-minimal.cover h2{color:#111!important}.slide.t-minimal.cover .theme{color:#111!important}.slide.t-minimal.cover .sub,.slide.t-minimal.cover .ey{color:#555!important}
+.slide.t-bold .sbar{height:2.2cqw;background:var(--sc1)!important}.slide.t-bold h2{font-size:3.7cqw;letter-spacing:-.03em}.slide.t-bold .ey{color:var(--sc1)!important}.slide.t-bold th{background:var(--sc1)!important;color:#fff!important}.slide.t-bold .kv div{background:color-mix(in srgb,var(--sc1) 10%,#fff)!important}.slide.t-bold.cover{background:var(--sc1)!important}.slide.t-bold.cover .ey,.slide.t-bold.cover .sub{color:rgba(255,255,255,.85)!important}.slide.t-bold.cover .theme{color:#fff!important;text-decoration:underline;text-underline-offset:.5cqw}
+.slide.t-editorial{background:#F7F3EC!important;color:#2B2118!important}.slide.t-editorial .sbar{background:#C4622D!important;height:.5cqw}.slide.t-editorial .ey{color:#C4622D!important}.slide.t-editorial h2{color:#2B2118;font-weight:800;letter-spacing:-.035em}.slide.t-editorial th{background:#EFE6D8!important;color:#5A4636!important}.slide.t-editorial td{border-color:#E5DACA!important}.slide.t-editorial .kv div{background:#EFE6D8!important;border-top-color:#C4622D!important}.slide.t-editorial .card{background:#FBF7F0!important;border-color:#E5DACA!important}.slide.t-editorial.cover{background:#2B2118!important;color:#F7F3EC!important}.slide.t-editorial.cover .theme{color:#E3A67C!important}.slide.t-editorial.cover .dots{display:none!important}
+.dthemes{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dtheme{display:flex;flex-direction:column;gap:4px;padding:8px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font:inherit;color:inherit;text-align:left}.dtheme.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}.dtheme i{display:block;height:34px;border-radius:6px}.dtheme b{font-size:12.5px}.dtheme span{font-size:11px;color:var(--muted)}
+.searchbtn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-size:13px;cursor:pointer}.searchbtn kbd{margin-left:auto;font-family:var(--fm);font-size:10.5px;border:1px solid var(--line-2);border-radius:5px;padding:0 5px}
+#spal{position:fixed;inset:0;z-index:95;background:rgba(15,30,74,.35);display:flex;justify-content:center;align-items:flex-start;padding:10vh 16px 16px}#spal .box{width:min(640px,100%);background:var(--surface);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.3);overflow:hidden;display:flex;flex-direction:column;max-height:75vh}#spal input{border:0;border-bottom:1px solid var(--line);padding:16px 18px;font:inherit;font-size:16px;background:transparent;color:var(--ink);outline:none}#spal .res{overflow:auto;padding:6px}#spal .grp{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:10px 12px 4px}#spal .it{display:flex;gap:10px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:9px 12px;border-radius:10px;cursor:pointer;font:inherit;color:inherit}#spal .it.sel,#spal .it:hover{background:var(--accent-soft)}#spal .it .tx{display:flex;flex-direction:column;min-width:0}#spal .it .tx small{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .grid3{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin:10px 0}.grid3 .card{border-radius:14px;padding:14px;background:color-mix(in srgb,var(--kc) 8%,var(--surface));border:1px solid color-mix(in srgb,var(--kc) 25%,var(--line));border-top:4px solid var(--kc)}.grid3 .card p{margin:6px 0 0}.list .li.on{background:var(--accent-soft)}
 .moods,.capvars{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.moods .chip,.capvars .chip{cursor:pointer;font:inherit;font-size:12px;font-weight:600}.capvars .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}.langpick{border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--surface-2)}.langpick summary{cursor:pointer}.langgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin-top:8px}.langrow{display:flex;align-items:center;gap:8px}.langrow .chk{flex:0 0 96px}.langrow select{padding:5px 8px;font-size:12.5px}
 .bav.blogo{background:#fff;border:1px solid var(--line);overflow:hidden;padding:2px}.bav.blogo img{width:100%;height:100%;object-fit:contain;display:block}.logoup{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.logoup .bav{width:64px;height:64px;border-radius:16px;font-size:22px}.slide .clogo{position:absolute;top:3.2cqw;right:3.2cqw;height:6cqw;max-width:18cqw;background:#fff;border-radius:1.2cqw;padding:.8cqw 1.2cqw;object-fit:contain}
@@ -543,6 +550,7 @@ th{background:var(--surface-2)}
 <div id="present" hidden></div>
 <div id="printdeck" aria-hidden="true"></div>
 <div id="login" hidden><form class="box" id="loginForm"><div style="display:flex;gap:12px;align-items:center"><div style="display:flex;flex-direction:column;gap:0"><span id="lg-logo"></span><small class="eng lg">Content Engine<sup class="tm">™</sup></small></div></div><label class="f">Username<input class="in" id="lg-user" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="e.g. priya"></label><label class="f">Password<input class="in" type="password" id="lg-pw" autocomplete="current-password" required></label><p class="err" id="lg-err" hidden></p><button class="btn pri" type="submit" style="justify-content:center">Sign in</button><p class="muted sm">No login yet? Ask your admin to create one for you on the Team page.</p></form></div>
+<div id="spal" hidden><div class="box" role="dialog" aria-label="Search"><input id="spal-q" placeholder="Search brands, posts, captions, ideas, briefs…" autocomplete="off" spellcheck="false"><div class="res" id="spal-res"></div></div></div>
 <div id="pwbox" hidden><form class="box" id="pwForm"><h2 style="font-size:20px" id="pw-title">Change your password</h2><p class="muted sm" id="pw-note"></p><label class="f">Current password<input class="in" type="password" id="pw-old" autocomplete="current-password" required></label><label class="f">New password <span class="hint">at least 8 characters</span><input class="in" type="password" id="pw-new" autocomplete="new-password" minlength="8" required></label><label class="f">Repeat new password<input class="in" type="password" id="pw-new2" autocomplete="new-password" minlength="8" required></label><p class="err" id="pw-err" hidden></p><div class="acts"><button class="btn pri" type="submit">Save password</button><button class="btn ghost" type="button" id="pw-cancel">Cancel</button></div></form></div>
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -1122,6 +1130,7 @@ function vSide(){
   const nb = (v, l, ico, col, c) => `<button class="${ui.view===v?'on':''}" data-act="go" data-v="${v}"><span class="ico" style="--ics:var(${col}s);--ic:var(${col})">${IC[ico]}</span>${esc(l)}${c ? `<span class="count">${c}</span>` : ''}</button>`;
   const team = Object.entries(D.team).sort((a,b) => str(a[1].name).localeCompare(str(b[1].name))).map(([id,m]) => [id, `${m.name} · ${m.role}`]);
   return `<div class="logo" style="flex-direction:column;align-items:flex-start;gap:0;cursor:pointer" data-act="go" data-v="home" role="link" tabindex="0" title="Go to Dashboard" aria-label="Digimuse Content Engine, go to Dashboard">${LOGO_IMG}<small class="eng">Content Engine<sup class="tm">™</sup></small></div>
+  <button class="searchbtn" data-act="search">⌕ Search everything <kbd>${/Mac/.test(navigator.platform) ? '⌘' : 'Ctrl'} K</kbd></button>
   <nav class="nav" aria-label="Main">${nb('home','Dashboard','home','--c1')}${nb('tasks','My tasks','tasks','--c2', me ? myTasks().length : 0)}${nb('briefs','Briefs','doc','--c5', Object.values(D.reports).filter(r => r.type === 'brief' && r.status !== 'Delivered').length)}${nb('pitch','Pitch mode','spark','--c2')}${nb('team','Team','team','--c4')}${nb('live','Go live guide','rocket','--c3')}</nav>
   <div><div class="slabel">Brands <button class="lnk" data-act="newBrand">+ New brand</button></div>
     <div class="blist">${sortedBrands().map(([id,b]) => { const c = brandColors(b); return `<button class="bitem ${ui.brandId===id && (ui.view==='brand'||ui.view==='plan') ? 'on' : ''}" data-act="goBrand" data-id="${id}">${bav(b)}${esc(str(b.name).trim() || 'Untitled brand')}</button>`; }).join('') || '<p class="sm" style="padding:0 10px;color:var(--side-muted)">No brands yet</p>'}</div></div>
@@ -1488,7 +1497,10 @@ function vLab(b){
       <button class="btn pri" data-act="runLab" ${ui.labBusy || aiOff() ? 'disabled' : ''}>${ui.labBusy ? `<span class="spin"></span> ${esc(ui.labBusy)}` : '<span class="spark">✦</span> Run research'}</button>
     </div>
     ${HOSTED ? '' : '<p class="muted sm">Live web search runs on the hosted version. Here the AI uses what it already knows.</p>'}
-    ${reps.length ? `<div class="rowline"><label class="f" style="max-width:420px">Saved research<select class="in" data-chg="labPick">${opts(reps.map(([id, r]) => [id, `${rtype(r.kind)[1]} · ${new Date(r.at).toLocaleDateString()}${r.focus ? ' · ' + str(r.focus).slice(0, 40) : ''}`]), cur?.[0])}</select></label></div>` : ''}
+    <div class="trendbox"><label class="chk"><input type="checkbox" data-bf="trendAlert.on" id="bf-trendAlert-on" ${b.trendAlert?.on ? 'checked' : ''}> <b>Weekly trend alert</b> <span class="muted sm">every Monday 9 am: Trend radar runs by itself and new ideas land in the Ideas bank</span></label>
+      <div class="rowline"><label class="f" style="flex:0 0 130px">Ideas each week<input class="in" type="number" min="3" max="12" data-bf="trendAlert.n" id="bf-trendAlert-n" value="${esc(b.trendAlert?.n || 6)}"></label><label class="f">Focus <span class="hint">optional</span><input class="in" data-bf="trendAlert.focus" id="bf-trendAlert-focus" value="${esc(b.trendAlert?.focus || '')}" placeholder="Festive gifting, Gen Z office culture"></label>${HOSTED ? `<button class="btn" data-act="trendNow" ${ui.trendBusy || aiOff() ? 'disabled' : ''}>${ui.trendBusy ? '<span class="spin"></span> Running…' : 'Run it now'}</button>` : ''}</div>
+      ${b.trendAlert?.lastRun ? `<p class="muted sm">Last run ${ago(b.trendAlert.lastRun)}.</p>` : ''}</div>
+    ${reps.length ? `<div class="rowline"><label class="f" style="max-width:420px">Saved research<select class="in" data-chg="labPick">${opts(reps.map(([id, r]) => [id, `${r.auto ? '⏰ Weekly alert' : rtype(r.kind)[1]} · ${new Date(r.at).toLocaleDateString()}${r.focus ? ' · ' + str(r.focus).slice(0, 40) : ''}`]), cur?.[0])}</select></label></div>` : ''}
     ${aiNote()}
   </section>
   ${cur ? vLabView(b, cur[0], cur[1]) : `<div class="empty"><p>Pick a research type and press Run research. Results are saved for the whole team.</p></div>`}`;
@@ -1871,7 +1883,9 @@ function vReport(plan, ps){
   const byFmt = {}; withM.forEach(p => { const e = er(p); if (e == null) return; (byFmt[p.format] = byFmt[p.format] || []).push(e); });
   const fRows = Object.entries(byFmt).map(([l,v]) => ({l, v:v.reduce((s,x)=>s+x,0)/v.length, tip:`${l}: ${v.length} posts`})).sort((a,b) => b.v - a.v);
   const pct = v => v.toFixed(1) + '%';
-  const entry = `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c5)"></span>Log results</h2><p>Enter each post's numbers from Instagram or LinkedIn insights. Engagement rate = (likes + comments + saves + shares) ÷ reach.</p></div></header>
+  const bIG = D.brands[plan.brandId]?.handles?.instagram || '';
+  const entry = `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c5)"></span>Log results</h2><p>Enter each post's numbers from Instagram or LinkedIn insights, or import Instagram likes, comments and views automatically. Engagement rate = (likes + comments + saves + shares) ÷ reach.</p></div>${HOSTED ? `<button class="btn pri" data-act="igImport" ${ui.igImp ? 'disabled' : ''} title="${bIG ? 'Pulls @' + esc(bIG) + ' posts from Instagram' : 'Add the brand Instagram handle in the Competitors tab first'}">${ui.igImp ? '<span class="spin"></span> Importing…' : 'Import from Instagram'}</button>` : ''}</header>
+    ${ui.igImpMsg ? `<p class="sm" style="margin:0 0 8px">${esc(ui.igImpMsg)}</p>` : ''}
     ${live.length ? `<div class="tw"><table style="min-width:900px"><thead><tr><th>Post</th>${METRICS.map(([,l]) => `<th>${l}</th>`).join('')}<th>ER</th></tr></thead><tbody>${live.map(p => `<tr><td style="min-width:200px"><b>${esc(p.topic || 'Untitled')}</b><div class="muted sm">${shortD(p.date)} · ${esc(p.channel)} ${esc(p.format)}</div></td>${METRICS.map(([k]) => `<td style="min-width:86px"><input class="in" type="number" min="0" data-mf="${k}" data-id="${p.id}" id="m-${p.id}-${k}" value="${esc(p.metrics?.[k] ?? '')}" aria-label="${k}"></td>`).join('')}<td class="num">${er(p) != null ? pct(er(p)) : '—'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Posts appear here once they are approved, scheduled or published.</p>'}
   </section>`;
   if (!withM.length) return entry;
@@ -2002,7 +2016,9 @@ function deckModel(plan, ps){
   return M;
 }
 function deckAccent(b){ const c = brandColors(b); return c.solid && lum(c.solid) < .5 ? c.solid : '#0048AC'; }
-function slideHTML(m, i, n, plan){
+const DTHEMES = [['classic','Classic','Navy cover, brand accent'],['minimal','Minimal','White, black type, thin lines'],['bold','Bold','Brand colour blocks, big type'],['editorial','Editorial','Warm cream, magazine feel']];
+function slideHTML(m, i, n, plan){ const t = plan.deckTheme || D.plans[plan.id]?.deckTheme || 'classic'; const h = slideHTML0(m, i, n, plan); return t === 'classic' ? h : h.replace('<div class="slide', `<div class="slide t-${t}`); }
+function slideHTML0(m, i, n, plan){
   const b = plan._brand || D.brands[plan.brandId] || {};
   const acc = deckAccent(b);
   const ft = `<div class="ft"><span>${esc(b.name)} · ${esc(mLabel(plan.month))}</span><span>digimuse. · ${i + 1}/${n}</span></div>`;
@@ -2034,6 +2050,7 @@ function vPresent(plan, ps){
   const pre = [['full','Full plan'],['research','Research deck'],['strategy','Strategy only'],['content','Content only']];
   return `<div class="deckwrap"><aside class="deckside">
     ${chPicker() ? `<section class="panel" style="padding:18px">${chPicker()}</section>` : ''}
+    <section class="panel" style="padding:18px"><h3>Deck theme</h3><div class="dthemes">${DTHEMES.map(([k, l, d]) => `<button class="dtheme ${(plan.deckTheme || 'classic') === k ? 'on' : ''}" data-act="deckTheme" data-k="${k}"><i style="background:${k === 'classic' ? 'linear-gradient(90deg,#0F1E4A 55%,#FFA41B 55%)' : k === 'minimal' ? '#fff;border:1px solid #ddd;box-shadow:inset 0 -4px #111' : k === 'bold' ? 'var(--accent)' : 'linear-gradient(90deg,#2B2118 45%,#F7F3EC 45%)'}"></i><b>${l}</b><span>${d}</span></button>`).join('')}</div></section>
     <section class="panel" style="padding:18px"><h3>Present to the client</h3><p class="muted sm">${M.length} slides, built from this plan. Edit any post or section and the deck updates.</p>
       <div class="acts" style="flex-direction:column;align-items:stretch"><button class="btn pri" data-act="present" ${M.length ? '' : 'disabled'}>▶ Present</button><button class="btn hot" data-act="pptx" ${typeof PptxGenJS === 'undefined' || !DL || !M.length ? 'disabled' : ''}>Download PowerPoint</button>${HOSTED ? `<button class="btn" data-act="pdf" ${M.length ? '' : 'disabled'}>Save as PDF</button>` : ''}</div>
       ${typeof PptxGenJS === 'undefined' ? '<p class="muted sm">PowerPoint export is still loading or blocked.</p>' : ''}</section>
@@ -2071,32 +2088,38 @@ async function downloadPptx(Mx, meta={}){
   toast('Building PowerPoint…');
   try {
     const pptx = new PptxGenJS(); pptx.layout = 'LAYOUT_WIDE'; pptx.author = 'Digimuse'; pptx.company = 'Digimuse'; pptx.title = `${b.name} — ${mLabel(plan.month)}`;
-    const F = 'Montserrat', INK = '131A33', GREY = '8B91A7', ACC = hx(deckAccent(b)); const bc = brandColors(b);
+    const DT = meta.deckTheme || plan.deckTheme || 'classic'; const bc = brandColors(b); const ACC0 = hx(deckAccent(b));
+    const PAL = {classic:{bg:'FFFFFF', ink:'131A33', acc:ACC0, cov:'0F1E4A', covInk:'FFFFFF', covSub:'C9D3F5', covK:'8FA0D6', covT:'FFA41B', th:'F3F5FB', thInk:'444C66', kv:'F7F8FC', band:0.09, dots:true},
+      minimal:{bg:'FFFFFF', ink:'111111', acc:'111111', cov:'FFFFFF', covInk:'111111', covSub:'555555', covK:'555555', covT:'111111', th:'FFFFFF', thInk:'111111', kv:'FFFFFF', band:0, dots:false},
+      bold:{bg:'FFFFFF', ink:'131A33', acc:ACC0, cov:ACC0, covInk:'FFFFFF', covSub:'F1F1F1', covK:'FFFFFF', covT:'FFFFFF', th:ACC0, thInk:'FFFFFF', kv:'F3F5FB', band:0.2, dots:false},
+      editorial:{bg:'F7F3EC', ink:'2B2118', acc:'C4622D', cov:'2B2118', covInk:'F7F3EC', covSub:'D9CBB8', covK:'E3A67C', covT:'E3A67C', th:'EFE6D8', thInk:'5A4636', kv:'EFE6D8', band:0.05, dots:false}}[DT] || null;
+    const F = 'Montserrat', INK = PAL.ink, GREY = '8B91A7', ACC = PAL.acc;
     const BG = hx(bc.solid || '#2F5BEA'), FG = hx(bc.fg, 'FFFFFF'), AC = hx(bc.ac, 'FFA41B');
     const W = 13.333, X = 0.65, CW = W - 1.3;
     const foot = (sl, i, dark) => { sl.addText(`${b.name} · ${LBL}`, {x:X, y:7.05, w:7, h:0.3, fontFace:F, fontSize:9, color:dark ? '8FA0D6' : GREY}); sl.addText(`digimuse. · ${i + 1}/${M.length}`, {x:W - X - 4, y:7.05, w:4, h:0.3, fontFace:F, fontSize:9, color:dark ? '8FA0D6' : GREY, align:'right'}); };
-    const head = (sl, m) => { sl.addShape(pptx.ShapeType.rect, {x:0, y:0, w:W, h:0.09, fill:{color:ACC}, line:{color:ACC}}); sl.addText(str(m.ey).toUpperCase(), {x:X, y:0.35, w:CW, h:0.3, fontFace:F, fontSize:10, bold:true, color:ACC, charSpacing:2}); sl.addText(str(m.title), {x:X, y:0.62, w:CW, h:0.75, fontFace:F, fontSize:26, bold:true, color:INK}); };
+    const head = (sl, m) => { if (PAL.band) sl.addShape(pptx.ShapeType.rect, {x:0, y:0, w:W, h:PAL.band, fill:{color:ACC}, line:{color:ACC}}); sl.addText(str(m.ey).toUpperCase(), {x:X, y:0.35, w:CW, h:0.3, fontFace:F, fontSize:10, bold:true, color:ACC, charSpacing:2}); sl.addText(str(m.title), {x:X, y:0.62, w:CW, h:0.75, fontFace:F, fontSize:26, bold:true, color:INK}); };
     M.forEach((m, i) => {
       const sl = pptx.addSlide();
       if (m.k === 'cover'){
-        sl.background = {color:'0F1E4A'};
-        ['FF5A5F','FFA41B','10B9A0'].forEach((c, j) => sl.addShape(pptx.ShapeType.ellipse, {x:10.6 + j * 0.62, y:0.8, w:0.42, h:0.42, fill:{color:c}, line:{color:c}}));
-        sl.addText(meta.kicker || `SOCIAL MEDIA PLAN · ${mLabel(plan.month).toUpperCase()}`, {x:X, y:2.2, w:CW, h:0.4, fontFace:F, fontSize:12, bold:true, color:'8FA0D6', charSpacing:3});
-        sl.addText(str(b.name), {x:X, y:2.65, w:CW, h:1.3, fontFace:F, fontSize:48, bold:true, color:'FFFFFF'});
-        const TH = meta.theme != null ? meta.theme : plan.strategy?.theme?.name; if (TH) sl.addText(TH, {x:X, y:3.95, w:CW, h:0.6, fontFace:F, fontSize:22, bold:true, italic:true, color:'FFA41B'});
-        sl.addText(meta.sub || 'Research · Strategy · Content calendar · Post-by-post content', {x:X, y:4.6, w:CW, h:0.5, fontFace:F, fontSize:15, color:'C9D3F5'});
+        sl.background = {color:PAL.cov};
+        if (PAL.dots) ['FF5A5F','FFA41B','10B9A0'].forEach((c, j) => sl.addShape(pptx.ShapeType.ellipse, {x:10.6 + j * 0.62, y:0.8, w:0.42, h:0.42, fill:{color:c}, line:{color:c}}));
+        if (DT === 'minimal') sl.addShape(pptx.ShapeType.rect, {x:0, y:7.42, w:W, h:0.08, fill:{color:'111111'}, line:{color:'111111'}});
+        sl.addText(meta.kicker || `SOCIAL MEDIA PLAN · ${mLabel(plan.month).toUpperCase()}`, {x:X, y:2.2, w:CW, h:0.4, fontFace:F, fontSize:12, bold:true, color:PAL.covK, charSpacing:3});
+        sl.addText(str(b.name), {x:X, y:2.65, w:CW, h:1.3, fontFace:F, fontSize:48, bold:true, color:PAL.covInk});
+        const TH = meta.theme != null ? meta.theme : plan.strategy?.theme?.name; if (TH) sl.addText(TH, {x:X, y:3.95, w:CW, h:0.6, fontFace:F, fontSize:22, bold:true, italic:DT !== 'minimal', color:PAL.covT});
+        sl.addText(meta.sub || 'Research · Strategy · Content calendar · Post-by-post content', {x:X, y:4.6, w:CW, h:0.5, fontFace:F, fontSize:15, color:PAL.covSub});
         if (b.logo){ sl.addShape(pptx.ShapeType.roundRect, {x:W - X - 2.3, y:0.55, w:2.3, h:1.0, fill:{color:'FFFFFF'}, line:{color:'FFFFFF'}, rectRadius:0.12}); sl.addImage({data:b.logo, x:W - X - 2.2, y:0.62, w:2.1, h:0.86, sizing:{type:'contain', w:2.1, h:0.86}}); }
-        sl.addText('Prepared by Digimuse · Content Engine™', {x:X, y:7.05, w:6, h:0.3, fontFace:F, fontSize:9, color:'8FA0D6'});
+        sl.addText('Prepared by Digimuse · Content Engine™', {x:X, y:7.05, w:6, h:0.3, fontFace:F, fontSize:9, color:PAL.covK});
         return;
       }
-      sl.background = {color:'FFFFFF'}; head(sl, m.k === 'post' ? {ey:`Post ${m.n} of ${m.of}${m.post.pillar ? ' · ' + m.post.pillar : ''}`, title:m.post.topic} : m); foot(sl, i);
+      sl.background = {color:PAL.bg}; head(sl, m.k === 'post' ? {ey:`Post ${m.n} of ${m.of}${m.post.pillar ? ' · ' + m.post.pillar : ''}`, title:m.post.topic} : m); foot(sl, i);
       if (m.k === 'table'){
-        const rows = [m.head.map(h => ({text:h.toUpperCase(), options:{bold:true, fontSize:9, color:'444C66', fill:{color:'F3F5FB'}}}))].concat(m.rows.map(r => r.map((c, j) => ({text:str(c), options:{bold:j === 0}}))));
+        const rows = [m.head.map(h => ({text:h.toUpperCase(), options:{bold:true, fontSize:9, color:PAL.thInk, fill:{color:PAL.th}}}))].concat(m.rows.map(r => r.map((c, j) => ({text:str(c), options:{bold:j === 0}}))));
         sl.addTable(rows.map((r, j) => j ? r : r), {x:X, y:1.6, w:CW, fontFace:F, fontSize:m.rows.length <= 4 ? 14 : m.rows.length <= 6 ? 12.5 : 11, color:'252C45', valign:'top', border:{type:'solid', pt:0.5, color:'E6E9F2'}, margin:0.12});
       } else if (m.k === 'kv'){
         const cols = m.cols, gap = 0.3, w = (CW - gap * (cols - 1)) / cols, rowsN = Math.ceil(m.items.length / cols), h = Math.min(2.6, (5.2 - gap * (rowsN - 1)) / rowsN);
         m.items.forEach(([l, t, c], j) => { const x = X + (j % cols) * (w + gap), y = 1.6 + Math.floor(j / cols) * (h + gap); const col = PALHEX[c] || ACC;
-          sl.addShape(pptx.ShapeType.rect, {x, y, w, h, fill:{color:'F7F8FC'}, line:{color:'F7F8FC'}}); sl.addShape(pptx.ShapeType.rect, {x, y, w, h:0.07, fill:{color:col}, line:{color:col}});
+          sl.addShape(pptx.ShapeType.rect, {x, y, w, h, fill:{color:PAL.kv}, line:{color:DT === 'minimal' ? 'E4E4E4' : PAL.kv}}); sl.addShape(pptx.ShapeType.rect, {x, y, w, h:0.07, fill:{color:col}, line:{color:col}});
           sl.addText([{text:str(l).toUpperCase(), options:{bold:true, fontSize:10, color:col, charSpacing:2, breakLine:true}}, {text:str(t), options:{fontSize:cols === 1 ? 24 : 16, color:'252C45'}}], {x:x + 0.2, y:y + 0.2, w:w - 0.4, h:h - 0.3, fontFace:F, valign:'top', paraSpaceAfter:6}); });
       } else if (m.k === 'cards'){
         const cols = m.cols, gap = 0.25, w = (CW - gap * (cols - 1)) / cols, h = m.cards.some(c => c.body) ? 4.9 : 2.3;
@@ -2497,6 +2520,91 @@ function vPitchView(id, r){
   <div class="grid2"><section class="panel"><header><h2><span class="dotc" style="--dc:var(--c1)"></span>Why us</h2></header><ul style="margin:0;padding-left:18px">${arr(A.whyUs).map(x => `<li>${esc(x)}</li>`).join('')}</ul></section><section class="panel"><header><h2><span class="dotc" style="--dc:var(--c2)"></span>Next steps</h2></header><ol style="margin:0;padding-left:18px">${arr(A.nextSteps).map(x => `<li>${esc(x)}</li>`).join('')}</ol></section></div>`;
 }
 
+/* ---------- Instagram results import (likes, comments, views via Business Discovery) ---------- */
+async function igImport(){
+  const plan = D.plans[ui.planId]; const b = D.brands[plan.brandId]; const h = str(b.handles?.instagram).replace(/^@/, '').trim();
+  if (!h){ toast('Add the brand\'s Instagram handle in Competitors → Your brand first'); return; }
+  ui.igImp = true; ui.igImpMsg = ''; renderAll();
+  try {
+    const start = plan.month + '-01'; const days = Math.min(90, Math.max(7, Math.ceil((Date.now() - pdate(start).getTime()) / 864e5) + 3));
+    const r = await fetch('/api/bench', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({competitors:[{name:b.name, instagram:h}], days})});
+    if (r.status === 401){ showLogin(); return; }
+    const j = await r.json(); const res = arr(j.results)[0] || {};
+    if (j.source === 'none') throw {message:'Instagram is not connected yet. Add META_ACCESS_TOKEN and META_IG_USER_ID in Vercel.'};
+    if (arr(res.errors).length && !arr(res.posts).length) throw {message:res.errors[0]};
+    const ig = arr(res.posts).filter(x => x.platform === 'Instagram' && str(x.date).startsWith(plan.month));
+    const mine = postsOf(ui.planId).filter(p => p.channel === 'Instagram' && p.format !== 'Story');
+    const used = new Set(); let matched = 0;
+    const dd = (a, c) => Math.abs((pdate(a) - pdate(c)) / 864e5);
+    for (const x of ig.sort((a, c) => str(a.date).localeCompare(str(c.date)))){
+      const cand = mine.filter(p => !used.has(p.id) && validD(p.date) && dd(p.date, x.date) <= 1).sort((a, c) => (a.format === x.type ? 0 : 1) - (c.format === x.type ? 0 : 1) || dd(a.date, x.date) - dd(c.date, x.date));
+      const p = cand[0]; if (!p) continue; used.add(p.id); matched++;
+      await patch('posts', p.id, {metrics:{likes:x.likes, comments:x.comments, ...(x.views ? {views:x.views} : {}), url:x.url, importedAt:Date.now()}, ...(['Approved', 'Scheduled'].includes(p.status) || group(p.status) !== 'done' ? {status:'Published'} : {})});
+    }
+    ui.igImpMsg = `Imported ${matched} of ${ig.length} Instagram posts from ${mLabel(plan.month)} (@${h}). ${ig.length - matched ? (ig.length - matched) + ' had no planned post within a day. ' : ''}Reach, impressions and saves are only visible to the account owner, so add those from Instagram Insights.`;
+    toast(`Imported results for ${matched} posts`);
+  } catch (e){ ui.igImpMsg = e.message || 'Import failed'; toast(ui.igImpMsg); }
+  finally { ui.igImp = false; renderAll(); }
+}
+
+/* ---------- search everything (Ctrl/Cmd + K) ---------- */
+function searchIndex(q){
+  const t = q.trim().toLowerCase(); if (t.length < 2) return [];
+  const has = (...xs) => xs.some(x => str(x).toLowerCase().includes(t));
+  const out = [];
+  Object.entries(D.brands).forEach(([id, b]) => { if (has(b.name, b.industry, b.desc)) out.push({g:'Brands', t:b.name, s:[b.industry, b.type].filter(Boolean).join(' · '), go:{k:'brand', id}, b});
+    arr(b.ideas).forEach((x, i) => { if (has(x.text, x.why)) out.push({g:'Ideas', t:x.text, s:b.name + (x.used ? ' · used' : ''), go:{k:'ideas', id}, b}); });
+    arr(b.brain?.products).forEach(pr => { if (has(pr.name, pr.what)) out.push({g:'Products', t:pr.name, s:b.name + ' · ' + str(pr.what), go:{k:'brain', id}, b}); }); });
+  Object.entries(D.plans).forEach(([id, p]) => { const b = D.brands[p.brandId] || {}; if (has(b.name + ' ' + mLabel(p.month), p.strategy?.theme?.name)) out.push({g:'Plans', t:`${b.name} · ${mLabel(p.month)}`, s:p.strategy?.theme?.name || p.status, go:{k:'plan', id}, b}); });
+  Object.values(D.posts).forEach(p => { if (has(p.topic, p.hook, p.caption, p.hashtags, p.onImage?.headline)) { const b = D.brands[p.brandId] || {}; out.push({g:'Posts', t:p.topic || 'Untitled', s:`${b.name || ''} · ${fmtD(p.date)} · ${p.channel} ${p.format}`, go:{k:'post', id:p.id}, b}); } });
+  Object.entries(D.reports).forEach(([id, r]) => { const b = D.brands[r.brandId] || {};
+    if (r.type === 'brief' && has(r.data?.title, r.data?.summary, r.file)) out.push({g:'Briefs', t:r.data?.title || 'Brief', s:b.name, go:{k:'brief', id}, b});
+    else if (r.type === 'pitch' && has(r.prospect?.name, r.data?.strategy?.bigIdea)) out.push({g:'Pitches', t:r.prospect?.name, s:r.data?.strategy?.bigIdea || r.status, go:{k:'pitch', id}});
+    else if (r.type === 'research' && has(r.data?.headline, r.focus, r.data?.summary)) out.push({g:'Research', t:r.data?.headline || rtype(r.kind)[1], s:b.name + ' · ' + new Date(r.at).toLocaleDateString(), go:{k:'lab', id, b:r.brandId}, b});
+    else if ((r.type === 'monthly' || r.type === 'bench') && has(r.data?.headline, r.analysis?.summary, b.name)) out.push({g:'Reports', t:r.type === 'bench' ? 'Competitor benchmark · ' + b.name : (r.data?.headline || 'Monthly report · ' + b.name), s:new Date(r.at).toLocaleDateString(), go:{k:r.type === 'bench' ? 'comp' : 'reports', id:r.brandId}, b}); });
+  Object.entries(D.team).forEach(([id, m]) => { if (has(m.name, m.role)) out.push({g:'Team', t:m.name, s:m.role, go:{k:'team'}}); });
+  const order = ['Brands', 'Plans', 'Posts', 'Briefs', 'Pitches', 'Ideas', 'Research', 'Products', 'Reports', 'Team'];
+  return out.sort((a, c) => order.indexOf(a.g) - order.indexOf(c.g)).slice(0, 60);
+}
+let sRes = [], sSel = 0;
+function openSearch(){ const el = $('#spal'); el.hidden = false; const i = $('#spal-q'); i.value = ''; paintSearch(); setTimeout(() => i.focus(), 20); }
+function closeSearch(){ $('#spal').hidden = true; }
+function paintSearch(){
+  const q = $('#spal-q').value; sRes = searchIndex(q); sSel = 0; let last = '';
+  $('#spal-res').innerHTML = !q.trim() ? '<p class="muted sm" style="padding:12px">Search brands, plans, posts, captions, ideas, briefs, pitches, research and products.</p>' : sRes.length ? sRes.map((r, i) => (r.g !== last ? `<div class="grp">${esc(last = r.g)}</div>` : '') + `<button class="it ${i === 0 ? 'sel' : ''}" data-si="${i}">${r.b ? bav(r.b, 26) : ''}<span class="tx"><b>${esc(str(r.t).slice(0, 90))}</b><small>${esc(str(r.s).slice(0, 110))}</small></span></button>`).join('') : '<p class="muted sm" style="padding:12px">Nothing found.</p>';
+}
+function goSearch(i){
+  const r = sRes[i]; if (!r) return; closeSearch(); const g = r.go; ui.postId = null;
+  if (g.k === 'brand' || g.k === 'ideas' || g.k === 'brain' || g.k === 'comp' || g.k === 'reports'){ ui.view = 'brand'; ui.brandId = g.id; ui.btab = g.k === 'brand' ? 'plans' : g.k; }
+  else if (g.k === 'plan'){ ui.view = 'plan'; ui.planId = g.id; ui.brandId = D.plans[g.id]?.brandId; ui.tab = 'deck'; }
+  else if (g.k === 'post'){ const p = D.posts[g.id]; ui.view = 'plan'; ui.planId = p.planId; ui.brandId = p.brandId; ui.tab = 'deck'; renderAll(); ui.postId = g.id; renderDrawer(); return; }
+  else if (g.k === 'brief'){ ui.view = 'briefs'; ui.briefId = g.id; }
+  else if (g.k === 'pitch'){ ui.view = 'pitch'; ui.pitchId = g.id; }
+  else if (g.k === 'lab'){ ui.view = 'brand'; ui.brandId = g.b; ui.btab = 'lab'; ui.labId = g.id; }
+  else if (g.k === 'team'){ ui.view = 'team'; }
+  renderAll(); window.scrollTo(0, 0);
+}
+
+/* ---------- AI usage & cost per client (admins) ---------- */
+function usagePrice(){ let x = {}; try { x = JSON.parse(localStorage.getItem('dce_price') || '{}'); } catch (e){} return {in:+x.in || 0.30, out:+x.out || 2.50, search:x.search != null ? +x.search : 0.035, fx:+x.fx || 88}; }
+function vUsage(){
+  if (!HOSTED || ui.user?.role !== 'admin') return '';
+  if (ui.usage == null && !ui.usageBusy){ ui.usageBusy = true; fetch('/api/usage', {credentials:'same-origin'}).then(r => r.json()).then(j => { ui.usage = j.months || {}; }).catch(() => { ui.usage = {}; }).finally(() => { ui.usageBusy = false; sched(); }); }
+  const U = ui.usage || {}; const months = Object.keys(U).sort().reverse(); const m = ui.usageMonth && U[ui.usageMonth] ? ui.usageMonth : months[0];
+  const P = usagePrice(); const rows = Object.entries(U[m] || {}).map(([bid, x]) => { const usd = (x.in || 0) / 1e6 * P.in + (x.out || 0) / 1e6 * P.out + (x.search || 0) * P.search; return {bid, x, usd, inr:usd * P.fx}; }).sort((a, c) => c.usd - a.usd);
+  const tot = rows.reduce((s, r) => ({calls:s.calls + (r.x.calls || 0), inT:s.inT + (r.x.in || 0), outT:s.outT + (r.x.out || 0), search:s.search + (r.x.search || 0), inr:s.inr + r.inr}), {calls:0, inT:0, outT:0, search:0, inr:0});
+  const nm = bid => bid === 'pitch' ? 'Pitch mode' : bid === 'other' ? 'Other / general' : D.brands[bid]?.name || 'Deleted brand';
+  const k = n => n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : String(n || 0);
+  const inr = v => '₹' + Math.round(v).toLocaleString('en-IN');
+  return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>AI usage & cost by client <span class="chip">Admins only</span></h2><p>Counted from every AI call on the hosted app. Cost is an estimate from the rates below; check the real bill in Google Cloud → Billing.</p></div><label class="f" style="flex:0 0 170px">Month<select class="in" data-chg="usageMonth">${opts(months.map(x => [x, mLabel(x)]), m)}</select></label></header>
+    ${ui.usageBusy && !ui.usage ? '<p class="muted sm"><span class="spin"></span> Loading…</p>' : tbl(['Client', 'AI calls', 'Tokens in', 'Tokens out', 'Web searches', 'Est. cost', 'Per retainer'], rows.map(r => { const b = D.brands[r.bid]; const rc = b ? FORMATS.reduce((s, f) => s + (+(b.retainer || {})[f] || 0), 0) : 0;
+      return [`<b>${esc(nm(r.bid))}</b>`, `<span class="mono">${r.x.calls || 0}</span>`, `<span class="mono">${k(r.x.in)}</span>`, `<span class="mono">${k(r.x.out)}</span>`, `<span class="mono">${r.x.search || 0}</span>`, `<b class="mono">${inr(r.inr)}</b>`, rc ? `<span class="muted sm">${inr(r.inr / rc)} per contracted post</span>` : '']; }).concat(rows.length ? [[`<b>Total</b>`, `<b class="mono">${tot.calls}</b>`, `<b class="mono">${k(tot.inT)}</b>`, `<b class="mono">${k(tot.outT)}</b>`, `<b class="mono">${tot.search}</b>`, `<b class="mono">${inr(tot.inr)}</b>`, '']] : []))}
+    <details><summary class="sm" style="cursor:pointer;font-weight:700">Rates used for the estimate</summary><div class="rowline" style="margin-top:8px">
+      <label class="f">Input $ per 1M tokens<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="in" value="${P.in}"></label><label class="f">Output $ per 1M tokens<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="out" value="${P.out}"></label><label class="f">$ per web search<input class="in" type="number" step="0.001" data-chg="usagePrice" data-k="search" value="${P.search}"></label><label class="f">₹ per $<input class="in" type="number" step="0.5" data-chg="usagePrice" data-k="fx" value="${P.fx}"></label></div>
+      <p class="muted sm">Defaults are Gemini Flash list prices; Google gives some free searches a day, so the search part may be lower. Update these if your model or plan differs.</p></details>
+  </section>`;
+}
+
 /* ---------- tasks, team, go-live ---------- */
 function vTasks(){
   const team = Object.entries(D.team).map(([id,m]) => [id, `${m.name} · ${m.role}`]);
@@ -2517,12 +2625,13 @@ function vTeam(){
     <div class="rowline"><label class="f">Name<input class="in" id="nm-name" placeholder="Full name"></label><label class="f" style="flex:0 0 190px">Role<select class="in" id="nm-role">${opts(ROLES, 'Copywriter')}</select></label><button class="btn pri" data-act="addMember">Add member</button></div>
   </section>
   ${vLogins(m)}
+  ${vUsage()}
   ${vActivity()}`;
 }
 function vActivity(){
   if (!HOSTED) return '';
   if (ui.acts == null && !ui.actsBusy){ ui.actsBusy = true; fetch('/api/log?limit=60', {credentials:'same-origin'}).then(r => r.json()).then(j => { ui.acts = arr(j.items); }).catch(() => { ui.acts = []; }).finally(() => { ui.actsBusy = false; sched(); }); }
-  const what = e => { const col = {posts:'post', plans:'plan', brands:'brand', reports:'report', team:'team member'}[e.col] || e.col; const t = e.title ? ` “${esc(e.title)}”` : '';
+  const what = e => { const col = {posts:'post', plans:'plan', brands:'brand', reports:'report', team:'team member'}[e.col] || e.col; const tt = /^\d{4}-\d{2}$/.test(str(e.title)) ? mLabel(e.title) : e.title; const t = tt ? ` “${esc(tt)}”` : '';
     return e.op === 'set' ? `created ${col}${t}` : e.op === 'delete' ? `deleted ${col}${t}` : `changed ${esc(arr(e.keys).map(k => FLD[k] || k).slice(0, 4).join(', '))} on ${col}${t}`; };
   return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Recent activity</h2><p>Every change, by whom and when. Open a post and use History to restore earlier copy.</p></div><button class="btn sm" data-act="actsReload">Refresh</button></header>
     ${ui.actsBusy && !ui.acts ? '<p class="muted sm"><span class="spin"></span> Loading…</p>' : `<div class="list">${arr(ui.acts).map(e => `<div class="li" ${e.col === 'posts' && D.posts[e.id] ? `data-act="open" data-id="${e.id}" style="cursor:pointer"` : ''}><span class="tx"><span class="sm"><b>${esc(e.by)}</b> ${what(e)}</span><span class="muted sm">${ago(e.at)}</span></span></div>`).join('') || '<p class="muted sm">Nothing yet.</p>'}</div>`}
@@ -3018,7 +3127,7 @@ const shotText = p => `SHOT LIST — ${p.topic} (${p.channel} ${p.format}, ${fmt
 
 /* ---------- version history + activity ---------- */
 const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : new Date(t).toLocaleDateString(); };
-const FLD = {topic:'topic', hook:'hook', caption:'caption', hashtags:'hashtags', onImage:'on-image copy', slides:'carousel slides', script:'script', design:'design brief', langs:'language versions', shots:'shot list', status:'status', date:'date', pillar:'pillar', product:'product', channel:'channel', format:'format', comments:'comments', creatives:'creatives', metrics:'results', checklist:'checklist', writer:'writer', designer:'designer', capVars:'caption variants', capSel:'caption choice'};
+const FLD = {topic:'topic', hook:'hook', caption:'caption', hashtags:'hashtags', onImage:'on-image copy', slides:'carousel slides', script:'script', design:'design brief', langs:'language versions', shots:'shot list', status:'status', date:'date', pillar:'pillar', product:'product', channel:'channel', format:'format', comments:'comments', creatives:'creatives', metrics:'results', checklist:'checklist', writer:'writer', designer:'designer', capVars:'caption variants', capSel:'caption choice', deckTheme:'deck theme', handles:'social handles', trendAlert:'trend alert', retainer:'retainer', logo:'logo', ideas:'ideas', brain:'Brand Brain', pillars:'pillars', tasks:'tasks', saved:'saved ideas', opts:'plan settings', topical:'topical days', strategy:'strategy', snapshot:'research', shots:'shot list', shoot:'shoot notes', langDefault:'language defaults'};
 async function loadHist(id){
   ui.hist = {id, busy:true, log:[], versions:[]}; renderDrawer();
   if (!HOSTED){ ui.hist = {id, busy:false, log:[], versions:[], off:true}; renderDrawer(); return; }
@@ -3172,6 +3281,10 @@ const ACT = {
   pptx: () => downloadPptx(),
   designerDeck: () => downloadDesignerDeck(),
   labKind: a => { ui.labKind = a.dataset.k; renderAll(); },
+  search: () => openSearch(),
+  igImport: () => igImport(),
+  trendNow: async () => { ui.trendBusy = true; renderAll(); try { const r = await fetch('/api/cron?brand=' + encodeURIComponent(ui.brandId), {credentials:'same-origin'}); const j = await r.json(); if (!r.ok || !j.done?.length) throw {message:j.failed?.[0]?.error || j.error || 'Trend alert failed'}; await hostedDB?.refresh(); ui.labId = j.done[0].report; toast(`${j.done[0].ideas} new trend ideas added to the Ideas bank`); } catch (e){ toast(e.message || 'Trend alert failed'); } finally { ui.trendBusy = false; renderAll(); } },
+  deckTheme: a => patch('plans', ui.planId, {deckTheme:a.dataset.k}),
   runBrief: () => runBrief(),
   briefOpen: a => { ui.view = 'briefs'; ui.briefId = a.dataset.id; renderAll(); setTimeout(() => document.querySelectorAll('.hero')[1]?.scrollIntoView({behavior:'smooth', block:'start'}), 40); },
   briefCopy: a => copyText(briefText(D.reports[a.dataset.id])),
@@ -3586,6 +3699,8 @@ const ACT = {
   rmMember: a => { ui.confirm = null; del('team', a.dataset.id); if (me === a.dataset.id){ me = ''; lsSet('mp_me', ''); } }
 };
 const CHG = {
+  usageMonth: t => { ui.usageMonth = t.value; renderAll(); },
+  usagePrice: t => { const P = usagePrice(); P[t.dataset.k] = +t.value; try { localStorage.setItem('dce_price', JSON.stringify(P)); } catch (e){} renderAll(); },
   briefClient: t => { ui.briefClient = t.value; renderAll(); },
   briefStatus: t => patch('reports', t.dataset.id, {status:t.value}),
   pitchStatus: t => patch('reports', t.dataset.id, {status:t.value}),
@@ -3832,6 +3947,15 @@ $('#pwForm').addEventListener('submit', async e => {
   catch (x){ err.hidden = false; err.textContent = x.message; }
 });
 $('#pw-cancel').addEventListener('click', () => { $('#pwbox').hidden = true; });
+$('#spal-q').addEventListener('input', paintSearch);
+$('#spal').addEventListener('click', e => { const it = e.target.closest('[data-si]'); if (it) return goSearch(+it.dataset.si); if (e.target.id === 'spal') closeSearch(); });
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); $('#spal').hidden ? openSearch() : closeSearch(); return; }
+  if ($('#spal').hidden) return;
+  if (e.key === 'Escape'){ closeSearch(); return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){ e.preventDefault(); sSel = Math.max(0, Math.min(sRes.length - 1, sSel + (e.key === 'ArrowDown' ? 1 : -1))); document.querySelectorAll('#spal .it').forEach((x, i) => x.classList.toggle('sel', i === sSel)); document.querySelectorAll('#spal .it')[sSel]?.scrollIntoView({block:'nearest'}); }
+  if (e.key === 'Enter'){ e.preventDefault(); goSearch(sSel); }
+});
 
 /* ---------- boot ---------- */
 renderAll();
