@@ -49,6 +49,7 @@ html{color-scheme:light}
 .lm.u{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:5px}.lm.l{align-self:flex-start;background:var(--bg);border:1px solid var(--line);border-bottom-left-radius:5px}
 .lideas,.lapply{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.lapply p{margin:2px 0 4px;white-space:normal}.lsrc{font-size:12px;color:var(--muted);margin-top:6px}.lacts{display:flex;justify-content:flex-end;margin-top:2px}
 .lhello{display:flex;gap:10px;align-items:flex-start;color:var(--ink);font-size:14px;line-height:1.5}.lfoot{border-top:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:7px}.lchips{display:flex;gap:6px;flex-wrap:wrap}.lchips .chip{cursor:pointer;font-size:12.5px}
+.lgo{margin-top:8px}.sec.flash{outline:3px solid var(--accent);outline-offset:4px;border-radius:14px;transition:outline-color .6s}
 .lmeta{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.lmeta small{color:var(--muted);font-size:11.5px}
 .lin{display:flex;gap:8px;align-items:flex-end}.lin textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font:inherit;font-size:14px;background:var(--bg);color:var(--ink);max-height:140px}
 .typing span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted);margin-right:3px;animation:lb 1s infinite}.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}.typing em{font-style:normal;color:var(--muted);font-size:12.5px}@keyframes lb{0%,80%,100%{opacity:.25}40%{opacity:1}}
@@ -555,9 +556,9 @@ th{background:var(--surface-2)}
 .modes{display:inline-flex;gap:4px;padding:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;flex-wrap:wrap}
 .modes label{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:9px;cursor:pointer;font-weight:700;font-size:13px;color:var(--ink-2)}
 .modes input{accent-color:var(--accent)}
-.modes label:has(input:checked){background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
 </head>
 <body>
+.modes label:has(input:checked){background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
 .week{display:grid;grid-template-columns:repeat(7,minmax(138px,1fr));gap:8px;overflow-x:auto;padding-bottom:6px}
 .dayc{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:8px;min-width:138px}
 .dayc > header{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13px}
@@ -3859,6 +3860,7 @@ const lumiSave = () => lsSet('dce_lumi', JSON.stringify(LUMI.msgs.slice(-40).map
 const LUMI_GUIDE = `Sidebar: Dashboard, My tasks, Chat with Lumi, Briefs (upload a client brief; Lumi plans the response and tasks), Pitch mode (sample plan + pitch deck for a prospect), Team (logins, activity, Lumi usage & cost for admins), Go live guide, Search everything (Ctrl/Cmd K), brands list, light/dark mode.
 Brand tabs: Monthly plans (+ New plan: month, content mix or weekly schedule, pillars, products, topical days, language versions, Lumi creatives), Topical calendar (master list per month with regions), Competitors (benchmark Instagram/LinkedIn), Research (trend, audience, competitor, campaign research to the Ideas bank), Reports, Ideas bank (one-click write), Brand Brain (products with industry fields, rules, references, reply bank, hashtag & CTA bank, brand kit colours/fonts, logo), Profile & team (retainer: posts and stories contracted per month, creatives default, team).
 Plan tabs: Client deck (present, PowerPoint, 4 themes), Posts, Calendar, Board (workflow), Research, Strategy, Topical days, Client review, Performance (results, Instagram import, report), Export (Excel workbook, client document, calendar CSV, design briefs, designer deck with references, Creatives: design all + download zip; platform filter on top).
+Common actions: reschedule = drag the post on the plan's Calendar tab, or change Post date/Time in the post panel · status = the "Move to …" button in the post panel or drag on the Board tab · assign writer/designer = Copywriter/Designer in the post panel · add a post = plan → Posts tab → + Add post · add a topical-day post = plan → Topical days tab, tick the day · new month = client → Monthly plans → + New plan · delete a post = post panel → Delete post · design all creatives = plan → Export → Creatives · client approval = plan → Client review tab.
 Post panel: write/regenerate with Lumi, Lumi writing tools, caption moods, hooks, on-image copy, language versions (each its own creative), Creative (3 designs, Edit design: position/size/fonts/colours/highlight/decoration/logo, own photo, regenerate with a note, carousel slide images, size), reel shot lists, design references, version history, status.`;
 function lumiScope(){
   const post = ui.postId ? D.posts[ui.postId] : null; const pid = post?.planId || (ui.view === 'plan' ? ui.planId : '');
@@ -3889,6 +3891,17 @@ function lumiChips(){ const {b, post, plan} = lumiScope();
   if (b) return [`What's trending in ${str(b.industry) || 'this category'} right now?`, 'Give me 5 post ideas for this month', 'Suggest 3 campaign ideas', 'Who should we benchmark against?'];
   return ['How do I plan a month for a new client?', 'How do Lumi creatives work?', 'Give me a 1-page pitch idea for a D2C brand', 'Write a LinkedIn post for Digimuse'];
 }
+const LUMI_PLAN_TABS = ['present','deck','calendar','board','topical','review','report','export'], LUMI_BRAND_TABS = ['plans','topical','comp','lab','reports','ideas','brain','profile'], LUMI_POST_SECS = ['creative','languages','status'], LUMI_PAGES = ['home','tasks','briefs','pitch','team','live'];
+const LUMI_GO_LABEL = {present:'Open the Client deck', deck:'Open Posts', calendar:'Open the Calendar', board:'Open the Board', topical:'Open Topical days', review:'Open Client review', report:'Open Performance', export:'Open Export', plans:'Open Monthly plans', comp:'Open Competitors', lab:'Open Research', reports:'Open Reports', ideas:'Open the Ideas bank', brain:'Open the Brand Brain', profile:'Open Profile & team', creative:'Go to Creative', languages:'Go to Language versions', status:'Go to status & dates', home:'Open Dashboard', tasks:'Open My tasks', briefs:'Open Briefs', pitch:'Open Pitch mode', team:'Open Team', live:'Open the Go live guide'};
+function lumiGo(g){
+  if (!g) return;
+  if (LUMI_POST_SECS.includes(g.to)){ if (!D.posts[g.postId]) return toast('That post is no longer here'); ui.postId = g.postId; renderDrawer(); setTimeout(() => { const want = {creative:'Creative', languages:'Language versions', status:'Brief & workflow'}[g.to]; const h = [...document.querySelectorAll('#drawer .sec h3')].find(x => x.textContent.trim().startsWith(want)); h?.closest('.sec')?.scrollIntoView({behavior:'smooth', block:'start'}); h?.closest('.sec')?.classList.add('flash'); setTimeout(() => h?.closest('.sec')?.classList.remove('flash'), 1600); }, 80); return; }
+  ui.postId = null; renderDrawer();
+  if (LUMI_PLAN_TABS.includes(g.to)){ if (!D.plans[g.pid]) return toast('That plan is no longer here'); ui.view = 'plan'; ui.planId = g.pid; ui.brandId = D.plans[g.pid].brandId; ui.tab = g.to; }
+  else if (LUMI_BRAND_TABS.includes(g.to)){ if (!D.brands[g.bid]) return toast('That client is no longer here'); ui.view = 'brand'; ui.brandId = g.bid; ui.btab = g.to; }
+  else ui.view = g.to;
+  renderAll(); window.scrollTo(0, 0);
+}
 const FIELD_LABEL = {hook:'hook', caption:'caption', hashtags:'hashtags', 'onImage.headline':'headline', 'onImage.subline':'subline', 'onImage.cta':'CTA'};
 function paintLumi(){
   const el = $('#lumi'), fab = $('#lumi-fab'); if (!el) return; el.hidden = !LUMI.open; if (fab) fab.hidden = LUMI.open; if (!LUMI.open) return;
@@ -3904,6 +3917,7 @@ function paintLumi(){
     + LUMI.msgs.map((m, i) => m.r === 'u' ? `<div class="lm u">${lumiMd(m.t)}</div>` : `<div class="lm l">${lumiMd(m.t)}
       ${arr(m.ideas).length ? `<div class="lideas">${m.ideas.map(x => `<div><b>${esc(x.title)}</b>${x.channel || x.format ? ` <span class="muted sm">${esc([x.channel, x.format].filter(Boolean).join(' · '))}</span>` : ''}${x.hook ? `<br><span class="sm">Hook: ${esc(x.hook)}</span>` : ''}</div>`).join('')}${m.bid && D.brands[m.bid] ? `<button class="btn sm ${m.saved ? '' : 'pri'}" data-act="lumiIdeas" data-i="${i}" ${m.saved ? 'disabled' : ''}>${m.saved ? '✓ Saved to Ideas bank' : `Save ${m.ideas.length} to ${esc(D.brands[m.bid].name)}'s Ideas bank`}</button>` : ''}</div>` : ''}
       ${arr(m.apply).length && m.postId && D.posts[m.postId] ? `<div class="lapply">${m.apply.map((x, j) => `<div><span class="eyebrow">${esc(x.label || FIELD_LABEL[x.field] || x.field)}</span><p>${esc(x.value).replace(/\n/g, '<br>')}</p><button class="btn sm ${arr(m.applied).includes(j) ? '' : 'pri'}" data-act="lumiApply" data-i="${i}" data-j="${j}" ${arr(m.applied).includes(j) ? 'disabled' : ''}>${arr(m.applied).includes(j) ? '✓ Applied' : 'Use as ' + esc(FIELD_LABEL[x.field] || x.field)}</button></div>`).join('')}</div>` : ''}
+      ${m.goto ? `<div class="lgo"><button class="btn sm pri" data-act="lumiGo" data-i="${i}">→ ${esc(m.goto.label || LUMI_GO_LABEL[m.goto.to] || 'Take me there')}</button></div>` : ''}
       ${arr(m.sources).length ? `<p class="lsrc">Sources: ${m.sources.slice(0, 5).map(x => `<a href="${esc(x.url || x.uri || '')}" target="_blank" rel="noopener">${esc(x.title || x.domain || 'link')}</a>`).join(' · ')}</p>` : ''}
       <div class="lacts"><button class="btn sm ghost" data-act="lumiCopy" data-i="${i}">Copy</button></div></div>`).join('')
     + (LUMI.busy ? `<div class="lm l typing"><span></span><span></span><span></span> <em>Lumi is ${$('#lumi-web')?.checked ? 'searching and ' : ''}thinking…</em></div>` : '');
@@ -3914,14 +3928,15 @@ async function lumiAsk(text){
   text = str(text).trim(); if (!text || LUMI.busy) return; if (aiOff()){ toast('Lumi is not available in this view'); return; }
   const {b, bid, post} = lumiScope(); const web = !!$('#lumi-web')?.checked && HOSTED;
   const hist = LUMI.msgs.slice(-6).map(m => (m.r === 'u' ? 'USER: ' : 'LUMI: ') + str(m.t).slice(0, 400)).join('\n');
-  const howTo = /\b(how|where|tool|feature|button|export|download|upload|setting|login|password|can i|can lumi|creative|deck|plan a|set up|setup)\b/i.test(text);
+  const howTo = /\b(how|where|tool|feature|button|export|download|upload|setting|login|password|can i|can lumi|can you|creative|deck|plan a|set up|setup|move|reschedule|shift|change|delete|remove|add|create|make|assign|approve|status|schedule|design|generate|duplicate|copy to)\b/i.test(text);
   LUMI.msgs.push({r:'u', t:text, at:Date.now()}); LUMI.busy = true; paintLumi();
   const prompt = `You are Lumi, the intelligence inside Digimuse Content Engine™, the internal tool of Digimuse, an Indian digital marketing agency (social media, performance, influencer, branding, production, SEO). You work with account managers, strategists, writers and designers: brainstorming, strategy, copy, captions, hooks, hashtags, trends, critique, client communication, and how to use the tool.
 STYLE: warm, sharp, specific; Indian market context; keep replies under 120 words unless the user asks for more; short bullets; no generic filler or AI clichés (never: elevate, unlock, game-changer, delve, in today's fast-paced world). Give a clear recommendation when asked. Use the Brand Brain; never invent facts about a client (prices, claims, offers); say when you are unsure. Follow the brand rules and compliance lines exactly.${web ? ' Use web search for anything current and name your sources.' : ''}
-${howTo ? 'TOOL GUIDE: ' + LUMI_GUIDE + '\n' : ''}CONTEXT — what the user has open:
+${howTo ? 'TOOL GUIDE: ' + LUMI_GUIDE + '\n' : ''}ACTIONS: from chat you cannot change anything in the tool (no creating, moving, rescheduling, deleting or editing posts, plans or clients; no status or assignee changes; no designing creatives; no exports) — the only exception is the Apply buttons for the open post's copy. If the user asks you to do one of these, say in one short line that you can't do that from chat yet, then give the exact steps from the TOOL GUIDE, and set "goto" to where they should go. Never pretend you did it.
+CONTEXT — what the user has open:
 ${lumiContext()}
 ${hist ? 'CONVERSATION SO FAR:\n' + hist + '\n' : ''}USER: ${text}
-Return JSON {"reply":"your answer; plain text with **bold** and - bullets allowed","ideas":[ONLY if the user asked for post/content/campaign ideas for this brand: {"title":"","channel":"Instagram|LinkedIn|…","format":"Static|Carousel|Reel|Story|Text","hook":"","why":""}],"apply":[ONLY if a post is open AND the user asked you to write or rewrite part of it: {"field":"hook|caption|hashtags|onImage.headline|onImage.subline|onImage.cta","label":"short label","value":"the final text, ready to use"}]}`;
+Return JSON {"goto":{"to":"one of: plan tabs present|deck|calendar|board|topical|review|report|export (only if a plan is open) · brand tabs plans|topical|comp|lab|reports|ideas|brain|profile (only if a client is in context) · post sections creative|languages|status (only if a post is open) · pages home|tasks|briefs|pitch|team|live","label":"button text, e.g. Open the Calendar"} or null,"reply":"your answer; plain text with **bold** and - bullets allowed","ideas":[ONLY if the user asked for post/content/campaign ideas for this brand: {"title":"","channel":"Instagram|LinkedIn|…","format":"Static|Carousel|Reel|Story|Text","hook":"","why":""}],"apply":[ONLY if a post is open AND the user asked you to write or rewrite part of it: {"field":"hook|caption|hashtags|onImage.headline|onImage.subline|onImage.cta","label":"short label","value":"the final text, ready to use"}]}`;
   try {
     let data, sources = [];
     if (HOSTED){ const j = await hostedCall(prompt, {json:!web, raw:true, search:web, modelTier:'chat', brandId:'chat'}); data = parseLoose(j.text); if (data === undefined) data = str(j.text); sources = arr(j.sources); if (j.chatLeft != null) LUMI.left = j.chatLeft; }
@@ -3929,7 +3944,9 @@ Return JSON {"reply":"your answer; plain text with **bold** and - bullets allowe
     const reply = typeof data === 'string' ? data : str(data?.reply) || 'I could not put that into words. Try asking again.';
     const ideas = arr(data?.ideas).filter(x => x && x.title).slice(0, 12).map(x => ({title:str(x.title).slice(0, 200), channel:CH.includes(x.channel) ? x.channel : '', format:FORMATS.includes(x.format) ? x.format : '', hook:str(x.hook).slice(0, 300), why:str(x.why).slice(0, 300)}));
     const apply = post ? arr(data?.apply).filter(x => FIELD_LABEL[x?.field] && str(x.value).trim()).slice(0, 6).map(x => ({field:x.field, label:str(x.label).slice(0, 40), value:str(x.value)})) : [];
-    LUMI.msgs.push({r:'l', t:reply, ideas, apply, bid:ideas.length ? bid : '', postId:apply.length ? post.id : '', sources:arr(sources).map(x => ({url:x.url || x.uri, title:x.title})).filter(x => x.url), at:Date.now()});
+    const {plan:pl0, pid:pid0} = lumiScope(); const gt = data?.goto && typeof data.goto === 'object' ? data.goto : null; const to = str(gt?.to);
+    const goto = !gt ? null : LUMI_PLAN_TABS.includes(to) && pid0 ? {to, pid:pid0, bid, label:str(gt.label).slice(0, 40)} : LUMI_BRAND_TABS.includes(to) && bid ? {to, bid, label:str(gt.label).slice(0, 40)} : LUMI_POST_SECS.includes(to) && post ? {to, postId:post.id, label:str(gt.label).slice(0, 40)} : LUMI_PAGES.includes(to) ? {to, label:str(gt.label).slice(0, 40)} : null;
+    LUMI.msgs.push({r:'l', t:reply, ideas, apply, goto, bid:ideas.length ? bid : '', postId:apply.length ? post.id : '', sources:arr(sources).map(x => ({url:x.url || x.uri, title:x.title})).filter(x => x.url), at:Date.now()});
   } catch (e){ LUMI.msgs.push({r:'l', t:e.message || errCopy(e) || 'Something went wrong. Try again.', at:Date.now()}); }
   finally { LUMI.busy = false; lumiSave(); paintLumi(); }
 }
@@ -4306,6 +4323,7 @@ const ACT = {
     ui.crJob = ''; toast(`${done} creative${done === 1 ? '' : 's'} designed${fail ? `, ${fail} failed (try those again)` : ''}${ui.crStop ? ' · stopped' : ''}`); sched(); },
   lumiOpen: () => { LUMI.open = true; paintLumi(); renderAll(); setTimeout(() => $('#lumi-in')?.focus(), 30); },
   lumiClose: () => { LUMI.open = false; paintLumi(); renderAll(); },
+  lumiGo: a => { const m = LUMI.msgs[+a.dataset.i]; lumiGo(m?.goto); },
   lumiNew: () => { if (LUMI.busy) return; LUMI.msgs = []; lumiSave(); paintLumi(); $('#lumi-in')?.focus(); },
   lumiSend: () => { const i = $('#lumi-in'); const t = i?.value || ''; if (!t.trim()) return; i.value = ''; lumiAsk(t); },
   lumiChip: a => lumiAsk(a.textContent),
