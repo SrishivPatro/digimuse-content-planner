@@ -1,8 +1,8 @@
-# Digimuse Content Engine™
+# LUMI by Digimuse
 
 Internal social media planning tool for the Digimuse team.
 
-**Lumi** is the tool's built-in intelligence: it researches, plans, writes and designs, always from each client's Brand Brain. Under the hood it runs on Gemini (or Claude) through the keys set in Vercel.
+**LUMI** is Digimuse's internal content tool, and **Lumi** is its built-in intelligence: it researches, plans, writes and designs, always from each client's Brand Brain. Under the hood it runs on Gemini (or Claude) through the keys set in Vercel.
 
 - **Brand Brain** for every client: products (auto-imported from the brand website), rules, references, reply bank, brand kit
 - **Monthly plans by Lumi**: web-researched trends and competitors, a creative reference board of real campaigns (Pinterest, Behance, other brands), strategy on your chosen content pillars, your exact content mix and product focus, and a creative director review that rewrites weak posts

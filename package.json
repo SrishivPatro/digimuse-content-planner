@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Digimuse Content Engine: AI social media planning, content deck, creatives, design briefs, approvals and reporting for the Digimuse team.",
+  "description": "LUMI by Digimuse: social media planning with Lumi, content deck, creatives, design briefs, approvals and reporting for the Digimuse team.",
   "engines": {
     "node": ">=18"
   },
