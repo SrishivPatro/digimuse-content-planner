@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Digimuse Content Planner: AI social media planning, content deck, design briefs, approvals and reporting for the Digimuse team.",
-  "engines": { "node": ">=18" }
+  "description": "Digimuse Content Engine: AI social media planning, content deck, creatives, design briefs, approvals and reporting for the Digimuse team.",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@vercel/blob": "^1.0.0"
+  }
 }

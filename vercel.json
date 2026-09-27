@@ -11,6 +11,9 @@
     },
     "api/cron.js": {
       "maxDuration": 300
+    },
+    "api/image.js": {
+      "maxDuration": 120
     }
   },
   "headers": [

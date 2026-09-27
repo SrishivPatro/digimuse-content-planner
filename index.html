@@ -31,6 +31,10 @@ html{color-scheme:light}
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.slide .pcv.pimg{padding:0;background:#EEF1F7;overflow:hidden}.slide .pcv.pimg img{width:100%;height:100%;object-fit:cover;display:block}
+.cv.hasimg{padding:0;background:#EEF1F7}.cv.hasimg img{width:100%;height:100%;object-fit:cover;display:block}
+.crwrap{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}.crmain{width:min(320px,100%);border-radius:12px;border:1px solid var(--line);display:block}.crslides{display:flex;gap:6px;flex-wrap:wrap;max-width:320px}.crslides img{width:72px;border-radius:8px;border:1px solid var(--line);display:block}
+.copts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.copt{display:flex;flex-direction:column;gap:6px;padding:6px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;color:var(--ink)}.copt:hover{border-color:var(--accent)}.copt img{width:100%;border-radius:8px;display:block}
 .optgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.optcol{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}.optcol .eyebrow{margin:0 0 2px}.optcol .chk{align-items:flex-start;line-height:1.4}.tophint{display:block;line-height:1.5;padding-top:6px;border-top:1px dashed var(--line)}
 .ctbar{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:14px 18px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);margin:0 0 12px}.ctbar.none{flex-direction:row;align-items:center;flex-wrap:wrap;gap:10px}.cttop{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.cttop .ctedit{margin-left:auto}.ctf{padding-top:10px;border-top:1px dashed var(--line);align-items:center}.ctbar.none{justify-content:space-between;color:var(--ink-2)}.ctbig{display:flex;align-items:baseline;gap:6px}.ctbig b{font-size:26px;font-weight:800;line-height:1}.ctbig span{color:var(--muted);font-weight:700}.ctbig small{color:var(--muted);margin-left:4px}.ctlab{font-weight:800;padding:4px 10px;border-radius:99px}.ctf{display:flex;gap:6px;flex-wrap:wrap;flex:1}.ctf .chip.lo{color:var(--warn);border-color:currentColor}.ctf .chip.hi{color:var(--c5);border-color:currentColor}.ctf .chip.ok{color:var(--s-approved);border-color:currentColor}
 .ctbar.less{border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}.ctbar.less .ctlab{background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--warn)}.ctbar.par{border-color:color-mix(in srgb,var(--s-approved) 45%,var(--line))}.ctbar.par .ctlab{background:color-mix(in srgb,var(--s-approved) 12%,transparent);color:var(--s-approved)}.ctbar.more{border-color:color-mix(in srgb,var(--c5) 45%,var(--line))}.ctbar.more .ctlab{background:color-mix(in srgb,var(--c5) 12%,transparent);color:var(--c5)}
@@ -1094,6 +1098,7 @@ function hasMetrics(p){ const m = p.metrics || {}; return METRICS.some(([k]) => 
 /* ---------- visual pieces ---------- */
 function creative(p, cls='band'){
   const b = D.brands[p.brandId] || {};
+  if (p.creative?.url) return `<div class="cv ${cls} hasimg"><img src="${esc(p.creative.url)}" alt="${esc(p.onImage?.headline || p.topic || 'Creative')}" loading="lazy"></div>`;
   const c = brandColors(b);
   const hl = p.onImage?.headline || p.topic || 'Untitled post';
   return `<div class="cv ${cls}" style="--cbg:${c.bg};--cfg:${c.fg};--cac:${c.ac}"><span class="deco" aria-hidden="true"></span><span class="deco2" aria-hidden="true"></span><span class="fm">${esc(CHA[p.channel] || p.channel)} · ${esc(str(p.format).toUpperCase())}</span><div class="hl">${esc(hl)}</div>${p.onImage?.subline ? `<div class="sl">${esc(p.onImage.subline)}</div>` : ''}${p.onImage?.cta ? `<span class="ct">${esc(p.onImage.cta)}</span>` : ''}</div>`;
@@ -1277,6 +1282,11 @@ function vPlans(b){
     ${hasCh ? vPlanPillars(b) : ''}
     ${hasCh ? vPlanHero(b) : ''}
     <div class="optgrid">
+      <div class="optcol"><p class="eyebrow">Creatives</p>
+        <label class="chk"><input type="checkbox" id="npl-cr" ${b.creativeDefault?.on ? 'checked' : ''}> Generate AI creatives <span class="muted sm">(about ₹3–12 per image)</span></label>
+        <div class="chips" style="margin:0">${CFORMATS.map(f => `<label class="chk chip"><input type="checkbox" class="npl-crf" value="${f}" ${arr(b.creativeDefault?.formats).length ? (b.creativeDefault.formats.includes(f) ? 'checked' : '') : 'checked'}> ${f === 'Story' ? 'Stories' : f + 's'}</label>`).join('')}</div>
+        <span class="muted sm">Off = copy and design briefs only. You can create a creative for any single post later.</span>
+      </div>
       <div class="optcol"><p class="eyebrow">Content</p>
         <label class="chk"><input type="checkbox" id="npl-cd" checked> Creative director review (sharper, a bit slower)</label>
         <label class="chk"><input type="checkbox" id="npl-reels" checked> Reel scripts</label>
@@ -1720,7 +1730,7 @@ function vBrain(b){
   <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>${esc(pschema(b).label)} <span class="muted mono" style="font-size:13px">${prod.length}</span></h2><p>Every post is anchored to one of these. Import them from the brand's website, add one by one, or paste a catalogue.</p></div><div class="acts"><button class="btn sm pri" data-act="importSite" ${ui.importBusy ? 'disabled' : ''}>${ui.importBusy ? '<span class="spin"></span> Reading website…' : 'Import from website'}</button>${prod.some(p => p.source === 'website') ? '<button class="btn sm ghost" data-act="clearImported">Remove imported</button>' : ''}</div></header>
     ${b.website ? `<p class="muted sm">Website: ${linkOK(b.website) ? `<a href="${esc(b.website)}" target="_blank" rel="noopener">${esc(b.website)}</a>` : esc(b.website)}${HOSTED ? '' : ' · Website import works on the Vercel version of the planner.'}</p>` : '<p class="muted sm">Add the brand website in Profile & team, and products are pulled in automatically.</p>'}
     <div class="rowline"><label class="f" style="flex:0 0 280px">Product type <span class="hint">sets the fields below</span><select class="in" data-chg="ptype">${opts(PTYPE_OPTS, pschemaKey(b))}</select></label><p class="muted sm" style="align-self:end">Picked from the industry (${esc(b.industry || 'not set')}). Change it if this brand sells something different.</p></div>
-    ${tbl(['Name','What it is','Key facts','Price / offer','Must include',''], prod.slice(0, ui.allProd ? 1000 : 25).map((p,i) => [`<b>${p.url && linkOK(p.url) ? `<a href="${esc(p.url)}" target="_blank" rel="noopener" style="color:inherit">${esc(p.name)}</a>` : esc(p.name)}</b>`, esc(p.what), `<span class="sm">${esc(prodFacts(b, p) || str(p.benefits).slice(0, 140))}</span>`, `${esc(p.price)}${p.offer ? `<br><span class="muted sm">${esc(p.offer)}</span>` : ''}`, p.must ? `<span class="sm">${esc(p.must)}</span>` : '<span class="muted sm">—</span>', `<div class="acts"><button class="btn sm" data-act="editProduct" data-i="${i}">Edit</button><button class="btn sm ghost" data-act="rmItem" data-k="products" data-i="${i}">Remove</button></div>`]))}
+    ${tbl(['Name','What it is','Key facts','Price / offer','Must include',''], prod.slice(0, ui.allProd ? 1000 : 25).map((p,i) => [`${p.photo ? `<img src="${esc(p.photo)}" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:8px">` : ''}<b>${p.url && linkOK(p.url) ? `<a href="${esc(p.url)}" target="_blank" rel="noopener" style="color:inherit">${esc(p.name)}</a>` : esc(p.name)}</b>`, esc(p.what), `<span class="sm">${esc(prodFacts(b, p) || str(p.benefits).slice(0, 140))}</span>`, `${esc(p.price)}${p.offer ? `<br><span class="muted sm">${esc(p.offer)}</span>` : ''}`, p.must ? `<span class="sm">${esc(p.must)}</span>` : '<span class="muted sm">—</span>', `<div class="acts"><button class="btn sm" data-act="editProduct" data-i="${i}">Edit</button><button class="btn sm ghost" data-act="rmItem" data-k="products" data-i="${i}">Remove</button></div>`]))}
     ${prod.length > 25 ? `<div><button class="btn sm" data-act="toggleProd">${ui.allProd ? 'Show fewer' : `Show all ${prod.length}`}</button></div>` : ''}
     ${(() => { const sc = pschema(b); const ed = ui.editProd != null && ui.editProd.b === ui.brandId ? prod[ui.editProd.i] : null; const v = k => esc(ed ? (['name','what','benefits','price','offer','must'].includes(k) ? ed[k] : ed.x?.[k]) || '' : '');
       return `<p class="eyebrow" style="margin-top:6px">${ed ? 'Edit ' + esc(ed.name) : 'Add a ' + esc(sc.one)}</p><div class="fg">
@@ -1730,6 +1740,7 @@ function vBrain(b){
       <label class="f">Key benefits<input class="in" id="np-ben" value="${v('benefits')}"></label>
       <label class="f">Price<input class="in" id="np-price" value="${v('price')}"></label>
       <label class="f">Current offer<input class="in" id="np-offer" value="${v('offer')}"></label>
+      <label class="f">Product photo <span class="hint">used so AI creatives show the real product</span><input class="in" type="file" id="np-photo" accept="image/png,image/jpeg,image/webp">${ed?.photo ? `<img src="${esc(ed.photo)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--line);margin-top:4px">` : ''}</label>
       <label class="f" style="grid-column:1/-1">Must include in every post about it <span class="hint">added to the caption automatically, e.g. RERA number or disclaimer</span><input class="in" id="np-must" value="${v('must')}" placeholder="${esc(sc.mustPh || 'Optional')}"></label>
     </div>`; })()}
     <div class="acts"><button class="btn" data-act="addProduct">${ui.editProd != null && ui.editProd.b === ui.brandId ? 'Save changes' : 'Add ' + esc(pschema(b).one)}</button>${ui.editProd != null && ui.editProd.b === ui.brandId ? '<button class="btn ghost" data-act="cancelProd">Cancel</button>' : ''}</div>
@@ -1776,6 +1787,9 @@ function vProfile(b){
   const rt = b.retainer || {};
   return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c5)"></span>Brand logo</h2><p>Shows in the sidebar, on the dashboard and on client deck covers. PNG with a transparent background works best.</p></div></header>
     <div class="logoup">${bav(b, 64)}<label class="btn sm">Upload logo<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-chg="logoUp" hidden></label>${b.logo ? '<button class="btn sm ghost" data-act="logoDel">Remove</button>' : ''}</div></section>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Creatives</h2><p>Whether this client's plans include AI creatives, or copy and design briefs only. You can still change it for any plan or post.</p></div></header>
+    <div class="modes"><label><input type="radio" name="crdef" data-chg="crDefOn" value="0" ${b.creativeDefault?.on ? '' : 'checked'}> Copy only (designer deck with briefs)</label><label><input type="radio" name="crdef" data-chg="crDefOn" value="1" ${b.creativeDefault?.on ? 'checked' : ''}> With AI creatives</label></div>
+    ${b.creativeDefault?.on ? `<div class="chips">${CFORMATS.map(f => `<label class="chk chip"><input type="checkbox" data-chg="crDefFmt" value="${f}" ${arr(b.creativeDefault.formats).length ? (b.creativeDefault.formats.includes(f) ? 'checked' : '') : 'checked'}> ${f === 'Story' ? 'Stories' : f + 's'}</label>`).join('')}</div>` : ''}</section>
   <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c4)"></span>Retainer: contracted each month</h2><p>What the client pays for. The dashboard tracks delivery against it, and new plans start from these numbers.</p></div></header>
     <div class="fg" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))">${FORMATS.map(f => `<label class="f">${f === 'Text' ? 'Text posts' : f + (f === 'Story' ? ' (stories)' : 's')}<input class="in" type="number" min="0" max="200" data-bf="retainer.${f}" id="bf-retainer-${f}" value="${esc(rt[f] ?? '')}" placeholder="0"></label>`).join('')}</div>
     <div class="fg">${f('Notes <span class="hint">e.g. 2 shoot days, 1 influencer post</span>','retainer.note',rt.note || '')}</div></section>
@@ -1998,7 +2012,7 @@ function vExport(plan, ps){
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Client document</h2><p>Strategy plus every post in Markdown. Paste into Google Docs or Notion, or download.</p></div></header><div class="acts"><button class="btn" data-act="md" ${DL ? '' : 'disabled'}>Download .md</button><button class="btn" data-act="copyMd">Copy text</button></div></section>
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c6)"></span>Calendar</h2><p>Tab-separated, ready to paste into Google Sheets.</p></div></header><div class="acts"><button class="btn" data-act="copyCal">Copy for Sheets</button><button class="btn" data-act="csv" ${DL ? '' : 'disabled'}>Download .csv</button></div></section>
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Design briefs</h2><p>Every post's brief in one text file for the design team.</p></div></header><div class="acts"><button class="btn" data-act="briefs" ${DL ? '' : 'disabled'}>Download briefs</button><button class="btn" data-act="copyBriefs">Copy all</button></div></section>
-    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Designer deck</h2><p>One clean slide per post: date, platform, format, pillar, image copy, post copy, design ref and notes. Opens in Google Slides (upload to Drive → Open with Google Slides).</p></div></header><div class="acts"><button class="btn pri" data-act="designerDeck" ${typeof PptxGenJS === 'undefined' || !DL || !ps.length ? 'disabled' : ''}>Download deck</button> <button class="btn" data-act="allShots" ${ui.shotJob || aiOff() || !ps.some(p => ['Reel','Video','Story'].includes(p.format)) ? 'disabled' : ''}>${ui.shotJob ? '<span class="spin"></span> Making shot lists…' : '✦ Shot lists for all reels'}</button><button class="btn hot" data-act="refFindAll" ${ui.refJob || aiOff() || !HOSTED || !ps.length ? 'disabled' : ''} title="${HOSTED ? 'Searches Pinterest, Behance and Dribbble and keeps only links that really open' : 'Needs the hosted version'}">${ui.refJob ? esc(ui.refJob) : 'Find real references for all posts'}</button></div><p class="muted sm">${ps.filter(p => refsOf(p).some(r => r.img)).length} of ${ps.filter(p => p.format !== 'Text').length} design posts have reference images. They appear on each slide.</p></section>
+    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Designer deck</h2><p>One clean slide per post: date, platform, format, pillar, image copy, post copy, design ref and notes. Opens in Google Slides (upload to Drive → Open with Google Slides).</p></div></header> ${ps.some(p => p.creative?.url) ? `<label class="chk" style="margin-bottom:8px"><input type="checkbox" data-chg="exImg" ${withImg() ? 'checked' : ''}> Include creatives (untick for copy only)</label>` : ''}<div class="acts"><button class="btn pri" data-act="designerDeck" ${typeof PptxGenJS === 'undefined' || !DL || !ps.length ? 'disabled' : ''}>Download deck</button> <button class="btn" data-act="allShots" ${ui.shotJob || aiOff() || !ps.some(p => ['Reel','Video','Story'].includes(p.format)) ? 'disabled' : ''}>${ui.shotJob ? '<span class="spin"></span> Making shot lists…' : '✦ Shot lists for all reels'}</button><button class="btn hot" data-act="refFindAll" ${ui.refJob || aiOff() || !HOSTED || !ps.length ? 'disabled' : ''} title="${HOSTED ? 'Searches Pinterest, Behance and Dribbble and keeps only links that really open' : 'Needs the hosted version'}">${ui.refJob ? esc(ui.refJob) : 'Find real references for all posts'}</button></div><p class="muted sm">${ps.filter(p => refsOf(p).some(r => r.img)).length} of ${ps.filter(p => p.format !== 'Text').length} design posts have reference images. They appear on each slide.</p></section>
   </div>
   ${DL ? '' : '<p class="muted sm">Downloads are not available in this view. Use the copy buttons instead.</p>'}
   <p class="muted sm">${ps.length} posts · ${ps.filter(p => p.hasContent).length} written · ${ps.filter(p => group(p.status) === 'done').length} approved</p>`;
@@ -2058,6 +2072,7 @@ function deckModel(plan, ps){
 function deckAccent(b){ const c = brandColors(b); return c.solid && lum(c.solid) < .5 ? c.solid : '#0048AC'; }
 const DTHEMES = [['classic','Classic','Navy cover, brand accent'],['minimal','Minimal','White, black type, thin lines'],['bold','Bold','Brand colour blocks, big type'],['editorial','Editorial','Warm cream, magazine feel']];
 function slideHTML(m, i, n, plan){ const t = plan.deckTheme || D.plans[plan.id]?.deckTheme || 'classic'; const h = slideHTML0(m, i, n, plan); return t === 'classic' ? h : h.replace('<div class="slide', `<div class="slide t-${t}`); }
+function pcvHTML(p, c){ return `<div class="pcv" style="background:${c.bg};color:${c.fg}"><span class="o" style="background:${c.ac}"></span>${p.format === 'Text' ? `<div class="hl" style="font-size:2.2cqw">${esc(p.hook)}</div>` : `<div class="hl">${esc(p.onImage?.headline || p.topic)}</div>${p.onImage?.subline ? `<div class="sl">${esc(p.onImage.subline)}</div>` : ''}${p.onImage?.cta ? `<span class="ct" style="background:${c.ac};color:${c.bg}">${esc(p.onImage.cta)}</span>` : ''}`}</div>`; }
 function slideHTML0(m, i, n, plan){
   const b = plan._brand || D.brands[plan.brandId] || {};
   const acc = deckAccent(b);
@@ -2079,7 +2094,7 @@ function slideHTML0(m, i, n, plan){
   if (m.k === 'post'){
     const p = m.post; const c = brandColors(b);
     const extra = arr(p.slides).length ? `<table class="mini"><thead><tr><th>#</th><th>Slide copy</th></tr></thead><tbody>${arr(p.slides).slice(0, 6).map((x, j) => `<tr><td>${j + 1}</td><td>${esc(x.copy)}</td></tr>`).join('')}</tbody></table>` : arr(p.script).length ? `<table class="mini"><thead><tr><th>Time</th><th>On screen</th><th>Voiceover</th></tr></thead><tbody>${arr(p.script).slice(0, 5).map(x => `<tr><td>${esc(x.t)}</td><td>${esc(x.onscreen)}</td><td>${esc(x.vo)}</td></tr>`).join('')}</tbody></table>` : '';
-    return wrap(`<div class="ey">Post ${m.n} of ${m.of}${p.pillar ? ' · ' + esc(p.pillar) : ''}</div><h2>${esc(p.topic)}</h2><div class="pgrid"><div class="pcv" style="background:${c.bg};color:${c.fg}"><span class="o" style="background:${c.ac}"></span>${p.format === 'Text' ? `<div class="hl" style="font-size:2.2cqw">${esc(p.hook)}</div>` : `<div class="hl">${esc(p.onImage?.headline || p.topic)}</div>${p.onImage?.subline ? `<div class="sl">${esc(p.onImage.subline)}</div>` : ''}${p.onImage?.cta ? `<span class="ct" style="background:${c.ac};color:${c.bg}">${esc(p.onImage.cta)}</span>` : ''}`}</div><div style="display:flex;flex-direction:column;gap:1.2cqw;min-width:0;overflow:hidden"><div class="pmeta2">${validD(p.date) ? `<span>${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</span>` : ''}<span class="ch" style="background:${CHC[p.channel] || '#555'}">${esc(p.channel)}</span><span>${esc(p.format)}</span>${p.topical ? `<span>${esc(p.topical)}</span>` : ''}</div>${p.hook ? `<div class="hook">${esc(p.hook)}</div>` : ''}${p.idea ? `<div style="font-size:1.15cqw;color:#444C66"><b style="color:#7C5CFF">The idea:</b> ${esc(p.idea)}</div>` : ''}<div class="capt" style="-webkit-line-clamp:${extra ? 4 : 7}">${esc(p.caption)}</div>${p.hashtags ? `<div class="tags">${esc(p.hashtags)}</div>` : ''}${extra}${(p.design?.layout || p.design?.mood || refsOf(p).some(r => r.img)) ? `<div style="background:#F3F5FB;border-radius:1cqw;padding:1cqw 1.2cqw;font-size:1.1cqw;line-height:1.45"><b style="color:var(--sc1);text-transform:uppercase;letter-spacing:.08em;font-size:1cqw">Design reference</b><br>${esc([p.design.layout, p.design.mood, p.design.elements].filter(Boolean).join(' · ').slice(0, 260))}${p.design.refSearch ? `<br><span style="color:#7A8199">Look up: ${esc(p.design.refSearch)}</span>` : ''}${refsOf(p).some(r => r.img) ? `<div style="display:flex;gap:.6cqw;margin-top:.6cqw">${refsOf(p).filter(r => r.img).slice(0, 4).map(r => `<a href="${esc(r.url)}" target="_blank" rel="noopener"><img src="${esc(r.img)}" alt="" referrerpolicy="no-referrer" style="height:6.5cqw;width:5.2cqw;object-fit:cover;border-radius:.6cqw;display:block"></a>`).join('')}</div>` : ''}</div>` : ''}</div></div>`);
+    return wrap(`<div class="ey">Post ${m.n} of ${m.of}${p.pillar ? ' · ' + esc(p.pillar) : ''}</div><h2>${esc(p.topic)}</h2><div class="pgrid">${withImg() && p.creative?.url ? `<div class="pcv pimg"><img src="${esc(p.creative.url)}" alt=""></div>` : pcvHTML(p, c)}<div style="display:flex;flex-direction:column;gap:1.2cqw;min-width:0;overflow:hidden"><div class="pmeta2">${validD(p.date) ? `<span>${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</span>` : ''}<span class="ch" style="background:${CHC[p.channel] || '#555'}">${esc(p.channel)}</span><span>${esc(p.format)}</span>${p.topical ? `<span>${esc(p.topical)}</span>` : ''}</div>${p.hook ? `<div class="hook">${esc(p.hook)}</div>` : ''}${p.idea ? `<div style="font-size:1.15cqw;color:#444C66"><b style="color:#7C5CFF">The idea:</b> ${esc(p.idea)}</div>` : ''}<div class="capt" style="-webkit-line-clamp:${extra ? 4 : 7}">${esc(p.caption)}</div>${p.hashtags ? `<div class="tags">${esc(p.hashtags)}</div>` : ''}${extra}${(p.design?.layout || p.design?.mood || refsOf(p).some(r => r.img)) ? `<div style="background:#F3F5FB;border-radius:1cqw;padding:1cqw 1.2cqw;font-size:1.1cqw;line-height:1.45"><b style="color:var(--sc1);text-transform:uppercase;letter-spacing:.08em;font-size:1cqw">Design reference</b><br>${esc([p.design.layout, p.design.mood, p.design.elements].filter(Boolean).join(' · ').slice(0, 260))}${p.design.refSearch ? `<br><span style="color:#7A8199">Look up: ${esc(p.design.refSearch)}</span>` : ''}${refsOf(p).some(r => r.img) ? `<div style="display:flex;gap:.6cqw;margin-top:.6cqw">${refsOf(p).filter(r => r.img).slice(0, 4).map(r => `<a href="${esc(r.url)}" target="_blank" rel="noopener"><img src="${esc(r.img)}" alt="" referrerpolicy="no-referrer" style="height:6.5cqw;width:5.2cqw;object-fit:cover;border-radius:.6cqw;display:block"></a>`).join('')}</div>` : ''}</div>` : ''}</div></div>`);
   }
   return '';
 }
@@ -2091,6 +2106,7 @@ function vPresent(plan, ps){
   return `<div class="deckwrap"><aside class="deckside">
     ${chPicker() ? `<section class="panel" style="padding:18px">${chPicker()}</section>` : ''}
     <section class="panel" style="padding:18px"><h3>Deck theme</h3><div class="dthemes">${DTHEMES.map(([k, l, d]) => `<button class="dtheme ${(plan.deckTheme || 'classic') === k ? 'on' : ''}" data-act="deckTheme" data-k="${k}"><i style="background:${k === 'classic' ? 'linear-gradient(90deg,#0F1E4A 55%,#FFA41B 55%)' : k === 'minimal' ? '#fff;border:1px solid #ddd;box-shadow:inset 0 -4px #111' : k === 'bold' ? 'var(--accent)' : 'linear-gradient(90deg,#2B2118 45%,#F7F3EC 45%)'}"></i><b>${l}</b><span>${d}</span></button>`).join('')}</div></section>
+    ${ps.some(p => p.creative?.url) ? `<section class="panel" style="padding:14px 18px"><label class="chk"><input type="checkbox" data-chg="exImg" ${withImg() ? 'checked' : ''}> Show creatives on slides</label><p class="muted sm" style="margin-top:4px">Untick for a copy-only deck.</p></section>` : ''}
     <section class="panel" style="padding:18px"><h3>Present to the client</h3><p class="muted sm">${M.length} slides, built from this plan. Edit any post or section and the deck updates.</p>
       <div class="acts" style="flex-direction:column;align-items:stretch"><button class="btn pri" data-act="present" ${M.length ? '' : 'disabled'}>▶ Present</button><button class="btn hot" data-act="pptx" ${typeof PptxGenJS === 'undefined' || !DL || !M.length ? 'disabled' : ''}>Download PowerPoint</button>${HOSTED ? `<button class="btn" data-act="pdf" ${M.length ? '' : 'disabled'}>Save as PDF</button>` : ''}</div>
       ${typeof PptxGenJS === 'undefined' ? '<p class="muted sm">PowerPoint export is still loading or blocked.</p>' : ''}</section>
@@ -2129,6 +2145,7 @@ async function downloadPptx(Mx, meta={}){
   try {
     const pptx = new PptxGenJS(); pptx.layout = 'LAYOUT_WIDE'; pptx.author = 'Digimuse'; pptx.company = 'Digimuse'; pptx.title = `${b.name} — ${mLabel(plan.month)}`;
     const DT = meta.deckTheme || plan.deckTheme || 'classic'; const bc = brandColors(b); const ACC0 = hx(deckAccent(b));
+    const CRD = withImg() && HOSTED ? await creativeData(M.filter(m => m.k === 'post').map(m => m.post)) : {};
     const PAL = {classic:{bg:'FFFFFF', ink:'131A33', acc:ACC0, cov:'0F1E4A', covInk:'FFFFFF', covSub:'C9D3F5', covK:'8FA0D6', covT:'FFA41B', th:'F3F5FB', thInk:'444C66', kv:'F7F8FC', band:0.09, dots:true},
       minimal:{bg:'FFFFFF', ink:'111111', acc:'111111', cov:'FFFFFF', covInk:'111111', covSub:'555555', covK:'555555', covT:'111111', th:'FFFFFF', thInk:'111111', kv:'FFFFFF', band:0, dots:false},
       bold:{bg:'FFFFFF', ink:'131A33', acc:ACC0, cov:ACC0, covInk:'FFFFFF', covSub:'F1F1F1', covK:'FFFFFF', covT:'FFFFFF', th:ACC0, thInk:'FFFFFF', kv:'F3F5FB', band:0.2, dots:false},
@@ -2177,10 +2194,11 @@ async function downloadPptx(Mx, meta={}){
         sl.addTable(rows, {x:X, y:1.5, w:CW, fontFace:F, fontSize:7.5, color:'252C45', valign:'top', border:{type:'solid', pt:0.5, color:'E6E9F2'}, margin:0.05, rowH:[0.3].concat(Array(rows.length - 1).fill((5.3 - 0.3) / (rows.length - 1)))});
       } else if (m.k === 'post'){
         const p = m.post;
+        if (CRD[p.id]){ sl.addShape(pptx.ShapeType.rect, {x:X, y:1.55, w:4.5, h:5.3, fill:{color:'EEF1F7'}, line:{color:'E6E9F2'}}); sl.addImage({data:CRD[p.id], x:X, y:1.55, w:4.5, h:5.3, sizing:{type:'contain', w:4.5, h:5.3}}); } else {
         sl.addShape(pptx.ShapeType.roundRect, {x:X, y:1.55, w:4.5, h:5.3, fill:{color:BG}, line:{color:BG}, rectRadius:0.12});
-        sl.addShape(pptx.ShapeType.ellipse, {x:X + 3.0, y:1.8, w:1.2, h:1.2, fill:{color:AC}, line:{color:AC}});
+        sl.addShape(pptx.ShapeType.ellipse, {x:X + 3.0, y:1.8, w:1.2, h:1.2, fill:{color:AC}, line:{color:AC}}); }
         const cv = p.format === 'Text' ? [{text:str(p.hook), options:{bold:true, fontSize:18, color:FG}}] : [{text:str(p.onImage?.headline || p.topic), options:{bold:true, fontSize:24, color:FG, breakLine:true}}].concat(p.onImage?.subline ? [{text:p.onImage.subline, options:{fontSize:12, color:FG, breakLine:true}}] : []).concat(p.onImage?.cta ? [{text:' ' + p.onImage.cta.toUpperCase() + ' ', options:{bold:true, fontSize:11, color:AC}}] : []);
-        sl.addText(cv, {x:X + 0.3, y:3.3, w:3.9, h:3.3, fontFace:F, valign:'bottom', paraSpaceAfter:6});
+        if (!CRD[p.id]) sl.addText(cv, {x:X + 0.3, y:3.3, w:3.9, h:3.3, fontFace:F, valign:'bottom', paraSpaceAfter:6});
         const RX = X + 4.85, RW = CW - 4.85;
         sl.addText(`${fmtD(p.date)}${p.time ? ' · ' + p.time : ''}   |   ${p.channel} ${p.format}${p.topical ? '   |   ' + p.topical : ''}`, {x:RX, y:1.55, w:RW, h:0.35, fontFace:F, fontSize:11, bold:true, color:ACC});
         if (p.hook) sl.addText(str(p.hook), {x:RX, y:1.95, w:RW, h:0.75, fontFace:F, fontSize:16, bold:true, color:INK, valign:'top'});
@@ -2302,9 +2320,11 @@ async function downloadDesignerDeck(o = {}){
         try { (await ogCheck(want.slice(k, k + 6), true)).forEach(r => { if (r.data) imgs[r.url] = r.data; }); } catch (e){}
       }
     }
+    const CRD = (o.withImg ?? withImg()) && HOSTED ? await creativeData(ps) : {};
     ps.forEach((p, i) => {
-      const pics = refsOf(p).filter(r => imgs[r.url] || (!HOSTED && /^data:image/.test(r.img))).slice(0, 3);
-      const TW = pics.length ? CW - 3.35 : CW;
+      const crd = CRD[p.id];
+      const pics = crd ? [] : refsOf(p).filter(r => imgs[r.url] || (!HOSTED && /^data:image/.test(r.img))).slice(0, 3);
+      const TW = pics.length || crd ? CW - 3.35 : CW;
       const rows = designerRows(p, b); const chars = rows.reduce((n, r) => n + str(r[1]).length + 40, 0) * (CW / TW);
       const fs = chars > 2600 ? 7.5 : chars > 1900 ? 8.5 : chars > 1300 ? 9.5 : chars > 800 ? 11 : 13;
       const sl = pptx.addSlide(); sl.background = {color:'FFFFFF'};
@@ -2312,6 +2332,10 @@ async function downloadDesignerDeck(o = {}){
       sl.addText(`${b.name} · ${mLabel(plan.month)}`, {x:W - X - 6, y:0.2, w:6, h:0.35, fontFace:F, fontSize:9, color:GREY, align:'right'});
       sl.addTable(rows.map(([k, v]) => [{text:k, options:{fontFace:F, color:INK}}, {text:str(v) || ' ', options:{fontFace:F, color:'252C45'}}]),
         {x:X, y:0.6, w:TW, colW:[LW, TW - LW], fontFace:F, fontSize:fs, border:{type:'solid', pt:0.75, color:LINE}, margin:[0.08, 0.12, 0.08, 0.12], valign:'top', autoPage:true, autoPageRepeatHeader:false, autoPageSlideStartY:0.6});
+      if (crd){ const RX = X + CW - 3.15, RW = 3.15;
+        sl.addText('CREATIVE DRAFT', {x:RX, y:0.6, w:RW, h:0.3, fontFace:F, fontSize:9, bold:true, color:ACC, charSpacing:1});
+        sl.addShape(pptx.ShapeType.rect, {x:RX, y:0.95, w:RW, h:5.2, fill:{color:'F3F5FB'}, line:{color:'E6E9F2'}}); sl.addImage({data:crd, x:RX, y:0.95, w:RW, h:5.2, sizing:{type:'contain', w:RW, h:5.2}, hyperlink:{url:p.creative.url.startsWith('/') ? location.origin + p.creative.url : p.creative.url}});
+        if (arr(p.creative.slides).length) sl.addText(`+ ${p.creative.slides.length} more carousel slides in the tool`, {x:RX, y:6.2, w:RW, h:0.3, fontFace:F, fontSize:8.5, color:GREY}); }
       if (pics.length){
         const RX = X + CW - 3.15, RW = 3.15, gap = 0.12, ih = (6.1 - gap * (pics.length - 1)) / pics.length;
         sl.addText('DESIGN REFERENCES', {x:RX, y:0.6, w:RW, h:0.3, fontFace:F, fontSize:9, bold:true, color:ACC, charSpacing:1});
@@ -2646,21 +2670,21 @@ function goSearch(i){
 }
 
 /* ---------- AI usage & cost per client (admins) ---------- */
-function usagePrice(){ let x = {}; try { x = JSON.parse(localStorage.getItem('dce_price') || '{}'); } catch (e){} return {in:+x.in || 0.75, out:+x.out || 3.75, search:x.search != null ? +x.search : 0.014, fx:+x.fx || 88}; }
+function usagePrice(){ let x = {}; try { x = JSON.parse(localStorage.getItem('dce_price') || '{}'); } catch (e){} return {in:+x.in || 0.75, out:+x.out || 3.75, search:x.search != null ? +x.search : 0.014, img:x.img != null ? +x.img : 0.039, fx:+x.fx || 88}; }
 function vUsage(){
   if (!HOSTED || ui.user?.role !== 'admin') return '';
   if (ui.usage == null && !ui.usageBusy){ ui.usageBusy = true; fetch('/api/usage', {credentials:'same-origin'}).then(r => r.json()).then(j => { ui.usage = j.months || {}; }).catch(() => { ui.usage = {}; }).finally(() => { ui.usageBusy = false; sched(); }); }
   const U = ui.usage || {}; const months = Object.keys(U).sort().reverse(); const m = ui.usageMonth && U[ui.usageMonth] ? ui.usageMonth : months[0];
-  const P = usagePrice(); const rows = Object.entries(U[m] || {}).map(([bid, x]) => { const usd = (x.in || 0) / 1e6 * P.in + (x.out || 0) / 1e6 * P.out + (x.search || 0) * P.search; return {bid, x, usd, inr:usd * P.fx}; }).sort((a, c) => c.usd - a.usd);
-  const tot = rows.reduce((s, r) => ({calls:s.calls + (r.x.calls || 0), inT:s.inT + (r.x.in || 0), outT:s.outT + (r.x.out || 0), search:s.search + (r.x.search || 0), inr:s.inr + r.inr}), {calls:0, inT:0, outT:0, search:0, inr:0});
+  const P = usagePrice(); const rows = Object.entries(U[m] || {}).map(([bid, x]) => { const usd = (x.in || 0) / 1e6 * P.in + (x.out || 0) / 1e6 * P.out + (x.search || 0) * P.search + (x.img || 0) * P.img; return {bid, x, usd, inr:usd * P.fx}; }).sort((a, c) => c.usd - a.usd);
+  const tot = rows.reduce((s, r) => ({calls:s.calls + (r.x.calls || 0), inT:s.inT + (r.x.in || 0), outT:s.outT + (r.x.out || 0), search:s.search + (r.x.search || 0), img:s.img + (r.x.img || 0), inr:s.inr + r.inr}), {calls:0, inT:0, outT:0, search:0, img:0, inr:0});
   const nm = bid => bid === 'pitch' ? 'Pitch mode' : bid === 'other' ? 'Other / general' : D.brands[bid]?.name || 'Deleted brand';
   const k = n => n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : String(n || 0);
   const inr = v => '₹' + Math.round(v).toLocaleString('en-IN');
   return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>AI usage & cost by client <span class="chip">Admins only</span></h2><p>Counted from every AI call on the hosted app. Cost is an estimate from the rates below; check the real bill in Google Cloud → Billing.</p></div><label class="f" style="flex:0 0 170px">Month<select class="in" data-chg="usageMonth">${opts(months.map(x => [x, mLabel(x)]), m)}</select></label></header>
-    ${ui.usageBusy && !ui.usage ? '<p class="muted sm"><span class="spin"></span> Loading…</p>' : tbl(['Client', 'AI calls', 'Tokens in', 'Tokens out', 'Web searches', 'Est. cost', 'Per retainer'], rows.map(r => { const b = D.brands[r.bid]; const rc = b ? FORMATS.reduce((s, f) => s + (+(b.retainer || {})[f] || 0), 0) : 0;
-      return [`<b>${esc(nm(r.bid))}</b>`, `<span class="mono">${r.x.calls || 0}</span>`, `<span class="mono">${k(r.x.in)}</span>`, `<span class="mono">${k(r.x.out)}</span>`, `<span class="mono">${r.x.search || 0}</span>`, `<b class="mono">${inr(r.inr)}</b>`, rc ? `<span class="muted sm">${inr(r.inr / rc)} per contracted post</span>` : '']; }).concat(rows.length ? [[`<b>Total</b>`, `<b class="mono">${tot.calls}</b>`, `<b class="mono">${k(tot.inT)}</b>`, `<b class="mono">${k(tot.outT)}</b>`, `<b class="mono">${tot.search}</b>`, `<b class="mono">${inr(tot.inr)}</b>`, '']] : []))}
+    ${ui.usageBusy && !ui.usage ? '<p class="muted sm"><span class="spin"></span> Loading…</p>' : tbl(['Client', 'AI calls', 'Tokens in', 'Tokens out', 'Web searches', 'Images', 'Est. cost', 'Per retainer'], rows.map(r => { const b = D.brands[r.bid]; const rc = b ? FORMATS.reduce((s, f) => s + (+(b.retainer || {})[f] || 0), 0) : 0;
+      return [`<b>${esc(nm(r.bid))}</b>`, `<span class="mono">${r.x.calls || 0}</span>`, `<span class="mono">${k(r.x.in)}</span>`, `<span class="mono">${k(r.x.out)}</span>`, `<span class="mono">${r.x.search || 0}</span>`, `<span class="mono">${r.x.img || 0}</span>`, `<b class="mono">${inr(r.inr)}</b>`, rc ? `<span class="muted sm">${inr(r.inr / rc)} per contracted post</span>` : '']; }).concat(rows.length ? [[`<b>Total</b>`, `<b class="mono">${tot.calls}</b>`, `<b class="mono">${k(tot.inT)}</b>`, `<b class="mono">${k(tot.outT)}</b>`, `<b class="mono">${tot.search}</b>`, `<b class="mono">${tot.img}</b>`, `<b class="mono">${inr(tot.inr)}</b>`, '']] : []))}
     <details><summary class="sm" style="cursor:pointer;font-weight:700">Rates used for the estimate</summary><div class="rowline" style="margin-top:8px">
-      <label class="f">Input $ per 1M tokens<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="in" value="${P.in}"></label><label class="f">Output $ per 1M tokens<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="out" value="${P.out}"></label><label class="f">$ per web search<input class="in" type="number" step="0.001" data-chg="usagePrice" data-k="search" value="${P.search}"></label><label class="f">₹ per $<input class="in" type="number" step="0.5" data-chg="usagePrice" data-k="fx" value="${P.fx}"></label></div>
+      <label class="f">Input $ per 1M tokens<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="in" value="${P.in}"></label><label class="f">Output $ per 1M tokens<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="out" value="${P.out}"></label><label class="f">$ per web search<input class="in" type="number" step="0.001" data-chg="usagePrice" data-k="search" value="${P.search}"></label><label class="f">$ per image<input class="in" type="number" step="0.001" data-chg="usagePrice" data-k="img" value="${P.img}"></label><label class="f">₹ per $<input class="in" type="number" step="0.5" data-chg="usagePrice" data-k="fx" value="${P.fx}"></label></div>
       <p class="muted sm">Defaults are current Gemini Flash prices (Sep 2026, promotional until 1 Jan 2027, when they double). The first 5,000 web searches a month are free, so the search part is usually lower. Update these if your model or plan changes.</p></details>
   </section>`;
 }
@@ -2855,6 +2879,17 @@ function vDrawer(p){
       <section class="sec"><h3>On-image copy <small>Headline ${words(p.onImage?.headline)}/8 words · subline ${words(p.onImage?.subline)}/14</small></h3>
         ${inp('Headline','onImage.headline',p.onImage?.headline)}${inp('Subline','onImage.subline',p.onImage?.subline)}${inp('CTA','onImage.cta',p.onImage?.cta)}
       </section>
+
+      ${p.format === 'Text' ? '' : `<section class="sec"><h3>Creative <small>${p.creative?.url ? (p.creative.fromParent ? 'Uses the main post’s visual with this version’s text' : 'AI visual + exact text, logo and brand fonts') : 'Optional · about ₹3–12 per image'}</small></h3>
+        ${p.creative?.url ? `<div class="crwrap"><a href="${esc(p.creative.url)}" target="_blank" rel="noopener"><img class="crmain" src="${esc(p.creative.url)}" alt="Creative"></a>${arr(p.creative.slides).length ? `<div class="crslides">${arr(p.creative.slides).map((u, i) => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Slide ${i + 2}"></a>`).join('')}</div>` : ''}</div>
+          ${p.creative.sig !== crSig(p, b) ? `<div class="banner"><span>The copy changed since this creative was made.</span><button class="btn sm pri" data-act="crRecompose" ${bz ? 'disabled' : ''}>Update text on image</button></div>` : ''}` : ''}
+        ${arr(ui.copts?.[p.id]).length ? `<p class="eyebrow">Pick one</p><div class="copts">${ui.copts[p.id].map((u, i) => `<button class="copt" data-act="crPick" data-i="${i}" ${bz ? 'disabled' : ''}><img src="${u}" alt="Option ${i + 1}"><span>Use option ${i + 1}</span></button>`).join('')}</div>` : ''}
+        ${p.parentId ? `<div class="acts">${p.creative?.raw ? `<button class="btn sm" data-act="crRecompose" ${bz ? 'disabled' : ''}>Update text on image</button>` : '<span class="muted sm">Create the creative on the main post; this version gets the same visual with its own text.</span>'}</div>` : `<div class="rowline"><label class="f" style="flex:0 0 190px">Text position<select class="in" id="cr-pos">${opts(CPOS, p.creative?.pos || 'bottom')}</select></label>
+          <button class="btn sm pri" data-act="crGen" data-n="3" ${bz || !HOSTED || !p.hasContent ? 'disabled' : ''}>✦ ${p.creative?.url ? 'New' : 'Generate'} creative · 3 options</button><button class="btn sm" data-act="crGen" data-n="1" ${bz || !HOSTED || !p.hasContent ? 'disabled' : ''}>1 option (cheaper)</button>
+          ${p.creative?.raw ? `<button class="btn sm ghost" data-act="crPosApply" ${bz ? 'disabled' : ''}>Apply position</button>` : ''}</div>`}
+        ${p.creative?.url ? `<div class="acts"><a class="btn sm" href="${esc(p.creative.url)}" download="${esc(str(p.topic).replace(/[^\w-]+/g, '-') || 'creative')}.jpg" target="_blank" rel="noopener">Download</a>${p.parentId ? '' : ui.confirm === 'crdel' + p.id ? '<button class="btn sm danger" data-act="crDel">Yes, remove</button>' : `<button class="btn sm ghost" data-act="ask2" data-k="crdel${p.id}">Remove creative</button>`}</div>` : ''}
+        ${HOSTED ? `<p class="muted sm">${p.creativeTries ? p.creativeTries + ' images generated for this post so far. ' : ''}Text, logo and any must-include line are added by the tool in brand fonts, so spelling and numbers are always exact.</p>` : '<p class="muted sm">Creatives are generated on the hosted version.</p>'}
+      </section>`}
 
       ${showSlides ? `<section class="sec"><h3>Carousel slides <button class="btn sm" data-act="addRow" data-k="slides">+ Add slide</button></h3>
         <div class="tw"><table><thead><tr><th>#</th><th>Visual</th><th>On-slide copy</th><th></th></tr></thead><tbody>${arr(p.slides).map((s,i) => `<tr><td class="num">${i+1}</td><td><textarea class="in" rows="2" data-pf="slides.${i}.visual" id="pf-sv-${i}">${esc(s.visual)}</textarea></td><td><textarea class="in" rows="2" data-pf="slides.${i}.copy" id="pf-sc-${i}">${esc(s.copy)}</textarea></td><td><button class="btn sm ghost" data-act="rmRow" data-k="slides" data-i="${i}" aria-label="Remove slide">×</button></td></tr>`).join('')}</tbody></table></div></section>` : ''}
@@ -3156,6 +3191,9 @@ async function runPlan(pid){
         await pool(bs, 2, async bt => { if (signal.aborted) return; try { await writeLang(bt, L.lang, signal); } catch (e){ if (e?.code === 'cancelled') throw e; failed += bt.length; } dn += bt.length; step(pid, `Writing ${L.lang} versions · ${dn} of ${need.length}`); });
       }
     }
+    let crNote = '';
+    if (!failed && D.plans[pid]?.opts?.creatives?.on && HOSTED){ step(pid, 'Creating creatives…'); const r = await autoCreatives(pid, signal); if (r.failed) crNote = ` ${r.failed} creatives could not be made; create them from the post.`; }
+    if (crNote) toast(crNote.trim());
     if (failed) await patch('plans', pid, {status:'paused', error:`${failed} posts or language versions could not be written. Press Continue to retry them.`});
     else { await patch('plans', pid, {status:'ready', error:'', readyAt:Date.now()}); toast('Plan ready'); }
   } catch (e){
@@ -3192,9 +3230,10 @@ Reply with only JSON: [{"id":"","hook":"","headline":"","subline":"","cta":"","c
     const part = {topic:`${str(p.topic).replace(/\s·\s[A-Za-z]+$/, '')} · ${lang}`, hook:str(x.hook), onImage:{headline:str(x.headline), subline:str(x.subline), cta:str(x.cta)}, caption:withMust(b, p.product, str(x.caption)), hashtags:str(p.hashtags),
       slides:arr(p.slides).map((sl, i) => ({n:i + 1, visual:str(sl.visual), copy:str(arr(x.slides)[i] ?? sl.copy)})), script:arr(p.script).map((sc, i) => ({t:str(sc.t), visual:str(sc.visual), audio:str(sc.audio), onscreen:str(arr(x.script)[i]?.onscreen ?? sc.onscreen), vo:str(arr(x.script)[i]?.vo ?? sc.vo)})),
       design:clone(p.design || {}), hasContent:true, writtenAt:Date.now()};
-    const kid = kidsOf(p.id).find(c => c.lang === lang);
+    let kid = kidsOf(p.id).find(c => c.lang === lang);
     if (kid) await patch('posts', kid.id, part);
-    else { const id = uid(); await put('posts', id, newPost(b, p.planId, {id, brandId:p.brandId, parentId:p.id, lang, date:p.date, time:p.time, channel:p.channel, format:p.format, pillar:p.pillar, product:p.product || '', topical:p.topical || '', objective:p.objective || '', status:['Approved','Scheduled','Published'].includes(p.status) ? 'Design in progress' : p.status || 'Idea', writer:p.writer || '', designer:p.designer || '', am:p.am || '', ...part})); }
+    else { const id = uid(); kid = {id}; await put('posts', id, newPost(b, p.planId, {id, brandId:p.brandId, parentId:p.id, lang, date:p.date, time:p.time, channel:p.channel, format:p.format, pillar:p.pillar, product:p.product || '', topical:p.topical || '', objective:p.objective || '', status:['Approved','Scheduled','Published'].includes(p.status) ? 'Design in progress' : p.status || 'Idea', writer:p.writer || '', designer:p.designer || '', am:p.am || '', ...part})); }
+    if (D.posts[p.id]?.creative?.raw && HOSTED){ try { await patch('posts', kid.id, {creative:{raw:D.posts[p.id].creative.raw, pos:D.posts[p.id].creative.pos || 'bottom', fromParent:true}}); await recompose(kid.id); } catch (e){} }
     n++;
   }
   if (!n) throw {code:'invalid_json'};
@@ -3325,6 +3364,133 @@ async function placeStories(pid, n, write){
   }
   if (write && ids.length){ const bs = []; for (let i = 0; i < ids.length; i += 4) bs.push(ids.slice(i, i + 4)); for (const bt of bs){ bt.forEach(id => busy[id] = 'Writing…'); sched(); try { await writePosts(bt.map(id => D.posts[id]), 'These are Instagram Stories on days without a feed post: keep them light and interactive (polls, questions, behind the scenes, reminders, countdowns) and connected to the month\'s theme.'); } catch (e){ toast(errCopy(e)); } finally { bt.forEach(id => delete busy[id]); sched(); } } }
   return ids.length;
+}
+
+/* ---------- AI creatives: unique AI visual + exact text, logo and brand fonts drawn by the tool ---------- */
+const CFORMATS = ['Static','Carousel','Story'];
+const withImg = () => ui.withImg ?? true;
+async function creativeData(list){ const out = {}; const todo = list.filter(p => p.creative?.url); for (let i = 0; i < todo.length; i++){ if (i % 4 === 0) toast(`Adding creatives… ${i}/${todo.length}`); try { const x = await toB64(todo[i].creative.url); out[todo[i].id] = `data:${x.mime};base64,${x.data}`; } catch (e){} } return out; }
+const CPOS = [['bottom','Text at bottom'],['top','Text at top'],['center','Text in centre'],['none','No text (visual only)']];
+const NOTO = {Hindi:'Noto Sans Devanagari', Marathi:'Noto Sans Devanagari', Kannada:'Noto Sans Kannada', Tamil:'Noto Sans Tamil', Telugu:'Noto Sans Telugu', Malayalam:'Noto Sans Malayalam', Bengali:'Noto Sans Bengali', Gujarati:'Noto Sans Gujarati', Punjabi:'Noto Sans Gurmukhi', Odia:'Noto Sans Oriya'};
+const ASPECTS = [['1:1', 1], ['4:5', .8], ['9:16', .5625], ['16:9', 1.778]];
+function creativeSize(p){
+  if (p.format === 'Story' || p.format === 'Reel') return {w:1080, h:1920, aspect:'9:16'};
+  const m = str(sizeFor(p.channel, p.format)).match(/(\d{3,4})\s*×\s*(\d{3,4})/); let w = 1080, h = 1350;
+  if (m){ w = +m[1]; h = +m[2]; }
+  const r = w / h; const a = ASPECTS.slice().sort((x, y) => Math.abs(x[1] - r) - Math.abs(y[1] - r))[0];
+  const W = 1080, H = Math.round(W / a[1]); return {w:W, h:H, aspect:a[0]};
+}
+const sameOrigin = u => !u ? '' : u.startsWith('data:') || u.startsWith('/api/img') ? u : '/api/img?u=' + encodeURIComponent(u);
+function loadImg(src){ return new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error('Could not load image')); i.src = src; }); }
+async function toB64(url){ const r = await fetch(sameOrigin(url), {credentials:'same-origin'}); const bl = await r.blob(); return await new Promise(ok => { const fr = new FileReader(); fr.onload = () => ok({mime:bl.type || 'image/jpeg', data:String(fr.result).split(',')[1]}); fr.readAsDataURL(bl); }); }
+async function imgApi(body){
+  const r = await fetch('/api/image', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify(body)});
+  if (r.status === 401){ showLogin(); throw {message:'Please sign in again'}; }
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw {message:j.error || 'Image service error', code:j.code}; return j;
+}
+const fontsLoaded = {};
+async function ensureFonts(b, lang){
+  const fams = [str(b?.brain?.kit?.fonts).split(/[,/|]/)[0].trim(), NOTO[lang]].filter(Boolean);
+  for (const f of fams){ if (fontsLoaded[f]) continue; fontsLoaded[f] = 1; const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(f).replace(/%20/g, '+')}:wght@500;700;800&display=swap`; document.head.appendChild(l); }
+  const stack = `${fams.map(f => `"${f}"`).join(', ')}${fams.length ? ', ' : ''}"Montserrat", system-ui, sans-serif`;
+  try { await Promise.race([Promise.all([document.fonts.load(`800 60px ${stack}`), document.fonts.load(`500 30px ${stack}`)]), new Promise(r => setTimeout(r, 2500))]); } catch (e){}
+  return stack;
+}
+function imagePrompt(p, b, pos){
+  const d = p.design || {}; const k = b.brain?.kit || {}; const pr = findProd(b, p.product);
+  const area = {bottom:'the bottom 38% of the frame', top:'the top 32% of the frame', center:'a calm central band', none:'no area (full-bleed visual)'}[pos || 'bottom'];
+  return `Create a premium social media visual for the brand "${b.name}" (${str(b.industry)}, ${str(b.price)} positioning, audience ${str(b.audience?.geo || 'India')}).
+Post: ${p.channel} ${p.format}${p.format === 'Story' && p.storyType ? ' (' + p.storyType + ')' : ''} · topic: ${str(p.topic)}${p.product ? ' · product: ' + p.product + (pr ? ' — ' + str(pr.what) : '') : ''}${p.topical ? ' · occasion: ' + p.topical : ''}
+Headline this visual must support (do NOT write it): "${str(p.onImage?.headline || p.hook)}"
+Design brief — layout: ${str(d.layout)}; mood: ${str(d.mood)}; palette: ${str(d.palette || k.colors)}; elements: ${str(d.elements)}; do: ${str(d.dos)}; don't: ${str(d.donts)}.
+Brand colours: ${str(k.colors) || 'as per mood'}. Look and feel: ${str(p.design?.refSearch)}.
+${p.notes || d.note ? 'Note to designer: ' + str(p.notes || d.note) : ''}
+RULES: absolutely no text, letters, numbers, logos, watermarks or UI in the image. Leave clean, uncluttered negative space in ${area} for text that will be added later. Real, high-end, editorial quality; natural lighting; Indian context where people or places appear; no distorted hands or faces.${pr?.photo ? ' Use the attached product photo: keep the product, packaging, label and shape exactly as it is and build the scene around it.' : ''}`;
+}
+function wrapLines(ctx, text, maxW, maxLines){
+  const words = str(text).split(/\s+/).filter(Boolean); const lines = []; let cur = '';
+  for (const w of words){ const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; } }
+  if (cur) lines.push(cur);
+  if (lines.length > maxLines){ const keep = lines.slice(0, maxLines); keep[maxLines - 1] = keep[maxLines - 1].replace(/\s*\S*$/, '') + '…'; return keep; }
+  return lines;
+}
+function rr(ctx, x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+async function composeCreative({img, p, b, w, h, pos, slide, total, text}){
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c = cv.getContext('2d');
+  const col = brandColors(b); const stack = await ensureFonts(b, p.lang);
+  const t = text || {headline:p.onImage?.headline || p.topic, subline:p.onImage?.subline, cta:p.onImage?.cta};
+  const must = str(findProd(b, p.product)?.must);
+  if (slide > 0){   // inner carousel slide: brand colour + copy, no AI cost
+    c.fillStyle = col.bg; c.fillRect(0, 0, w, h);
+    if (img){ c.globalAlpha = .14; const s = Math.max(w / img.width, h / img.height); c.drawImage(img, (w - img.width * s) / 2, (h - img.height * s) / 2, img.width * s, img.height * s); c.globalAlpha = 1; }
+  } else if (img){ const s = Math.max(w / img.width, h / img.height); c.drawImage(img, (w - img.width * s) / 2, (h - img.height * s) / 2, img.width * s, img.height * s); }
+  else { c.fillStyle = col.bg; c.fillRect(0, 0, w, h); }
+  const P = Math.round(w * .075), maxW = w - P * 2; const onImg = slide > 0 ? col.fg : '#FFFFFF';
+  if (pos !== 'none' && slide === 0 && img){
+    const g = pos === 'top' ? c.createLinearGradient(0, 0, 0, h * .55) : pos === 'center' ? null : c.createLinearGradient(0, h * .38, 0, h);
+    if (g){ if (pos === 'top'){ g.addColorStop(0, 'rgba(0,0,0,.72)'); g.addColorStop(1, 'rgba(0,0,0,0)'); } else { g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.78)'); } c.fillStyle = g; c.fillRect(0, 0, w, h); }
+    else { c.fillStyle = 'rgba(0,0,0,.38)'; c.fillRect(0, 0, w, h); }
+  }
+  if (b.logo){ try { const lg = await loadImg(b.logo); const lh = Math.round(w * .07), lw = Math.min(w * .28, lg.width * lh / lg.height); const bx = P - 14, by = pos === 'top' && slide === 0 ? h - P - lh - 14 : P - 14; c.fillStyle = 'rgba(255,255,255,.94)'; rr(c, bx, by, lw + 28, lh + 28, 18); c.fill(); c.drawImage(lg, bx + 14, by + 14, lw, lh); } catch (e){} }
+  if (slide > 0 && total){ c.font = `700 ${Math.round(w * .03)}px ${stack}`; c.fillStyle = onImg; c.globalAlpha = .75; c.textAlign = 'right'; c.fillText(`${slide + 1}/${total}`, w - P, P + w * .03); c.globalAlpha = 1; c.textAlign = 'left'; }
+  if (pos === 'none' && slide === 0) return cv.toDataURL('image/jpeg', .86);
+  // text block
+  let hs = Math.round(w * (slide > 0 ? .07 : .085)); c.font = `800 ${hs}px ${stack}`; let hl = wrapLines(c, t.headline, maxW, 3);
+  while (hl.length === 3 && hs > w * .05 && c.measureText(hl[2]).width > maxW * .98){ hs -= 4; c.font = `800 ${hs}px ${stack}`; hl = wrapLines(c, t.headline, maxW, 3); }
+  const ss = Math.round(w * .04); c.font = `500 ${ss}px ${stack}`; const sl = t.subline ? wrapLines(c, t.subline, maxW, 3) : [];
+  const cs = Math.round(w * .034); const ctaH = t.cta ? cs * 2.3 : 0; const mustS = Math.round(w * .022);
+  const blockH = hl.length * hs * 1.12 + (sl.length ? ss * .6 + sl.length * ss * 1.3 : 0) + (ctaH ? ctaH + ss * .8 : 0);
+  let y = slide > 0 || pos === 'center' ? (h - blockH) / 2 : pos === 'top' ? P + (b.logo ? w * .13 : 0) : h - P - blockH - (must ? mustS * 2.2 : 0);
+  c.fillStyle = onImg; c.textBaseline = 'top'; c.shadowColor = slide > 0 ? 'transparent' : 'rgba(0,0,0,.35)'; c.shadowBlur = slide > 0 ? 0 : 12;
+  c.font = `800 ${hs}px ${stack}`; hl.forEach((l, i) => c.fillText(l, P, y + i * hs * 1.12)); y += hl.length * hs * 1.12;
+  if (sl.length){ y += ss * .6; c.font = `500 ${ss}px ${stack}`; c.globalAlpha = .92; sl.forEach((l, i) => c.fillText(l, P, y + i * ss * 1.3)); c.globalAlpha = 1; y += sl.length * ss * 1.3; }
+  c.shadowBlur = 0;
+  if (t.cta){ y += ss * .8; c.font = `800 ${cs}px ${stack}`; const tw = c.measureText(str(t.cta).toUpperCase()).width; c.fillStyle = col.ac; rr(c, P, y, tw + cs * 1.6, ctaH, ctaH / 2); c.fill(); c.fillStyle = lum(col.ac) > .5 ? '#111' : '#fff'; c.fillText(str(t.cta).toUpperCase(), P + cs * .8, y + (ctaH - cs) / 2); }
+  if (must && slide === 0){ c.font = `500 ${mustS}px ${stack}`; c.fillStyle = onImg; c.globalAlpha = .85; const ml = wrapLines(c, must, maxW, 2); ml.forEach((l, i) => c.fillText(l, P, h - P * .55 - (ml.length - i) * mustS * 1.25)); c.globalAlpha = 1; }
+  return cv.toDataURL('image/jpeg', .86);
+}
+const dataB64 = d => String(d).split(',')[1];
+const crSig = (p, b) => [p.onImage?.headline, p.onImage?.subline, p.onImage?.cta, findProd(b, p.product)?.must, b?.logo ? 'L' : '', arr(p.slides).map(x => x.copy).join('|')].map(str).join('¦');
+async function saveImg(dataURL, old){ return (await imgApi({action:'save', data:dataB64(dataURL), mime:'image/jpeg', old:old || ''})).url; }
+async function renderAndSave(p, b, rawImg, pos, oldCr){
+  const {w, h} = creativeSize(p);
+  const main = await composeCreative({img:rawImg, p, b, w, h, pos, slide:0});
+  const url = await saveImg(main, oldCr?.url);
+  const slides = [];
+  if (p.format === 'Carousel' && arr(p.slides).length > 1){ const tot = arr(p.slides).length;
+    for (let i = 1; i < tot; i++){ const d = await composeCreative({img:rawImg, p, b, w, h, pos, slide:i, total:tot, text:{headline:str(p.slides[i].copy), subline:'', cta:i === tot - 1 ? p.onImage?.cta : ''}}); slides.push(await saveImg(d, arr(oldCr?.slides)[i - 1])); } }
+  return {url, slides, pos, w, h, sig:crSig(p, b)};
+}
+async function finalizeCreative(pid, rawDataURL, pos){
+  const p = D.posts[pid]; const b = D.brands[p.brandId]; const img = await loadImg(rawDataURL);
+  const {w, h} = creativeSize(p); const rc = document.createElement('canvas'); const s = Math.min(1, 1400 / Math.max(img.width, img.height)); rc.width = Math.round(img.width * s); rc.height = Math.round(img.height * s); rc.getContext('2d').drawImage(img, 0, 0, rc.width, rc.height);
+  const raw = await saveImg(rc.toDataURL('image/jpeg', .86), p.creative?.raw);
+  const out = await renderAndSave(p, b, img, pos, p.creative);
+  await patch('posts', pid, {creative:{...out, raw, at:Date.now(), by:me || ''}});
+  for (const k of kidsOf(pid)){ const ko = await renderAndSave({...k, format:p.format}, b, img, pos, k.creative); await patch('posts', k.id, {creative:{...ko, raw, at:Date.now(), fromParent:true}}); }
+}
+async function genCreative(pid, n, pos){
+  const p = D.posts[pid]; if (!p) return; const b = D.brands[p.brandId]; if (!HOSTED) throw {message:'Creatives are generated on the hosted version.'};
+  const pr = findProd(b, p.product); const refs = pr?.photo ? [await toB64(pr.photo)] : [];
+  const j = await imgApi({action:'generate', prompt:imagePrompt(p, b, pos), aspect:creativeSize(p).aspect, n, refs, brandId:p.brandId});
+  const opts = arr(j.images).map(x => `data:${x.mime};base64,${x.data}`);
+  if (!opts.length) throw {message:'No image came back. Try again.'};
+  await patch('posts', pid, {creativeTries:(p.creativeTries || 0) + opts.length});
+  return opts;
+}
+async function recompose(pid){
+  const p = D.posts[pid]; const cr = p?.creative; if (!cr?.raw) return; const src = p.parentId && D.posts[p.parentId] ? D.posts[p.parentId] : p;
+  const b = D.brands[p.brandId]; const img = await loadImg(sameOrigin(cr.raw));
+  const out = await renderAndSave({...p, format:src.format}, b, img, cr.pos || 'bottom', cr); await patch('posts', pid, {creative:{...cr, ...out, at:Date.now()}});
+}
+async function autoCreatives(pid, signal){
+  const plan = D.plans[pid]; const fm = arr(plan.opts?.creatives?.formats).length ? plan.opts.creatives.formats : CFORMATS;
+  const todo = postsOf(pid).filter(p => !p.parentId && p.hasContent && fm.includes(p.format) && !p.creative?.url);
+  let done = 0, failed = 0; gen[pid].total = todo.length; gen[pid].done = 0;
+  await pool(todo, 2, async p => { if (signal?.aborted) return; busy[p.id] = 'Creating the creative…'; sched();
+    try { const o = await genCreative(p.id, 1, 'bottom'); await finalizeCreative(p.id, o[0], 'bottom'); done++; } catch (e){ failed++; if (e?.code === 'rate_limited') await new Promise(r => setTimeout(r, 8000)); }
+    finally { delete busy[p.id]; gen[pid].done++; step(pid, `Creating creatives · ${gen[pid].done} of ${todo.length}`); } });
+  return {done, failed};
 }
 
 /* ---------- AI post tools ---------- */
@@ -3512,6 +3678,14 @@ const ACT = {
     ui.view = 'brand'; ui.brandId = id; ui.btab = 'profile'; renderAll(); window.scrollTo(0, 0); toast('Client created from the pitch: pillars, products, competitors and 12 ideas carried over');
   },
   capMood: a => capRewrite(a.dataset.m),
+  crGen: async a => { const id = ui.postId; const n = +a.dataset.n || 1; const pos = $('#cr-pos')?.value || 'bottom'; busy[id] = n > 1 ? `Creating ${n} creative options…` : 'Creating the creative…'; sched();
+    try { const o = await genCreative(id, n, pos); if (n === 1){ busy[id] = 'Adding text and logo…'; sched(); await finalizeCreative(id, o[0], pos); toast('Creative ready'); } else { ui.copts = {...(ui.copts || {}), [id]:o}; ui.cpos = pos; toast('Pick the option you like'); } }
+    catch (e){ toast(e.message || errCopy(e)); } finally { delete busy[id]; sched(); } },
+  crPick: async a => { const id = ui.postId; const u = arr(ui.copts?.[id])[+a.dataset.i]; if (!u) return; busy[id] = 'Adding text, logo and brand fonts…'; sched();
+    try { await finalizeCreative(id, u, $('#cr-pos')?.value || ui.cpos || 'bottom'); delete ui.copts[id]; toast(kidsOf(id).length ? 'Creative ready, language versions updated too' : 'Creative ready'); } catch (e){ toast(e.message || 'Could not save the creative'); } finally { delete busy[id]; sched(); } },
+  crRecompose: async () => { const id = ui.postId; busy[id] = 'Updating the text on the image…'; sched(); try { await recompose(id); toast('Creative updated'); } catch (e){ toast(e.message || 'Could not update'); } finally { delete busy[id]; sched(); } },
+  crPosApply: async () => { const id = ui.postId; const pos = $('#cr-pos')?.value || 'bottom'; await patch('posts', id, {creative:{pos}}); busy[id] = 'Moving the text…'; sched(); try { await recompose(id); for (const k of kidsOf(id)) if (k.creative?.raw){ await patch('posts', k.id, {creative:{pos}}); await recompose(k.id); } toast('Text moved'); } catch (e){ toast(e.message || 'Could not update'); } finally { delete busy[id]; sched(); } },
+  crDel: async () => { const id = ui.postId; ui.confirm = null; const cr = D.posts[id]?.creative; if (cr){ [cr.url, cr.raw, ...arr(cr.slides)].forEach(u => imgApi({action:'delete', url:u}).catch(() => {})); } await patch('posts', id, {creative:null}); for (const k of kidsOf(id)) if (k.creative){ [k.creative.url, ...arr(k.creative.slides)].forEach(u => imgApi({action:'delete', url:u}).catch(() => {})); await patch('posts', k.id, {creative:null}); } toast('Creative removed'); },
   storyType: a => patch('posts', ui.postId, {storyType:a.dataset.t}),
   fillStories: async a => { const n = +a.dataset.n; if (!n) return; ui.storyBusy = true; renderAll(); try { const k = await placeStories(ui.planId, n, true); toast(`${k} Stories added on days without a feed post and written`); } finally { ui.storyBusy = false; renderAll(); } },
   genTopical: () => genTopical(),
@@ -3626,12 +3800,14 @@ const ACT = {
   delPlan: () => { const id = ui.planId; ui.confirm = null; postsOf(id).forEach(p => del('posts', p.id)); del('plans', id); ui.view = 'brand'; ui.planId = null; toast('Plan deleted'); },
   delPlanRow: a => { const id = a.dataset.id; ui.confirm = null; postsOf(id).forEach(p => del('posts', p.id)); del('plans', id); toast('Plan deleted'); },
   delBrand: () => { const id = ui.brandId; ui.confirm = null; ui.view = 'home'; ui.brandId = null; plansOf(id).forEach(([pid]) => { postsOf(pid).forEach(p => del('posts', p.id)); del('plans', pid); }); Object.entries(D.reports).filter(([,r]) => r.brandId === id).forEach(([rid]) => del('reports', rid)); del('brands', id); toast('Brand deleted'); },
-  addProduct: () => {
+  addProduct: async () => {
     const b = D.brands[ui.brandId]; const v = k => ($('#np-' + k)?.value || '').trim(); const sc = pschema(b);
     if (!v('name')){ toast('Add a name'); return; }
     const x = {}; sc.fields.forEach(([k]) => { const val = ($('#npx-' + k)?.value || '').trim(); if (val) x[k] = val; });
+    let photo = null; const pf = $('#np-photo')?.files?.[0];
+    if (pf && HOSTED){ try { toast('Uploading product photo…'); const im = await loadImg(URL.createObjectURL(pf)); const c = document.createElement('canvas'); const k2 = Math.min(1, 1000 / Math.max(im.width, im.height)); c.width = Math.round(im.width * k2); c.height = Math.round(im.height * k2); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); photo = await saveImg(c.toDataURL('image/jpeg', .88)); } catch (e){ toast('Photo upload failed: ' + (e.message || '')); } }
     const l = clone(arr(b.brain?.products)); const ed = ui.editProd != null && ui.editProd.b === ui.brandId ? ui.editProd.i : null;
-    const item = {...(ed != null ? l[ed] : {}), name:v('name'), what:v('what'), benefits:v('ben'), price:v('price'), offer:v('offer'), must:v('must'), x:{...(ed != null ? l[ed]?.x : {}), ...x}};
+    const item = {...(ed != null ? l[ed] : {}), name:v('name'), what:v('what'), benefits:v('ben'), price:v('price'), offer:v('offer'), must:v('must'), x:{...(ed != null ? l[ed]?.x : {}), ...x}, ...(photo ? {photo} : {})};
     sc.fields.forEach(([k]) => { if (!x[k] && item.x) delete item.x[k]; });
     if (ed != null) l[ed] = item; else l.push(item);
     ui.editProd = null; patch('brands', ui.brandId, {brain:{products:l}}); toast(ed != null ? 'Saved' : `${sc.one[0].toUpperCase() + sc.one.slice(1)} added`);
@@ -3787,7 +3963,8 @@ const ACT = {
     if (pls.length) patch('brands', ui.brandId, {pillars:arr(b0.pillars).map((x, i) => { const s2 = pls.find(y => y.name === x.name); return s2 ? {...x, mix:s2.mix} : x; })});
     const langs = [...document.querySelectorAll('.npl-lang-x:checked')].map(x => ({lang:x.value, scope:document.querySelector(`.npl-lang-scope[data-lang="${x.value}"]`)?.value || 'all'}));
     if (langs.length || arr(D.brands[ui.brandId]?.langDefault).length) patch('brands', ui.brandId, {langDefault:langs});
-    const o = {langs, reviewTopical:!!$('#npl-toprev')?.checked && !!$('#npl-top')?.checked, mode, schedule, mix, pillars:pls, hero, cd:$('#npl-cd').checked, region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
+    const creatives = {on:!!$('#npl-cr')?.checked, formats:[...document.querySelectorAll('.npl-crf:checked')].map(x => x.value)};
+    const o = {creatives, langs, reviewTopical:!!$('#npl-toprev')?.checked && !!$('#npl-top')?.checked, mode, schedule, mix, pillars:pls, hero, cd:$('#npl-cd').checked, region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
     const doc = {brandId:ui.brandId, month, opts:o, status:'generating', createdAt:Date.now(), createdBy:me};
     if (reuse){ doc.snapshot = reuse.snapshot; doc.research = reuse.research; }
     await put('plans', id, doc);
@@ -3895,6 +4072,9 @@ const ACT = {
   rmMember: a => { ui.confirm = null; del('team', a.dataset.id); if (me === a.dataset.id){ me = ''; lsSet('mp_me', ''); } }
 };
 const CHG = {
+  crDefOn: t => { const b = D.brands[ui.brandId]; patch('brands', ui.brandId, {creativeDefault:{on:t.value === '1', formats:arr(b.creativeDefault?.formats).length ? b.creativeDefault.formats : CFORMATS}}); },
+  crDefFmt: t => { const b = D.brands[ui.brandId]; let l = arr(b.creativeDefault?.formats).length ? b.creativeDefault.formats.slice() : CFORMATS.slice(); if (t.checked){ if (!l.includes(t.value)) l.push(t.value); } else l = l.filter(x => x !== t.value); patch('brands', ui.brandId, {creativeDefault:{on:true, formats:l}}); },
+  exImg: t => { ui.withImg = t.checked; renderAll(); },
   pitchTopShow: t => { ui.pitchTopShow = t.checked; renderAll(); },
   ptTop: t => { const r = D.reports[t.dataset.id]; const l = clone(arr(r.topical)); if (!l[+t.dataset.i]) return; l[+t.dataset.i].include = t.checked; patch('reports', t.dataset.id, {topical:l}); },
   topMonth: t => { ui.topMonth = t.value; renderAll(); },

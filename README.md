@@ -22,6 +22,7 @@ Internal social media planning tool for the Digimuse team.
 - **Research lab** + **weekly trend alert** (Mondays 9 am IST) feeding the Ideas bank; one-click write from any idea
 - **Briefs** (upload PDF / Word / text, AI plans the response and tasks) and **Pitch mode** (sample plan and pitch deck for prospects, convert to client)
 - **Competitors**, **Instagram results import**, **monthly reports**, **retainer tracker**
+- **AI creatives** (optional): a unique AI-generated visual per post with the exact headline, CTA, logo and brand fonts laid on top (never AI-drawn text). Turn on per client, per plan, per format and per post; pick from 3 options, change text position, recompose after copy edits; language versions reuse the same visual. Exports offer images or copy only.
 - **Team**: personal logins, activity log, AI cost per client (admins only), search everything (Ctrl/⌘ K), light and dark mode
 
 ## Deploy on Vercel
@@ -38,6 +39,8 @@ Internal social media planning tool for the Digimuse team.
    | `META_ACCESS_TOKEN` + `META_IG_USER_ID` *(optional, free)* | Real Instagram competitor data (followers, likes, comments, views) through Instagram's official Business Discovery API. Setup below. |
 | `APIFY_TOKEN` *(optional, paid)* | Only if you later want automated LinkedIn posts. Not needed: LinkedIn posts can be pasted in the Competitors tab. |
 | `CRON_SECRET` *(needed for weekly trend alerts)* | Any long random string. Vercel sends it to the weekly job so nobody else can trigger it. |
+| `BLOB_READ_WRITE_TOKEN` *(recommended for creatives)* | Added automatically when you create a **Blob** store (Storage → Create → Blob) and connect it. Without it, creatives are stored in Redis (max ~900 KB each). |
+| `GEMINI_IMAGE_MODEL` *(optional)* | Image model for creatives. Defaults to `gemini-2.5-flash-image`. Image generation needs Gemini billing on (about $0.039 per image). |
 | `ANTHROPIC_API_KEY` *(optional)* | Use Claude instead of Gemini |
    | `AI_PROVIDER` *(optional)* | `gemini` or `claude` if both keys are set |
    | `CLAUDE_MODEL` *(optional)* | Defaults to `claude-sonnet-5` |
@@ -65,6 +68,8 @@ Internal social media planning tool for the Digimuse team.
 - `api/log.js`: activity log and post version history.
 - `api/usage.js`: AI calls and tokens per client (admins only).
 - `api/cron.js`: weekly trend alert. Scheduled in `vercel.json` for Monday 03:30 UTC (9:00 IST); needs `CRON_SECRET`.
+- `api/image.js`: generates creative backgrounds (Gemini image model), saves and deletes creatives and product photos.
+- `api/img.js`: serves stored creatives (Redis) and proxies Blob images so the browser can compose them.
 - `api/og.js`, `api/scrape.js`, `api/bench.js`: reference link checks, website product import, competitor and Instagram data.
 - `api/bench.js`: pulls competitors' recent Instagram and LinkedIn posts through Apify.
 - `api/scrape.js`: imports a brand's products from its website (Shopify and WooCommerce stores directly; any other site is read and the AI picks out products and services).

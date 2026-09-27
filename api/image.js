@@ -1,0 +1,87 @@
+import crypto from 'node:crypto';
+import { authed, deny, redis, PREFIX, recordUsage } from './_lib.js';
+
+// POST {action:'generate', prompt, aspect:'4:5'|'9:16'|'1:1', n:1-3, refs:[{mime,data}], brandId}
+//   → {images:[{mime,data}]}   (not stored; the browser composes text on top, then saves the one it keeps)
+// POST {action:'save', data:<base64 jpeg/png>, mime, old:<url to replace>} → {url}
+// POST {action:'delete', url}
+const GBASE = 'https://generativelanguage.googleapis.com/v1beta';
+let picked = '';
+const BLOB = process.env.BLOB_READ_WRITE_TOKEN;
+
+async function listImageModel(){
+  const r = await fetch(`${GBASE}/models?pageSize=200`, { headers: { 'x-goog-api-key': process.env.GEMINI_API_KEY } });
+  const j = await r.json().catch(() => ({}));
+  const ok = (j.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => m.name.replace(/^models\//, '')).filter(n => /image/.test(n) && /flash/.test(n));
+  return ok.sort().reverse()[0] || null;
+}
+async function genOne(model, prompt, aspect, refs){
+  const r = await fetch(`${GBASE}/models/${encodeURIComponent(model)}:generateContent`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+    body: JSON.stringify({ contents: [{ role: 'user', parts: [...refs.map(f => ({ inline_data: { mime_type: f.mime, data: f.data } })), { text: prompt }] }], generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: aspect } } })
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error?.message || `Image model error ${r.status}`), { status: r.status });
+  const part = (j.candidates?.[0]?.content?.parts || []).find(p => p.inlineData || p.inline_data);
+  const d = part?.inlineData || part?.inline_data;
+  if (!d?.data) throw Object.assign(new Error('The image model returned no image (' + (j.candidates?.[0]?.finishReason || j.promptFeedback?.blockReason || 'unknown') + '). Try a different brief.'), { status: 502 });
+  return { mime: d.mimeType || d.mime_type || 'image/png', data: d.data };
+}
+async function generate(prompt, aspect, n, refs){
+  if (!process.env.GEMINI_API_KEY) throw Object.assign(new Error('Add GEMINI_API_KEY in Vercel to generate creatives.'), { status: 500 });
+  let model = picked || process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
+  const out = [];
+  for (let i = 0; i < n; i++){
+    try { out.push(await genOne(model, prompt + (n > 1 ? `\n(Variation ${i + 1} of ${n}: take a clearly different composition and angle.)` : ''), aspect, refs)); picked = model; }
+    catch (e){
+      if (!out.length && (e.status === 404 || /not found|no longer|deprecated|not supported/i.test(e.message))){ const next = await listImageModel(); if (next && next !== model){ model = next; i--; continue; } }
+      if (!out.length) throw e; break;
+    }
+  }
+  return out;
+}
+async function save(buf, mime){
+  const ext = /png/.test(mime) ? 'png' : 'jpg';
+  if (BLOB){
+    const { put } = await import('@vercel/blob');
+    const b = await put(`creatives/${crypto.randomBytes(8).toString('hex')}.${ext}`, buf, { access: 'public', contentType: mime, token: BLOB, addRandomSuffix: true });
+    return b.url;
+  }
+  if (buf.length > 900000) throw Object.assign(new Error('Image too large to store without Vercel Blob. Connect a Blob store in Vercel → Storage.'), { status: 413 });
+  const k = crypto.randomBytes(10).toString('hex');
+  await redis(['HSET', PREFIX + 'img', k, mime + ';' + buf.toString('base64')]);
+  return '/api/img?k=' + k;
+}
+async function remove(url){
+  if (!url) return;
+  const m = String(url).match(/[?&]k=([a-f0-9]+)/);
+  if (m) return redis(['HDEL', PREFIX + 'img', m[1]]);
+  if (BLOB && /blob\.vercel-storage\.com/.test(url)){ try { const { del } = await import('@vercel/blob'); await del(url, { token: BLOB }); } catch (e) {} }
+}
+
+export default async function handler(req, res){
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (!(await authed(req))) return deny(res);
+  const b = req.body || {};
+  try {
+    if (b.action === 'generate'){
+      const aspect = ['4:5', '9:16', '1:1', '16:9'].includes(b.aspect) ? b.aspect : '4:5';
+      const n = Math.max(1, Math.min(3, +b.n || 1));
+      const refs = (Array.isArray(b.refs) ? b.refs : []).filter(f => f && /^image\/(png|jpe?g|webp)$/.test(f.mime) && typeof f.data === 'string').slice(0, 2);
+      const images = await generate(String(b.prompt || '').slice(0, 6000), aspect, n, refs);
+      try { await recordUsage(b.brandId, { img: images.length, model: picked }, 'gemini-image'); } catch (e) {}
+      return res.status(200).json({ images, model: picked });
+    }
+    if (b.action === 'save'){
+      const mime = /^image\/(png|jpe?g|webp)$/.test(b.mime) ? b.mime : 'image/jpeg';
+      const buf = Buffer.from(String(b.data || ''), 'base64'); if (!buf.length) return res.status(400).json({ error: 'No image' });
+      const url = await save(buf, mime);
+      if (b.old) { try { await remove(b.old); } catch (e) {} }
+      return res.status(200).json({ url });
+    }
+    if (b.action === 'delete'){ await remove(b.url); return res.status(200).json({ ok: true }); }
+    res.status(400).json({ error: 'Unknown action' });
+  } catch (e){
+    res.status(e.status === 429 ? 429 : e.status || 500).json({ error: e.message, code: e.status === 429 ? 'rate_limited' : 'image_error' });
+  }
+}
