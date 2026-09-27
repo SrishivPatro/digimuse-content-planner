@@ -49,5 +49,8 @@
       "source": "/api/usage",
       "destination": "/api/log?usage=1"
     }
+  ],
+  "regions": [
+    "bom1"
   ]
 }
