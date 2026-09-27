@@ -1,13 +1,19 @@
 import { authed, deny, redis, PREFIX, monthKey } from './_lib.js';
+import { listBackups, makeBackup, autoBackup, restoreBackup, keyId, blobReady } from './_backup.js';
 
 // GET /api/log                 → recent activity (latest 300)
 // GET /api/log?doc=posts/<id>  → activity for one record
 // GET /api/log?hist=<postId>   → earlier versions of a post (for restore)
 // GET /api/log?usage=1         → admins only: AI calls, tokens and images per client, last 6 months
+// GET /api/log?backups=1       → admins only: list of cloud backups
+// POST {action:'autoBackup'}   → any user: daily backup if none in the last 20 hours
+// POST {action:'backup'|'restore'} → admins only
 export default async function handler(req, res){
   res.setHeader('Cache-Control', 'no-store');
   const me = await authed(req);
   if (!me) return deny(res);
+  if (req.method === 'POST') return backupPost(me, req, res);
+  if (req.query?.backups){ if (me.role !== 'admin') return res.status(403).json({ error: 'Admins only' }); try { return res.status(200).json({ backups: await listBackups(), blob: blobReady(), key: keyId() }); } catch (e){ return res.status(500).json({ error: e.message }); } }
   if (req.query?.usage) return usage(me, res);
   try {
     const q = req.query || {};
@@ -37,4 +43,15 @@ async function usage(me, res){
     }
     res.status(200).json({ months: out });
   } catch (e){ res.status(500).json({ error: e.message }); }
+}
+
+async function backupPost(me, req, res){
+  const b = req.body || {};
+  try {
+    if (b.action === 'autoBackup') return res.status(200).json(await autoBackup());
+    if (me.role !== 'admin') return res.status(403).json({ error: 'Only admins can do this. Ask your admin.' });
+    if (b.action === 'backup') return res.status(200).json({ made: await makeBackup(me.name || me.username, String(b.note || '').slice(0, 80)) });
+    if (b.action === 'restore'){ if (b.confirm !== 'RESTORE') return res.status(400).json({ error: 'Type RESTORE to confirm' }); return res.status(200).json(await restoreBackup(String(b.url || ''), me.name || me.username)); }
+    res.status(400).json({ error: 'Unknown action' });
+  } catch (e){ res.status(e.status || 500).json({ error: e.message }); }
 }

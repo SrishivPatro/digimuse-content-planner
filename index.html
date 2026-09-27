@@ -2709,6 +2709,25 @@ function goSearch(i){
 
 /* ---------- AI usage & cost per client (admins) ---------- */
 function usagePrice(){ let x = {}; try { x = JSON.parse(localStorage.getItem('dce_price') || '{}'); } catch (e){} return {in:+x.in || 0.75, out:+x.out || 3.75, cin:+x.cin || 0.10, cout:+x.cout || 0.40, search:x.search != null ? +x.search : 0.014, img:x.img != null ? +x.img : 0.039, fx:+x.fx || 88}; }
+/* ---------- Backups (admins): encrypted daily cloud backups + full download ---------- */
+function vBackups(){
+  if (!HOSTED || ui.user?.role !== 'admin') return '';
+  if (ui.backups == null && !ui.bkBusy){ ui.bkBusy = true; fetch('/api/log?backups=1', {credentials:'same-origin', cache:'no-store'}).then(r => r.json()).then(j => { ui.backups = j; }).catch(() => { ui.backups = {backups:[]}; }).finally(() => { ui.bkBusy = false; sched(); }); }
+  const B = ui.backups || {}; const list = arr(B.backups); const last = list[0]; const mb = n => n > 1e6 ? (n / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round((n || 0) / 1e3)) + ' KB';
+  const when = t => new Date(t).toLocaleString('en-IN', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'});
+  const stale = !last || Date.now() - last.at > 3 * 864e5;
+  return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Backups <span class="chip">Admins only</span></h2><p>Everything (clients, Brand Brains, plans, posts, reports, logins and settings) is backed up automatically once a day, encrypted, and the last 30 are kept.</p></div>
+    <div class="acts"><button class="btn pri" data-act="bkNow" ${ui.bkJob || B.blob === false ? 'disabled' : ''}>${ui.bkJob === 'backup' ? '<span class="spin"></span> Backing up…' : 'Back up now'}</button><button class="btn" data-act="bkDownload" ${!DL ? 'disabled' : ''} title="A readable copy of all client data to keep in Google Drive (logins not included)">Download everything (.json)</button></div></header>
+    ${ui.bkBusy && !ui.backups ? '<p class="muted sm"><span class="spin"></span> Loading…</p>' : B.blob === false ? '<p class="banner err">No Blob store connected, so cloud backups are off. Connect one in Vercel → Storage → Blob. Meanwhile, use Download everything once a week.</p>'
+      : `<p class="sm" style="${stale ? 'color:var(--s-client)' : ''}"><b>${last ? 'Last backup: ' + ago(last.at) + (last.by === 'auto' ? ' (automatic)' : ' by ' + esc(last.by)) : 'No backup yet: it runs automatically within a day, or press Back up now.'}</b>${last ? ` · ${list.length} kept · about ${mb(last.bytes)} each` : ''}</p>
+      ${list.length ? tbl(['When', 'By', 'Size', 'Clients', 'Plans', 'Posts', ''], list.map((x, i) => [when(x.at) + (x.note ? `<br><span class="muted sm">${esc(x.note)}</span>` : ''), x.by === 'auto' ? '<span class="muted">Automatic</span>' : esc(x.by), `<span class="mono">${mb(x.bytes)}</span>`, `<span class="mono">${x.counts?.brands ?? '–'}</span>`, `<span class="mono">${x.counts?.plans ?? '–'}</span>`, `<span class="mono">${x.counts?.posts ?? '–'}</span>`,
+        x.key && B.key && x.key !== B.key ? '<span class="muted sm" title="Made with a different SESSION_SECRET / BACKUP_KEY">Can\'t open with current secret</span>'
+        : ui.confirm === 'rs' + i ? `<div class="rowline" style="justify-content:flex-end"><input class="in" id="rs-confirm" placeholder="Type RESTORE" style="max-width:130px"><button class="btn sm danger" data-act="bkRestore" data-i="${i}" ${ui.bkJob ? 'disabled' : ''}>${ui.bkJob === 'restore' ? '<span class="spin"></span> Restoring…' : 'Restore'}</button><button class="btn sm ghost" data-act="ask2" data-k="">Cancel</button></div>`
+        : `<button class="btn sm ghost" data-act="ask2" data-k="rs${i}">Restore…</button>`])) : ''}
+      <p class="muted sm">Restoring replaces all clients, plans, posts and reports with that backup (a safety backup of the current state is taken first). Logins that exist now are kept as they are. Backups are encrypted with <code>SESSION_SECRET</code>: if you ever change it, older backups can't be opened, so also keep a monthly <b>Download everything</b> copy in Google Drive.</p>`}
+  </section>`;
+}
+async function bkApi(body){ const r = await fetch('/api/log', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify(body)}); const j = await r.json().catch(() => ({})); if (!r.ok) throw {message:j.error || 'Backup error'}; return j; }
 function vUsage(){
   if (!HOSTED || ui.user?.role !== 'admin') return '';
   if (ui.usage == null && !ui.usageBusy){ ui.usageBusy = true; fetch('/api/log?usage=1', {credentials:'same-origin'}).then(r => r.json()).then(j => { ui.usage = j.months || {}; }).catch(() => { ui.usage = {}; }).finally(() => { ui.usageBusy = false; sched(); }); }
@@ -2807,6 +2826,7 @@ function vTeam(){
     <div class="rowline"><label class="f">Name<input class="in" id="nm-name" placeholder="Full name"></label><label class="f" style="flex:0 0 190px">Role<select class="in" id="nm-role">${opts(ROLES, 'Copywriter')}</select></label><button class="btn pri" data-act="addMember">Add member</button></div>
   </section>
   ${vLogins(m)}
+  ${vBackups()}
   ${vUsage()}
   ${vActivity()}`;
 }
@@ -4343,6 +4363,11 @@ const ACT = {
   lumiApply: a => { const m = LUMI.msgs[+a.dataset.i]; const x = arr(m?.apply)[+a.dataset.j]; const p = D.posts[m?.postId]; if (!x || !p) return;
     const [k1, k2] = x.field.split('.'); patch('posts', p.id, k2 ? {[k1]:{[k2]:x.value}} : {[k1]:x.value});
     m.applied = [...arr(m.applied), +a.dataset.j]; lumiSave(); paintLumi(); toast(`Updated the ${FIELD_LABEL[x.field] || x.field}${p.creative?.url && x.field.startsWith('onImage') ? '. Update the text on the creative from the post' : ''}`); },
+  bkNow: async () => { ui.bkJob = 'backup'; sched(); try { const j = await bkApi({action:'backup'}); toast(`Backed up: ${j.made.counts.brands} clients, ${j.made.counts.plans} plans, ${j.made.counts.posts} posts`); ui.backups = null; } catch (e){ toast(e.message); } finally { ui.bkJob = ''; sched(); } },
+  bkDownload: () => { const at = new Date(); const out = {app:'Digimuse Content Engine', kind:'full-data-export', exportedAt:at.toISOString(), exportedBy:ui.user?.name || '', data:{brands:D.brands, team:D.team, plans:D.plans, posts:D.posts, reports:D.reports}};
+    save(`digimuse-content-engine-backup-${at.toISOString().slice(0, 10)}.json`, JSON.stringify(out)); },
+  bkRestore: async a => { const x = arr(ui.backups?.backups)[+a.dataset.i]; if (!x) return; if (($('#rs-confirm')?.value || '').trim() !== 'RESTORE') return toast('Type RESTORE to confirm');
+    ui.bkJob = 'restore'; sched(); try { await bkApi({action:'restore', url:x.url, confirm:'RESTORE'}); ui.confirm = null; ui.backups = null; toast('Restored. Reloading the data…'); hostedDB?.refresh(); } catch (e){ toast(e.message); } finally { ui.bkJob = ''; sched(); } },
   crAllStop: () => { ui.crStop = true; ui.crJob = 'Stopping after the current ones…'; },
   crZip: async () => { const plan = D.plans[ui.planId]; const list = expPosts().filter(p => p.creative?.url).sort(byDate); if (!list.length) return; ui.zipJob = 'Preparing…'; sched();
     try { const Z = await loadJSZip(); const z = new Z(); const rows = [['File','Date','Time','Platform','Format','Language','Headline','Caption','Hashtags']]; let n = 0; const tot = list.reduce((a, p) => a + 1 + arr(p.creative.slides).length, 0);
@@ -4953,6 +4978,7 @@ renderAll();
     db = a; S = sm; DL = dl;
   } else if (HOSTED){
     hostedDB = db = httpDB(); S = hostedAI; DL = hostedDL; loadMe();
+    try { if (!sessionStorage.getItem('dce_bk')){ sessionStorage.setItem('dce_bk', '1'); setTimeout(() => { fetch('/api/log', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({action:'autoBackup'})}).catch(() => {}); }, 15000); } } catch (e){}
   } else return;
   if (db){
     DB = db;

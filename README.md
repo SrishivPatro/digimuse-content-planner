@@ -44,6 +44,7 @@ Internal social media planning tool for the Digimuse team.
 | `CRON_SECRET` *(needed for weekly trend alerts)* | Any long random string. Vercel sends it to the weekly job so nobody else can trigger it. |
 | `BLOB_READ_WRITE_TOKEN` *(recommended for creatives)* | Added automatically when you create a **Blob** store (Storage → Create → Blob) and connect it. Without it, creatives are stored in Redis (max ~900 KB each). |
 | `GEMINI_IMAGE_MODEL` *(optional)* | Image model for creatives. Defaults to `gemini-2.5-flash-image`. Image generation needs Gemini billing on (about $0.039 per image). |
+| `BACKUP_KEY` *(optional)* | Secret used to encrypt backups. If not set, `SESSION_SECRET` is used. Changing it makes older backups unreadable. |
 | `GEMINI_API_KEY_FREE` *(recommended)* | A second Gemini key from a Google project **without billing** (free tier). Text (plans, posts, research, chat) runs on it first; the paid key covers images, overflow when the free tier is busy or out for the day, and anything the free key can't do. If the paid key runs out of credit, text keeps working on the free key. Admins choose the mode on Team → Free key vs paid key. Note: Google may use free-tier prompts to improve its products. |
 | `GEMINI_MODEL_CHAT` *(optional)* | Model for Chat with Lumi. Defaults to `gemini-flash-lite-latest` (about ₹0.03 a message). |
 | `LUMI_CHAT_DAILY` *(optional)* | Default chat messages per person per day (40). Admins can change it on Team → Lumi usage. |
@@ -53,6 +54,12 @@ Internal social media planning tool for the Digimuse team.
 
 4. **Redeploy** (Deployments → ⋯ → Redeploy) so the new variables load.
 5. Sign in as `owner`, open **Team → Logins** and create a login for each person. Share the link, their username and the temporary password privately. They set their own password on first sign-in.
+
+### Backups
+
+- Automatic, once a day (the first time anyone opens the tool), to the Blob store, encrypted with AES-256-GCM. The newest 30 are kept.
+- Team → **Backups** (admins): Back up now, restore any backup (type RESTORE; a safety copy is taken first; existing logins are kept), and **Download everything** as a readable .json to keep in Google Drive monthly.
+- Code: `api/_backup.js`, routes in `api/log.js`.
 
 ### Logins
 
