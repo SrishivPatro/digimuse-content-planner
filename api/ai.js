@@ -10,7 +10,7 @@ const istDay = () => new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 
 export default async function handler(req, res){
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const me = await authed(req); if (!me) return deny(res);
-  const { prompt, tier = 'default', json = false, search = false, brandId = '', files = [] } = req.body || {};
+  const { prompt, tier = 'default', json = false, search = false, brandId = '', files = [], stream = false } = req.body || {};
   if (!prompt || typeof prompt !== 'string') return res.status(400).json({ error: 'Missing prompt' });
   let chatLeft, freeMode = 'off', modeRaw;
   try {
@@ -23,6 +23,10 @@ export default async function handler(req, res){
       chatLeft = lim - n; }
   } catch (e) {}
   if (process.env.GEMINI_API_KEY_FREE) freeMode = ['all', 'light', 'off'].includes(modeRaw) ? modeRaw : 'all';
+  if (stream && tier === 'chat' && (process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_FREE) && (process.env.AI_PROVIDER || 'gemini').toLowerCase() === 'gemini'){
+    const started = await streamChat(res, prompt, json, !!search, freeMode, chatLeft, brandId);
+    if (started) return;   // otherwise fall through to the normal (non-streaming) path
+  }
   const fl = (Array.isArray(files) ? files : []).filter(f => f && /^(application\/pdf|image\/(png|jpe?g|webp))$/.test(f.mime) && typeof f.data === 'string').slice(0, 4);
   try {
     const out = await runAI(prompt, { tier, json, search: !!search, files: fl, freeMode });
@@ -137,4 +141,46 @@ async function claude(prompt, tier, search, files = []){
   const sources = blocks.filter(x => x.type === 'web_search_tool_result' && Array.isArray(x.content)).flatMap(x => x.content).filter(x => x.url).map(x => ({ title: x.title || '', uri: x.url }));
   const u = j.usage || {};
   return { text, sources, usage: { in: (u.input_tokens || 0) + (u.cache_read_input_tokens || 0), out: u.output_tokens || 0, search: u.server_tool_use?.web_search_requests || 0, model } };
+}
+
+// Streams Chat with Lumi as NDJSON lines: {"d":"text chunk"} … then {"done":true,"sources":[],"chatLeft":n}.
+// Returns false if no key could start a stream (caller then uses the normal path, which handles retries and model changes).
+async function streamChat(res, prompt, json, search, freeMode, chatLeft, brandId){
+  const paid = process.env.GEMINI_API_KEY, free = process.env.GEMINI_API_KEY_FREE;
+  const order = free && freeMode !== 'off' ? [['free', free], ['paid', paid]] : [['paid', paid], ...(free && freeMode !== 'off' ? [['free', free]] : [])];
+  const model = picked['free:chat'] || picked['paid:chat'] || process.env.GEMINI_MODEL_CHAT || 'gemini-flash-lite-latest';
+  for (const [kind, key] of order){
+    if (!key) continue;
+    for (const noThink of [true, false]){
+      let r;
+      try {
+        r = await fetch(`${GBASE}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], ...(search ? { tools: [{ google_search: {} }] } : {}),
+            generationConfig: { temperature: 0.3, maxOutputTokens: 8192, ...(noThink ? { thinkingConfig: { thinkingBudget: 0 } } : {}), ...(json && !search ? { responseMimeType: 'application/json' } : {}) } }) });
+      } catch (e) { break; }
+      if (!r.ok){ const t = await r.text().catch(() => ''); if (noThink && r.status === 400 && /think/i.test(t)) continue; break; }   // try without the setting, else next key
+      res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' });
+      const dec = new TextDecoder(); let buf = '', usage = {}, sources = [];
+      const reader = r.body.getReader();
+      try {
+        for (;;){
+          const { done, value } = await reader.read(); if (done) break;
+          buf += dec.decode(value, { stream: true }); let i;
+          while ((i = buf.indexOf('\n')) >= 0){
+            const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+            if (!line.startsWith('data:')) continue;
+            let j; try { j = JSON.parse(line.slice(5)); } catch (e) { continue; }
+            const c = j.candidates?.[0]; const t = (c?.content?.parts || []).filter(x => !x.thought).map(x => x.text || '').join('');
+            if (t) res.write(JSON.stringify({ d: t }) + '\n');
+            if (j.usageMetadata) usage = j.usageMetadata;
+            const g = (c?.groundingMetadata?.groundingChunks || []).map(x => x.web).filter(Boolean).map(w => ({ title: w.title || '', uri: w.uri || '' })); if (g.length) sources = g;
+          }
+        }
+      } catch (e) { res.write(JSON.stringify({ error: 'The reply was cut off. Try again.' }) + '\n'); }
+      res.end(JSON.stringify({ done: true, sources, ...(chatLeft !== undefined ? { chatLeft } : {}) }) + '\n');
+      try { await recordUsage(brandId, { in: usage.promptTokenCount || 0, out: (usage.candidatesTokenCount || 0) + (usage.thoughtsTokenCount || 0), search: search ? 1 : 0, model, free: kind === 'free' }, 'gemini'); } catch (e) {}
+      return true;
+    }
+  }
+  return false;
 }

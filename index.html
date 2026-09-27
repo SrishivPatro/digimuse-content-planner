@@ -50,6 +50,7 @@ html{color-scheme:light}
 .lideas,.lapply{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.lapply p{margin:2px 0 4px;white-space:normal}.lsrc{font-size:12px;color:var(--muted);margin-top:6px}.lacts{display:flex;justify-content:flex-end;margin-top:2px}
 .lhello{display:flex;gap:10px;align-items:flex-start;color:var(--ink);font-size:14px;line-height:1.5}.lfoot{border-top:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:7px}.lchips{display:flex;gap:6px;flex-wrap:wrap}.lchips .chip{cursor:pointer;font-size:12.5px}
 .lgo{margin-top:8px}.sec.flash{outline:3px solid var(--accent);outline-offset:4px;border-radius:14px;transition:outline-color .6s}
+.lm.live .caret{display:inline-block;width:7px;height:14px;margin-left:2px;vertical-align:-2px;background:var(--accent);border-radius:1px;animation:lb 1s infinite}
 .lmeta{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.lmeta small{color:var(--muted);font-size:11.5px}
 .lin{display:flex;gap:8px;align-items:flex-end}.lin textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font:inherit;font-size:14px;background:var(--bg);color:var(--ink);max-height:140px}
 .typing span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted);margin-right:3px;animation:lb 1s infinite}.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}.typing em{font-style:normal;color:var(--muted);font-size:12.5px}@keyframes lb{0%,80%,100%{opacity:.25}40%{opacity:1}}
@@ -555,9 +556,9 @@ th{background:var(--surface-2)}
 .ms[open] summary{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .ms summary.on{border-color:var(--accent);color:var(--accent);font-weight:700}
 .ms-pop{position:absolute;z-index:25;top:calc(100% + 4px);right:0;min-width:260px;max-width:340px;max-height:280px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;gap:2px}
-.ms-pop label{display:flex;gap:9px;align-items:center;padding:6px 8px;border-radius:8px;font-size:13px;cursor:pointer}
 </head>
 <body>
+.ms-pop label{display:flex;gap:9px;align-items:center;padding:6px 8px;border-radius:8px;font-size:13px;cursor:pointer}
 .ms-pop label:hover{background:var(--surface-2)}
 .ms-pop input{accent-color:var(--accent);width:15px;height:15px;flex:none}
 .ms-pop .ms-h{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700;padding:6px 8px 2px}
@@ -3956,7 +3957,7 @@ function paintLumi(){
       ${m.goto ? `<div class="lgo"><button class="btn sm pri" data-act="lumiGo" data-i="${i}">→ ${esc(m.goto.label || LUMI_GO_LABEL[m.goto.to] || 'Take me there')}</button></div>` : ''}
       ${arr(m.sources).length ? `<p class="lsrc">Sources: ${m.sources.slice(0, 5).map(x => `<a href="${esc(x.url || x.uri || '')}" target="_blank" rel="noopener">${esc(x.title || x.domain || 'link')}</a>`).join(' · ')}</p>` : ''}
       <div class="lacts"><button class="btn sm ghost" data-act="lumiCopy" data-i="${i}">Copy</button></div></div>`).join('')
-    + (LUMI.busy ? `<div class="lm l typing"><span></span><span></span><span></span> <em>Lumi is ${$('#lumi-web')?.checked ? 'searching and ' : ''}thinking…</em></div>` : '');
+    + (LUMI.busy ? (LUMI.live ? `<div class="lm l live">${lumiMd(LUMI.live)}<span class="caret"></span></div>` : `<div class="lm l typing"><span></span><span></span><span></span> <em>Lumi is ${$('#lumi-web')?.checked ? 'searching and ' : ''}thinking…</em></div>`) : '');
   $('#lumi-chips').innerHTML = LUMI.msgs.length ? '' : lumiChips().map(c => `<button class="chip" data-act="lumiChip">${esc(c)}</button>`).join('');
   $('#lumi-send').disabled = LUMI.busy; const box = $('#lumi-msgs'); box.scrollTop = box.scrollHeight;
 }
@@ -3969,6 +3970,28 @@ function lumiQuick(t){
   if (/^(ok+|okay|k+|cool|great|nice|perfect|awesome|got it|sure|done|alright)$/.test(x)) return '👍 Tell me what you need next.';
   if (/^(bye|see you|see ya|good night|gn|tc|take care)$/.test(x)) return 'Bye for now! Your chat is saved here.';
   return '';
+}
+// Pulls the "reply" value out of a JSON answer that is still arriving, so it can be shown word by word.
+function partialReply(buf){
+  const m = buf.match(/"reply"\s*:\s*"/); if (!m) return /^\s*[{\[]/.test(buf) ? '' : buf;   // plain-text answers (web search) stream as they are
+  let i = m.index + m[0].length, out = '';
+  while (i < buf.length){ const ch = buf[i];
+    if (ch === '"') break;
+    if (ch === '\\'){ const n = buf[i + 1]; if (n === undefined) break; if (n === 'u'){ const h = buf.slice(i + 2, i + 6); if (h.length < 4) break; out += String.fromCharCode(parseInt(h, 16)); i += 6; continue; } out += n === 'n' ? '\n' : n === 't' ? '\t' : n; i += 2; continue; }
+    out += ch; i++; }
+  return out;
+}
+async function lumiStream(prompt, web){
+  const r = await fetch('/api/ai', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({prompt, tier:'chat', json:!web, search:web, brandId:'chat', stream:true})});
+  if (r.status === 401){ showLogin(); throw {message:'Sign in again'}; }
+  if (!(r.headers.get('content-type') || '').includes('ndjson')){ const j = await r.json().catch(() => ({})); if (!r.ok) throw {code:j.code, message:billMsg(j.error) || j.error || 'Lumi error ' + r.status}; return j; }
+  const reader = r.body.getReader(), dec = new TextDecoder(); let buf = '', text = '', end = {}, last = 0;
+  for (;;){ const {done, value} = await reader.read(); if (done) break; buf += dec.decode(value, {stream:true}); let i;
+    while ((i = buf.indexOf('\n')) >= 0){ const line = buf.slice(0, i); buf = buf.slice(i + 1); if (!line.trim()) continue; let o; try { o = JSON.parse(line); } catch (e){ continue; }
+      if (o.d){ text += o.d; if (Date.now() - last > 60){ last = Date.now(); LUMI.live = partialReply(text); paintLumi(); } }
+      if (o.error) end.error = o.error; if (o.done) end = {...end, ...o}; } }
+  LUMI.live = ''; if (!text && end.error) throw {message:end.error};
+  return {text, sources:end.sources || [], chatLeft:end.chatLeft};
 }
 async function lumiAsk(text){
   text = str(text).trim(); if (!text || LUMI.busy) return;
@@ -3989,10 +4012,10 @@ ${howTo ? 'TOOL GUIDE: ' + LUMI_GUIDE + '\n' : ''}ACTIONS: from chat you cannot 
 CONTEXT — what the user has open:
 ${lumiContext()}
 ${hist ? 'CONVERSATION SO FAR:\n' + hist + '\n' : ''}USER: ${text}
-Return JSON {"goto":{"to":"one of: plan tabs present|deck|calendar|board|topical|review|report|export (only if a plan is open) · brand tabs plans|topical|comp|lab|reports|ideas|brain|profile (only if a client is in context) · post sections creative|languages|status (only if a post is open) · pages home|tasks|briefs|pitch|team|live","label":"button text, e.g. Open the Calendar"} or null,"reply":"your answer; plain text with **bold** and - bullets allowed","ideas":[ONLY if the user asked for post/content/campaign ideas for this brand: {"title":"","channel":"Instagram|LinkedIn|…","format":"Static|Carousel|Reel|Story|Text","hook":"","why":""}],"apply":[ONLY if a post is open AND the user asked you to write or rewrite part of it: {"field":"hook|caption|hashtags|onImage.headline|onImage.subline|onImage.cta","label":"short label","value":"the final text, ready to use"}]}`;
+Return JSON {"reply":"your answer; plain text with **bold** and - bullets allowed","goto":{"to":"one of: plan tabs present|deck|calendar|board|topical|review|report|export (only if a plan is open) · brand tabs plans|topical|comp|lab|reports|ideas|brain|profile (only if a client is in context) · post sections creative|languages|status (only if a post is open) · pages home|tasks|briefs|pitch|team|live","label":"button text, e.g. Open the Calendar"} or null,"ideas":[ONLY if the user asked for post/content/campaign ideas for this brand: {"title":"","channel":"Instagram|LinkedIn|…","format":"Static|Carousel|Reel|Story|Text","hook":"","why":""}],"apply":[ONLY if a post is open AND the user asked you to write or rewrite part of it: {"field":"hook|caption|hashtags|onImage.headline|onImage.subline|onImage.cta","label":"short label","value":"the final text, ready to use"}]}`;
   try {
     let data, sources = [];
-    if (HOSTED){ const j = await hostedCall(prompt, {json:!web, raw:true, search:web, modelTier:'chat', brandId:'chat'}); data = parseLoose(j.text); if (data === undefined) data = str(j.text); sources = arr(j.sources); if (j.chatLeft != null) LUMI.left = j.chatLeft; }
+    if (HOSTED){ const j = await lumiStream(todayLine() + '\n' + prompt, web); data = parseLoose(j.text); if (data === undefined) data = str(j.text); sources = arr(j.sources); if (j.chatLeft != null) LUMI.left = j.chatLeft; }
     else data = await ai(prompt, {brandId:'chat'});
     const reply = typeof data === 'string' ? data : str(data?.reply) || 'I could not put that into words. Try asking again.';
     const ideas = arr(data?.ideas).filter(x => x && x.title).slice(0, 12).map(x => ({title:str(x.title).slice(0, 200), channel:CH.includes(x.channel) ? x.channel : '', format:FORMATS.includes(x.format) ? x.format : '', hook:str(x.hook).slice(0, 300), why:str(x.why).slice(0, 300)}));
@@ -4001,7 +4024,7 @@ Return JSON {"goto":{"to":"one of: plan tabs present|deck|calendar|board|topical
     const goto = !gt ? null : LUMI_PLAN_TABS.includes(to) && pid0 ? {to, pid:pid0, bid, label:str(gt.label).slice(0, 40)} : LUMI_BRAND_TABS.includes(to) && bid ? {to, bid, label:str(gt.label).slice(0, 40)} : LUMI_POST_SECS.includes(to) && post ? {to, postId:post.id, label:str(gt.label).slice(0, 40)} : LUMI_PAGES.includes(to) ? {to, label:str(gt.label).slice(0, 40)} : null;
     LUMI.msgs.push({r:'l', t:reply, ideas, apply, goto, bid:ideas.length ? bid : '', postId:apply.length ? post.id : '', sources:arr(sources).map(x => ({url:x.url || x.uri, title:x.title})).filter(x => x.url), at:Date.now()});
   } catch (e){ LUMI.msgs.push({r:'l', t:e.message || errCopy(e) || 'Something went wrong. Try again.', at:Date.now()}); }
-  finally { LUMI.busy = false; lumiSave(); paintLumi(); }
+  finally { LUMI.busy = false; LUMI.live = ''; lumiSave(); paintLumi(); }
 }
 
 /* ---- design editor ---- */
