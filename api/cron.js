@@ -31,10 +31,10 @@ Reply with only JSON:
 
 async function runBrand(id, b, by){
   const out = await runAI(prompt(b), { search: true });
-  if (!out) throw new Error('No AI key set');
+  if (!out) throw new Error('Lumi has no key set (add GEMINI_API_KEY in Vercel)');
   try { await recordUsage(id, out.usage, out.provider); } catch (e) {}
   const data = loose(out.text);
-  if (!data || typeof data !== 'object') throw new Error('AI reply was not readable');
+  if (!data || typeof data !== 'object') throw new Error('Lumi’s reply was not readable');
   const rid = crypto.randomBytes(8).toString('hex');
   const report = { type: 'research', kind: 'trends', auto: true, brandId: id, at: Date.now(), days: 7, platform: 'Weekly trend alert', region: b.audience?.geo || 'India', focus: str(b.trendAlert?.focus), n: +b.trendAlert?.n || 6, data, sources: arr(out.sources).slice(0, 20), searched: !out.searchDropped, by: '', saved: [] };
   const FORMATS = ['Static', 'Carousel', 'Reel', 'Story', 'Video', 'Text'];

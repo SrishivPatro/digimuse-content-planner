@@ -2,14 +2,16 @@
 
 Internal social media planning tool for the Digimuse team.
 
+**Lumi** is the tool's built-in intelligence: it researches, plans, writes and designs, always from each client's Brand Brain. Under the hood it runs on Gemini (or Claude) through the keys set in Vercel.
+
 - **Brand Brain** for every client: products (auto-imported from the brand website), rules, references, reply bank, brand kit
-- **AI monthly plans**: web-researched trends and competitors, a creative reference board of real campaigns (Pinterest, Behance, other brands), strategy on your chosen content pillars, your exact content mix and product focus, and a creative director review that rewrites weak posts
+- **Monthly plans by Lumi**: web-researched trends and competitors, a creative reference board of real campaigns (Pinterest, Behance, other brands), strategy on your chosen content pillars, your exact content mix and product focus, and a creative director review that rewrites weak posts
 - **Content deck** with brand-coloured previews, hooks, captions, carousel slides and reel scripts
 - **Design briefs** for designers, creative versions, publish checklist
 - **Workflow**: board, due dates, My tasks, client review, feedback routed back to writer or designer
-- **Competitor benchmarking**: track or AI-scout competitors, pull their last 30–90 days of Instagram and LinkedIn posts, compare cadence, formats, pillars and top posts, find gaps and ideas to adapt
+- **Competitor benchmarking**: track or let Lumi scout competitors, pull their last 30–90 days of Instagram and LinkedIn posts, compare cadence, formats, pillars and top posts, find gaps and ideas to adapt
 - **Reports**: monthly client reports with KPIs, top posts, pillar and format learnings, competitor watch and next-month actions, downloadable as PowerPoint
-- **Performance**: log results, charts and an AI-written monthly report
+- **Performance**: log results, charts and a monthly report written by Lumi
 - **Client deck**: research, strategy and post-by-post slides built from each plan. Present in the app, download PowerPoint, or save as PDF. Presets for full plan, research, strategy or content decks.
 - **Exports**: Excel workbook, CSV, Markdown document, design briefs
 
@@ -20,10 +22,10 @@ Internal social media planning tool for the Digimuse team.
 - **Posts**: caption moods and versions, reel shot lists, language versions, version history, design references with thumbnails
 - **Decks**: client deck (4 themes), designer deck (one table slide per post), research, brief, pitch and report decks; platform filter on exports
 - **Research lab** + **weekly trend alert** (Mondays 9 am IST) feeding the Ideas bank; one-click write from any idea
-- **Briefs** (upload PDF / Word / text, AI plans the response and tasks) and **Pitch mode** (sample plan and pitch deck for prospects, convert to client)
+- **Briefs** (upload PDF / Word / text, Lumi plans the response and tasks) and **Pitch mode** (sample plan and pitch deck for prospects, convert to client)
 - **Competitors**, **Instagram results import**, **monthly reports**, **retainer tracker**
-- **AI creatives** (optional): an AI art director designs every post uniquely — visual style (photo, still life, flat lay, lifestyle, macro, collage, illustration, 3D, graphic, paper-cut), layout family, text placement and width, type scale, font pairing, emphasis and decoration — and avoids repeating the brand's recent creatives. The image is generated for that design; the tool sets the exact text, logo and must-include line where the image is calm, with contrast-safe colours. **Design editor** with live preview: position (9 spots or auto), width, size, align, fonts, caps, text and panel colours, highlight words, label, CTA style, decoration, logo position, show/hide parts, per carousel slide. **Change the image**: use your own photo (no image cost) or regenerate with a note. **Carousels**: text slides in the same design (free) or an AI image on every slide as one visual series. **Size**: auto from platform and format, or 1:1, 4:5, 9:16, 16:9 per post. Language versions keep the design; exports offer images or copy only.
-- **Team**: personal logins, activity log, AI cost per client (admins only), search everything (Ctrl/⌘ K), light and dark mode
+- **Lumi creatives** (optional): Lumi art-directs and designs every post uniquely — visual style (photo, still life, flat lay, lifestyle, macro, collage, illustration, 3D, graphic, paper-cut), layout family, text placement and width, type scale, font pairing, emphasis and decoration — and avoids repeating the brand's recent creatives. The image is generated for that design; the tool sets the exact text, logo and must-include line where the image is calm, with contrast-safe colours. **Design editor** with live preview: position (9 spots or auto), width, size, align, fonts, caps, text and panel colours, highlight words, label, CTA style, decoration, logo position, show/hide parts, per carousel slide. **Change the image**: use your own photo (no image cost) or regenerate with a note. **Carousels**: text slides in the same design (free) or an AI image on every slide as one visual series. **Size**: auto from platform and format, or 1:1, 4:5, 9:16, 16:9 per post. Language versions keep the design; exports offer images or copy only.
+- **Team**: personal logins, activity log, Lumi usage and cost per client (admins only), search everything (Ctrl/⌘ K), light and dark mode
 
 ## Deploy on Vercel
 
@@ -68,12 +70,12 @@ The Vercel Hobby plan allows 12 server functions per deployment; the app uses 11
 - `api/og.js`: checks design reference links (Pinterest, Behance, etc.) really open and returns their preview image for the designer deck.
 - `api/login.js`: sign-in and sign-out (30-day signed session cookie).
 - `api/users.js`: personal logins: create, reset, disable, change password.
-- `api/log.js`: activity log, post version history, and AI cost per client (`?usage=1`, admins only).
+- `api/log.js`: activity log, post version history, and Lumi cost per client (`?usage=1`, admins only).
 - `api/cron.js`: weekly trend alert. Scheduled in `vercel.json` for Monday 03:30 UTC (9:00 IST); needs `CRON_SECRET`.
 - `api/image.js`: generates creative backgrounds (Gemini image model), saves, serves and deletes creatives and product photos.
 - `api/og.js`, `api/scrape.js`, `api/bench.js`: reference link checks, website product import, competitor and Instagram data.
 - `api/bench.js`: pulls competitors' recent Instagram and LinkedIn posts through Apify.
-- `api/scrape.js`: imports a brand's products from its website (Shopify and WooCommerce stores directly; any other site is read and the AI picks out products and services).
+- `api/scrape.js`: imports a brand's products from its website (Shopify and WooCommerce stores directly; any other site is read and Lumi picks out products and services).
 
 Data lives in Upstash Redis under keys starting with `dcp:`. Clients poll for changes every 30 seconds.
 
