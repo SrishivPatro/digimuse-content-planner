@@ -8,6 +8,16 @@ export const chatLimitOf = async () => { const v = +(await redis(['HGET', PREFIX
 const istDay = () => new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
 
 export default async function handler(req, res){
+  if (req.method === 'GET' && req.query?.test){   // admins: check each Gemini key with a tiny request
+    const me0 = await authed(req); if (!me0) return deny(res); if (me0.role !== 'admin') return res.status(403).json({ error: 'Admins only' });
+    const one = async key => { if (!key) return { set: false };
+      try { const r = await fetch(`${GBASE}/models/${encodeURIComponent(process.env.GEMINI_MODEL_CHAT || 'gemini-flash-lite-latest')}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Reply with: ok' }] }], generationConfig: { maxOutputTokens: 5 } }) });
+        const j = await r.json().catch(() => ({})); return { set: true, ok: r.ok, status: r.status, msg: r.ok ? 'Working' : (j.error?.message || 'Error ' + r.status).slice(0, 300) }; }
+      catch (e){ return { set: true, ok: false, msg: e.message }; } };
+    const [free, paid] = await Promise.all([one(process.env.GEMINI_API_KEY_FREE), one(process.env.GEMINI_API_KEY)]);
+    const same = !!(process.env.GEMINI_API_KEY_FREE && process.env.GEMINI_API_KEY_FREE === process.env.GEMINI_API_KEY);
+    return res.status(200).json({ free, paid, same });
+  }
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const me = await authed(req); if (!me) return deny(res);
   const { prompt, tier = 'default', json = false, search = false, brandId = '', files = [], stream = false } = req.body || {};
@@ -55,12 +65,13 @@ async function geminiRouted(prompt, tier, json, search, files, freeMode){
   const paid = process.env.GEMINI_API_KEY, free = process.env.GEMINI_API_KEY_FREE;
   const freeFirst = free && freeMode !== 'off' && (freeMode === 'all' || tier === 'chat' || tier === 'quick');
   const order = freeFirst ? [['free', free], ['paid', paid]] : [['paid', paid], ...(free && freeMode !== 'off' ? [['free', free]] : [])];
-  let last;
+  let last; const errs = [];
   for (const [kind, key] of order){
     if (!key) continue;
     try { const out = await gemini(prompt, tier, json, search, files, key, kind); if (kind === 'free') out.usage.free = true; out.keyUsed = kind; return out; }
-    catch (e){ last = e; if (kind === 'paid' && !billingErr(e)) throw e; }   // free key busy/limited, or paid key out of credit: try the other key
+    catch (e){ errs.push(`${kind === 'free' ? 'Free key' : 'Paid key'}: ${String(e.message || '').slice(0, 160)}`); last = e; if (kind === 'paid' && !billingErr(e)) throw e; }   // free key busy/limited, or paid key out of credit: try the other key
   }
+  if (last && errs.length > 1) last.message = errs.join(' · ');
   throw last || Object.assign(new Error('No Gemini key set. Add GEMINI_API_KEY in Vercel.'), { status: 500 });
 }
 
