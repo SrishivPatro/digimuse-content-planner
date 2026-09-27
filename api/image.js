@@ -50,7 +50,7 @@ async function save(buf, mime){
   if (buf.length > 900000) throw Object.assign(new Error('Image too large to store without Vercel Blob. Connect a Blob store in Vercel → Storage.'), { status: 413 });
   const k = crypto.randomBytes(10).toString('hex');
   await redis(['HSET', PREFIX + 'img', k, mime + ';' + buf.toString('base64')]);
-  return '/api/img?k=' + k;
+  return '/api/image?k=' + k;
 }
 async function remove(url){
   if (!url) return;
@@ -59,9 +59,30 @@ async function remove(url){
   if (BLOB && /blob\.vercel-storage\.com/.test(url)){ try { const { del } = await import('@vercel/blob'); await del(url, { token: BLOB }); } catch (e) {} }
 }
 
+// GET ?k=<id> serves a creative stored in Redis; GET ?u=<blob url> proxies a Vercel Blob image (same origin, so canvas can redraw on it)
+async function serve(req, res){
+  const u = String(req.query?.u || '');
+  if (u){   // proxy a Vercel Blob creative so the browser can redraw text on it (same origin, no canvas taint)
+    let x; try { x = new URL(u); } catch (e) { return res.status(400).end(); }
+    if (x.protocol !== 'https:' || !/\.blob\.vercel-storage\.com$/.test(x.hostname)) return res.status(400).end();
+    const r = await fetch(x.href); if (!r.ok) return res.status(404).end();
+    res.setHeader('Content-Type', r.headers.get('content-type') || 'image/jpeg'); res.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+    return res.end(Buffer.from(await r.arrayBuffer()));
+  }
+  const k = String(req.query?.k || '').replace(/[^a-f0-9]/g, '');
+  if (!k) return res.status(400).end();
+  const v = await redis(['HGET', PREFIX + 'img', k]);
+  if (!v) return res.status(404).end();
+  const i = v.indexOf(';');
+  res.setHeader('Content-Type', v.slice(0, i) || 'image/jpeg');
+  res.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+  res.end(Buffer.from(v.slice(i + 1), 'base64'));
+}
+
 export default async function handler(req, res){
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   if (!(await authed(req))) return deny(res);
+  if (req.method === 'GET') return serve(req, res);
+  if (req.method !== 'POST') return res.status(405).json({ error: 'GET or POST' });
   const b = req.body || {};
   try {
     if (b.action === 'generate'){

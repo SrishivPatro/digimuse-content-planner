@@ -58,6 +58,9 @@ Internal social media planning tool for the Digimuse team.
 
 ## How it's built
 
+The Vercel Hobby plan allows 12 server functions per deployment; the app uses 11 (`api/_lib.js` is shared code, not a function). Merge endpoints rather than adding new files.
+
+
 - `index.html`: the whole app (no build step).
 - `api/sync.js`: loads all data (skips the download when nothing changed).
 - `api/db.js`: saves, updates and deletes records.
@@ -65,11 +68,9 @@ Internal social media planning tool for the Digimuse team.
 - `api/og.js`: checks design reference links (Pinterest, Behance, etc.) really open and returns their preview image for the designer deck.
 - `api/login.js`: sign-in and sign-out (30-day signed session cookie).
 - `api/users.js`: personal logins: create, reset, disable, change password.
-- `api/log.js`: activity log and post version history.
-- `api/usage.js`: AI calls and tokens per client (admins only).
+- `api/log.js`: activity log, post version history, and AI cost per client (`?usage=1`, admins only).
 - `api/cron.js`: weekly trend alert. Scheduled in `vercel.json` for Monday 03:30 UTC (9:00 IST); needs `CRON_SECRET`.
-- `api/image.js`: generates creative backgrounds (Gemini image model), saves and deletes creatives and product photos.
-- `api/img.js`: serves stored creatives (Redis) and proxies Blob images so the browser can compose them.
+- `api/image.js`: generates creative backgrounds (Gemini image model), saves, serves and deletes creatives and product photos.
 - `api/og.js`, `api/scrape.js`, `api/bench.js`: reference link checks, website product import, competitor and Instagram data.
 - `api/bench.js`: pulls competitors' recent Instagram and LinkedIn posts through Apify.
 - `api/scrape.js`: imports a brand's products from its website (Shopify and WooCommerce stores directly; any other site is read and the AI picks out products and services).

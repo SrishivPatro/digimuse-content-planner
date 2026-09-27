@@ -2673,7 +2673,7 @@ function goSearch(i){
 function usagePrice(){ let x = {}; try { x = JSON.parse(localStorage.getItem('dce_price') || '{}'); } catch (e){} return {in:+x.in || 0.75, out:+x.out || 3.75, search:x.search != null ? +x.search : 0.014, img:x.img != null ? +x.img : 0.039, fx:+x.fx || 88}; }
 function vUsage(){
   if (!HOSTED || ui.user?.role !== 'admin') return '';
-  if (ui.usage == null && !ui.usageBusy){ ui.usageBusy = true; fetch('/api/usage', {credentials:'same-origin'}).then(r => r.json()).then(j => { ui.usage = j.months || {}; }).catch(() => { ui.usage = {}; }).finally(() => { ui.usageBusy = false; sched(); }); }
+  if (ui.usage == null && !ui.usageBusy){ ui.usageBusy = true; fetch('/api/log?usage=1', {credentials:'same-origin'}).then(r => r.json()).then(j => { ui.usage = j.months || {}; }).catch(() => { ui.usage = {}; }).finally(() => { ui.usageBusy = false; sched(); }); }
   const U = ui.usage || {}; const months = Object.keys(U).sort().reverse(); const m = ui.usageMonth && U[ui.usageMonth] ? ui.usageMonth : months[0];
   const P = usagePrice(); const rows = Object.entries(U[m] || {}).map(([bid, x]) => { const usd = (x.in || 0) / 1e6 * P.in + (x.out || 0) / 1e6 * P.out + (x.search || 0) * P.search + (x.img || 0) * P.img; return {bid, x, usd, inr:usd * P.fx}; }).sort((a, c) => c.usd - a.usd);
   const tot = rows.reduce((s, r) => ({calls:s.calls + (r.x.calls || 0), inT:s.inT + (r.x.in || 0), outT:s.outT + (r.x.out || 0), search:s.search + (r.x.search || 0), img:s.img + (r.x.img || 0), inr:s.inr + r.inr}), {calls:0, inT:0, outT:0, search:0, img:0, inr:0});
@@ -3380,7 +3380,7 @@ function creativeSize(p){
   const r = w / h; const a = ASPECTS.slice().sort((x, y) => Math.abs(x[1] - r) - Math.abs(y[1] - r))[0];
   const W = 1080, H = Math.round(W / a[1]); return {w:W, h:H, aspect:a[0]};
 }
-const sameOrigin = u => !u ? '' : u.startsWith('data:') || u.startsWith('/api/img') ? u : '/api/img?u=' + encodeURIComponent(u);
+const sameOrigin = u => !u ? '' : u.startsWith('data:') || u.startsWith('/api/im') ? u : '/api/image?u=' + encodeURIComponent(u);
 function loadImg(src){ return new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error('Could not load image')); i.src = src; }); }
 async function toB64(url){ const r = await fetch(sameOrigin(url), {credentials:'same-origin'}); const bl = await r.blob(); return await new Promise(ok => { const fr = new FileReader(); fr.onload = () => ok({mime:bl.type || 'image/jpeg', data:String(fr.result).split(',')[1]}); fr.readAsDataURL(bl); }); }
 async function imgApi(body){
