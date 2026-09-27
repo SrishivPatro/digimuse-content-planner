@@ -4005,7 +4005,8 @@ async function lumiAsk(text){
   const quick = lumiQuick(text); if (quick){ LUMI.msgs.push({r:'u', t:text, at:Date.now()}, {r:'l', t:quick, at:Date.now()}); lumiSave(); paintLumi(); return; }
   if (aiOff()){ toast('Lumi is not available in this view'); return; }
   const {b, bid, post} = lumiScope(); const web = !!$('#lumi-web')?.checked && HOSTED;
-  const hist = LUMI.msgs.slice(-6).map(m => (m.r === 'u' ? 'USER: ' : 'LUMI: ') + str(m.t).slice(0, 400)).join('\n');
+  const isErr = m => m.err || /couldn't reach Gemini|Gemini credit is ₹0|paid credit is ₹0|Something went wrong\. Try again|Lumi error \d/.test(str(m.t));   // failed turns never go back to Gemini as history
+  const hist = LUMI.msgs.filter((m, i, a) => !isErr(m) && !(m.r === 'u' && a[i + 1] && isErr(a[i + 1]))).slice(-6).map(m => (m.r === 'u' ? 'USER: ' : 'LUMI: ') + str(m.t).slice(0, 400)).join('\n');
   const howTo = /\b(how|where|tool|feature|button|export|download|upload|setting|login|password|can i|can lumi|can you|creative|deck|plan a|set up|setup|move|reschedule|shift|change|delete|remove|add|create|make|assign|approve|status|schedule|design|generate|duplicate|copy to)\b/i.test(text);
   LUMI.msgs.push({r:'u', t:text, at:Date.now()}); LUMI.busy = true; paintLumi();
   const prompt = `You are Lumi, the intelligence inside LUMI by Digimuse, the internal content tool of Digimuse, an Indian digital marketing agency (social media, performance, influencer, branding, production, SEO). You work with account managers, strategists, writers and designers: brainstorming, strategy, copy, captions, hooks, hashtags, trends, critique, client communication, and how to use the tool.
@@ -4029,7 +4030,7 @@ Return JSON {"reply":"your answer; plain text with **bold** and - bullets allowe
     const {plan:pl0, pid:pid0} = lumiScope(); const gt = data?.goto && typeof data.goto === 'object' ? data.goto : null; const to = str(gt?.to);
     const goto = !gt ? null : LUMI_PLAN_TABS.includes(to) && pid0 ? {to, pid:pid0, bid, label:str(gt.label).slice(0, 40)} : LUMI_BRAND_TABS.includes(to) && bid ? {to, bid, label:str(gt.label).slice(0, 40)} : LUMI_POST_SECS.includes(to) && post ? {to, postId:post.id, label:str(gt.label).slice(0, 40)} : LUMI_PAGES.includes(to) ? {to, label:str(gt.label).slice(0, 40)} : null;
     LUMI.msgs.push({r:'l', t:reply, ideas, apply, goto, bid:ideas.length ? bid : '', postId:apply.length ? post.id : '', sources:arr(sources).map(x => ({url:x.url || x.uri, title:x.title})).filter(x => x.url), at:Date.now()});
-  } catch (e){ LUMI.msgs.push({r:'l', t:e.message || errCopy(e) || 'Something went wrong. Try again.', at:Date.now()}); }
+  } catch (e){ LUMI.msgs.push({r:'l', t:e.message || errCopy(e) || 'Something went wrong. Try again.', err:true, at:Date.now()}); }
   finally { LUMI.busy = false; LUMI.live = ''; lumiSave(); paintLumi(); }
 }
 
