@@ -22,7 +22,7 @@ Internal social media planning tool for the Digimuse team.
 - **Research lab** + **weekly trend alert** (Mondays 9 am IST) feeding the Ideas bank; one-click write from any idea
 - **Briefs** (upload PDF / Word / text, AI plans the response and tasks) and **Pitch mode** (sample plan and pitch deck for prospects, convert to client)
 - **Competitors**, **Instagram results import**, **monthly reports**, **retainer tracker**
-- **AI creatives** (optional): a unique AI-generated visual per post with the exact headline, CTA, logo and brand fonts laid on top (never AI-drawn text). Turn on per client, per plan, per format and per post; pick from 3 options, change text position, recompose after copy edits; language versions reuse the same visual. Exports offer images or copy only.
+- **AI creatives** (optional): an AI art director designs each post (layout from 8 designed systems: editorial, bold poster, split panel, floating card, framed, minimal luxe, quote, offer badge; font pairing; emphasis word; kicker), the photo is generated for that layout, and the tool sets the exact text, logo and must-include line where the finished image is calm, with colours picked for contrast. Pick from 3 fully designed options, try 3 other layouts on the same image at no image cost, or choose a layout. Language versions keep the design. Turn on per client, plan, format or post; exports offer images or copy only.
 - **Team**: personal logins, activity log, AI cost per client (admins only), search everything (Ctrl/⌘ K), light and dark mode
 
 ## Deploy on Vercel

@@ -2883,12 +2883,13 @@ function vDrawer(p){
       ${p.format === 'Text' ? '' : `<section class="sec"><h3>Creative <small>${p.creative?.url ? (p.creative.fromParent ? 'Uses the main post’s visual with this version’s text' : 'AI visual + exact text, logo and brand fonts') : 'Optional · about ₹3–12 per image'}</small></h3>
         ${p.creative?.url ? `<div class="crwrap"><a href="${esc(p.creative.url)}" target="_blank" rel="noopener"><img class="crmain" src="${esc(p.creative.url)}" alt="Creative"></a>${arr(p.creative.slides).length ? `<div class="crslides">${arr(p.creative.slides).map((u, i) => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Slide ${i + 2}"></a>`).join('')}</div>` : ''}</div>
           ${p.creative.sig !== crSig(p, b) ? `<div class="banner"><span>The copy changed since this creative was made.</span><button class="btn sm pri" data-act="crRecompose" ${bz ? 'disabled' : ''}>Update text on image</button></div>` : ''}` : ''}
-        ${arr(ui.copts?.[p.id]).length ? `<p class="eyebrow">Pick one</p><div class="copts">${ui.copts[p.id].map((u, i) => `<button class="copt" data-act="crPick" data-i="${i}" ${bz ? 'disabled' : ''}><img src="${u}" alt="Option ${i + 1}"><span>Use option ${i + 1}</span></button>`).join('')}</div>` : ''}
-        ${p.parentId ? `<div class="acts">${p.creative?.raw ? `<button class="btn sm" data-act="crRecompose" ${bz ? 'disabled' : ''}>Update text on image</button>` : '<span class="muted sm">Create the creative on the main post; this version gets the same visual with its own text.</span>'}</div>` : `<div class="rowline"><label class="f" style="flex:0 0 190px">Text position<select class="in" id="cr-pos">${opts(CPOS, p.creative?.pos || 'bottom')}</select></label>
-          <button class="btn sm pri" data-act="crGen" data-n="3" ${bz || !HOSTED || !p.hasContent ? 'disabled' : ''}>✦ ${p.creative?.url ? 'New' : 'Generate'} creative · 3 options</button><button class="btn sm" data-act="crGen" data-n="1" ${bz || !HOSTED || !p.hasContent ? 'disabled' : ''}>1 option (cheaper)</button>
-          ${p.creative?.raw ? `<button class="btn sm ghost" data-act="crPosApply" ${bz ? 'disabled' : ''}>Apply position</button>` : ''}</div>`}
+        ${arr(ui.copts?.[p.id]).length ? `<p class="eyebrow">Pick one</p><div class="copts">${ui.copts[p.id].map((o, i) => `<button class="copt" data-act="crPick" data-i="${i}" ${bz ? 'disabled' : ''} title="${esc(o.spec?.why || '')}"><img src="${o.preview}" alt="Design ${i + 1}"><span>${esc(LAYOUTS[o.spec?.layout]?.name || 'Visual only')}${o.spec?.head ? ' · ' + esc(o.spec.head) : ''}</span><em class="muted sm" style="font-style:normal;font-weight:600">Use this design</em></button>`).join('')}</div><p class="muted sm">Each design has its own layout and type, and the text sits where that image is calm. <button class="btn sm ghost" data-act="crDrop">Discard these</button></p>` : ''}
+        ${p.parentId ? `<div class="acts">${p.creative?.raw ? `<button class="btn sm" data-act="crRecompose" ${bz ? 'disabled' : ''}>Update text on image</button>` : '<span class="muted sm">Create the creative on the main post; this version gets the same visual with its own text.</span>'}</div>` : `${p.creative?.spec?.layout ? `<p class="muted sm">Layout: <b>${esc(LAYOUTS[p.creative.spec.layout]?.name || 'Visual only')}</b>${p.creative.spec.head ? ' · ' + esc(p.creative.spec.head) + (p.creative.spec.body && p.creative.spec.body !== p.creative.spec.head ? ' + ' + esc(p.creative.spec.body) : '') : ''}${p.creative.spec.why ? ' · ' + esc(p.creative.spec.why) : ''}</p>` : ''}
+          <div class="rowline"><label class="f" style="flex:0 0 230px">Layout<select class="in" id="cr-lay">${opts(LAYOUT_OPTS, 'auto')}</select></label>
+          <button class="btn sm pri" data-act="crGen" data-n="3" ${bz || !HOSTED || !p.hasContent ? 'disabled' : ''}>✦ ${p.creative?.url ? 'New' : 'Design'} creative · 3 designs</button><button class="btn sm" data-act="crGen" data-n="1" ${bz || !HOSTED || !p.hasContent ? 'disabled' : ''}>1 design (cheaper)</button></div>
+          ${p.creative?.raw ? `<div class="acts"><button class="btn sm" data-act="crRestyle" ${bz ? 'disabled' : ''} title="Keeps this image; only the layout and typography change">Try 3 other layouts · same image</button><button class="btn sm ghost" data-act="crPosApply" ${bz ? 'disabled' : ''}>Apply chosen layout</button></div>` : ''}`}
         ${p.creative?.url ? `<div class="acts"><a class="btn sm" href="${esc(p.creative.url)}" download="${esc(str(p.topic).replace(/[^\w-]+/g, '-') || 'creative')}.jpg" target="_blank" rel="noopener">Download</a>${p.parentId ? '' : ui.confirm === 'crdel' + p.id ? '<button class="btn sm danger" data-act="crDel">Yes, remove</button>' : `<button class="btn sm ghost" data-act="ask2" data-k="crdel${p.id}">Remove creative</button>`}</div>` : ''}
-        ${HOSTED ? `<p class="muted sm">${p.creativeTries ? p.creativeTries + ' images generated for this post so far. ' : ''}Text, logo and any must-include line are added by the tool in brand fonts, so spelling and numbers are always exact.</p>` : '<p class="muted sm">Creatives are generated on the hosted version.</p>'}
+        ${HOSTED ? `<p class="muted sm">${p.creativeTries ? p.creativeTries + ' images generated for this post so far. ' : ''}An AI art director picks the layout, fonts and emphasis for each post; the photo is shot for that layout, and the tool sets the exact text, logo and must-include line where the image is calm, so spelling and numbers are always right.</p>` : '<p class="muted sm">Creatives are generated on the hosted version.</p>'}
       </section>`}
 
       ${showSlides ? `<section class="sec"><h3>Carousel slides <button class="btn sm" data-act="addRow" data-k="slides">+ Add slide</button></h3>
@@ -3233,7 +3234,7 @@ Reply with only JSON: [{"id":"","hook":"","headline":"","subline":"","cta":"","c
     let kid = kidsOf(p.id).find(c => c.lang === lang);
     if (kid) await patch('posts', kid.id, part);
     else { const id = uid(); kid = {id}; await put('posts', id, newPost(b, p.planId, {id, brandId:p.brandId, parentId:p.id, lang, date:p.date, time:p.time, channel:p.channel, format:p.format, pillar:p.pillar, product:p.product || '', topical:p.topical || '', objective:p.objective || '', status:['Approved','Scheduled','Published'].includes(p.status) ? 'Design in progress' : p.status || 'Idea', writer:p.writer || '', designer:p.designer || '', am:p.am || '', ...part})); }
-    if (D.posts[p.id]?.creative?.raw && HOSTED){ try { await patch('posts', kid.id, {creative:{raw:D.posts[p.id].creative.raw, pos:D.posts[p.id].creative.pos || 'bottom', fromParent:true}}); await recompose(kid.id); } catch (e){} }
+    if (D.posts[p.id]?.creative?.raw && HOSTED){ try { await patch('posts', kid.id, {creative:{raw:D.posts[p.id].creative.raw, spec:D.posts[p.id].creative.spec || null, fromParent:true}}); await recompose(kid.id); } catch (e){} }
     n++;
   }
   if (!n) throw {code:'invalid_json'};
@@ -3370,7 +3371,24 @@ async function placeStories(pid, n, write){
 const CFORMATS = ['Static','Carousel','Story'];
 const withImg = () => ui.withImg ?? true;
 async function creativeData(list){ const out = {}; const todo = list.filter(p => p.creative?.url); for (let i = 0; i < todo.length; i++){ if (i % 4 === 0) toast(`Adding creatives… ${i}/${todo.length}`); try { const x = await toB64(todo[i].creative.url); out[todo[i].id] = `data:${x.mime};base64,${x.data}`; } catch (e){} } return out; }
-const CPOS = [['bottom','Text at bottom'],['top','Text at top'],['center','Text in centre'],['none','No text (visual only)']];
+/* Layout system: each creative gets its own art direction (layout, fonts, emphasis, scene), the image is generated
+   for that layout, and the text is placed where the finished image is actually calm, with colours picked for contrast. */
+const LAYOUTS = {
+  editorial:{name:'Editorial', zones:['bl','tl','br','tr','left','right'], hint:'small kicker, large elegant headline, thin rule, subline, text-link CTA. Storytelling, heritage, lifestyle, premium.'},
+  poster:{name:'Bold poster', zones:['bottom','top'], hint:'oversized tight headline across the width, kicker, CTA button. Launches, announcements, youthful or high-energy brands.'},
+  split:{name:'Split panel', zones:['bottom','left','right','top'], hint:'solid brand-colour panel beside/below the photo holding the text. Clean, informative, product-led, B2B, finance.'},
+  card:{name:'Floating card', zones:['bl','br','tl','tr'], hint:'rounded card over the photo with the text inside. Tips, features, product details, soft and friendly.'},
+  frame:{name:'Framed', zones:['bottom'], hint:'photo framed by a brand-colour border, text in the bottom strip. Gallery feel: real estate, jewellery, hospitality, fashion.'},
+  minimal:{name:'Minimal luxe', zones:['bottom','top','bl','tl','br','tr'], hint:'small refined headline, lots of air, tiny subline. Luxury, beauty, calm moments.'},
+  quote:{name:'Quote', zones:['center'], hint:'large quote with quote marks, centred, over a softly dimmed photo. Testimonials, founder notes, sayings, festive wishes.'},
+  offer:{name:'Offer badge', zones:['tr','tl','br','bl'], hint:'round badge with the offer (e.g. 20% OFF) plus headline and CTA. Only when the copy contains a real offer, price or discount.'}
+};
+const LAYOUT_OPTS = [['auto','Auto · designed for this image'], ...Object.entries(LAYOUTS).map(([k, v]) => [k, v.name]), ['none','No text (visual only)']];
+const FONTS = {
+  'Playfair Display':[400,700,800], 'DM Serif Display':[400], 'Cormorant Garamond':[500,700], 'Fraunces':[400,700,800], 'Instrument Serif':[400], 'Libre Caslon Text':[400,700],
+  'Montserrat':[500,700,800], 'Poppins':[500,700,800], 'Inter':[500,700,800], 'DM Sans':[500,700], 'Manrope':[500,700,800], 'Space Grotesk':[500,700], 'Outfit':[500,700,800], 'Sora':[500,700,800], 'Syne':[500,700,800],
+  'Bebas Neue':[400], 'Anton':[400], 'Archivo Black':[400]
+};
 const NOTO = {Hindi:'Noto Sans Devanagari', Marathi:'Noto Sans Devanagari', Kannada:'Noto Sans Kannada', Tamil:'Noto Sans Tamil', Telugu:'Noto Sans Telugu', Malayalam:'Noto Sans Malayalam', Bengali:'Noto Sans Bengali', Gujarati:'Noto Sans Gujarati', Punjabi:'Noto Sans Gurmukhi', Odia:'Noto Sans Oriya'};
 const ASPECTS = [['1:1', 1], ['4:5', .8], ['9:16', .5625], ['16:9', 1.778]];
 function creativeSize(p){
@@ -3388,110 +3406,317 @@ async function imgApi(body){
   if (r.status === 401){ showLogin(); throw {message:'Please sign in again'}; }
   const j = await r.json().catch(() => ({})); if (!r.ok) throw {message:j.error || 'Image service error', code:j.code}; return j;
 }
+const kitFont = b => str(b?.brain?.kit?.fonts).split(/[,/|]/)[0].replace(/["']/g, '').trim();
 const fontsLoaded = {};
-async function ensureFonts(b, lang){
-  const fams = [str(b?.brain?.kit?.fonts).split(/[,/|]/)[0].trim(), NOTO[lang]].filter(Boolean);
-  for (const f of fams){ if (fontsLoaded[f]) continue; fontsLoaded[f] = 1; const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(f).replace(/%20/g, '+')}:wght@500;700;800&display=swap`; document.head.appendChild(l); }
-  const stack = `${fams.map(f => `"${f}"`).join(', ')}${fams.length ? ', ' : ''}"Montserrat", system-ui, sans-serif`;
-  try { await Promise.race([Promise.all([document.fonts.load(`800 60px ${stack}`), document.fonts.load(`500 30px ${stack}`)]), new Promise(r => setTimeout(r, 2500))]); } catch (e){}
-  return stack;
+function loadFontCSS(f){
+  if (!f) return Promise.resolve(); if (fontsLoaded[f]) return fontsLoaded[f]; const fam = encodeURIComponent(f).replace(/%20/g, '+');
+  const add = q => new Promise(ok => { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = `https://fonts.googleapis.com/css2?family=${q}&display=swap`; l.onload = l.onerror = () => ok(); document.head.appendChild(l); });
+  return fontsLoaded[f] = FONTS[f] ? add(`${fam}:wght@${FONTS[f].join(';')}`) : Promise.all([add(fam), add(`${fam}:wght@700`)]);
 }
-function imagePrompt(p, b, pos){
-  const d = p.design || {}; const k = b.brain?.kit || {}; const pr = findProd(b, p.product);
-  const area = {bottom:'the bottom 38% of the frame', top:'the top 32% of the frame', center:'a calm central band', none:'no area (full-bleed visual)'}[pos || 'bottom'];
-  return `Create a premium social media visual for the brand "${b.name}" (${str(b.industry)}, ${str(b.price)} positioning, audience ${str(b.audience?.geo || 'India')}).
+const fw = (f, want) => { const ws = FONTS[f]; if (!ws) return want; return ws.reduce((a, x) => Math.abs(x - want) < Math.abs(a - want) ? x : a, ws[0]); };
+const fstack = (f, lang) => [f, NOTO[lang], 'Montserrat'].filter(Boolean).map(x => `"${x}"`).join(', ') + ', system-ui, sans-serif';
+async function ensureFonts(spec, lang){
+  const fams = [spec.head, spec.body, NOTO[lang], 'Montserrat'].filter(Boolean);
+  const H = fstack(spec.head, lang), B = fstack(spec.body, lang); const sample = lang && NOTO[lang] ? 'अआकखগকகఅಅഅગਅଅ Aa' : 'Aa';
+  try { await Promise.race([Promise.all(fams.map(loadFontCSS)), new Promise(r => setTimeout(r, 4000))]); await Promise.race([Promise.all([document.fonts.load(`${fw(spec.head, 800)} 60px ${H}`, sample), document.fonts.load(`${fw(spec.head, 500)} 60px ${H}`, sample), document.fonts.load(`${fw(spec.body, 500)} 30px ${B}`, sample), document.fonts.load(`${fw(spec.body, 700)} 30px ${B}`, sample)]), new Promise(r => setTimeout(r, 4000))]); } catch (e){}
+  return {H, B};
+}
+
+/* ---- art direction ---- */
+function defaultSpec(p, b, i = 0, only){
+  const kf = kitFont(b); const lux = /premium|luxury/i.test(str(b.price)) || (b.voice?.premium || 3) >= 4;
+  const order = only && LAYOUTS[only] ? [only] : lux ? ['editorial','frame','minimal','split'] : ['poster','split','card','editorial'];
+  const layout = order[i % order.length];
+  const head = kf || (['editorial','frame','minimal','quote'].includes(layout) ? 'Playfair Display' : layout === 'poster' ? 'Montserrat' : 'Manrope');
+  return {layout, zone:LAYOUTS[layout].zones[0], head, body:kf && !['editorial','frame','minimal'].includes(layout) ? kf : 'DM Sans', caps:layout === 'poster', emphasis:'', kicker:str(p.pillar).slice(0, 26), cta:layout === 'editorial' || layout === 'minimal' ? 'link' : 'pill', panel:'', badge:'', scene:''};
+}
+function cleanSpec(s, p, b, i, only){
+  const d = defaultSpec(p, b, i, only); s = s && typeof s === 'object' ? s : {};
+  const layout = only && LAYOUTS[only] ? only : LAYOUTS[s.layout] ? s.layout : d.layout;
+  const zone = LAYOUTS[layout].zones.includes(s.zone) ? s.zone : LAYOUTS[layout].zones[0];
+  const kf = kitFont(b); const okF = f => FONTS[f] || (f && f === kf) ? f : '';
+  const hl = str(p.onImage?.headline || p.topic); const emph = str(s.emphasis).trim();
+  const copy = [p.onImage?.headline, p.onImage?.subline, p.onImage?.cta, p.caption].map(str).join(' ').toLowerCase();
+  const badge = str(s.badge).trim(); const badgeOK = badge && badge.split(/\s+/).every(w => copy.includes(w.toLowerCase().replace(/[^\p{L}\p{N}%₹]/gu, '')));
+  return {layout, zone, head:okF(s.head) || d.head, body:okF(s.body) || d.body, caps:!!s.caps && !p.lang, emphasis:emph && hl.toLowerCase().includes(emph.toLowerCase()) ? emph : '',
+    kicker:str(s.kicker).slice(0, 28), cta:['pill','link','none'].includes(s.cta) ? s.cta : d.cta, panel:/^#[0-9a-f]{6}$/i.test(s.panel) ? s.panel : '', badge:layout === 'offer' && badgeOK ? badge.slice(0, 14) : '', scene:str(s.scene).slice(0, 400), why:str(s.why).slice(0, 160)};
+}
+async function artDirect(p, b, n, only){
+  const k = b.brain?.kit || {}; const d = p.design || {};
+  const prompt = `You are the art director at a top Indian design studio. Design ${n} DIFFERENT layout concept${n > 1 ? 's' : ''} for one social media creative, so it looks like a thoughtfully designed post by a senior designer, never a generic template.
+BRAND: ${b.name} · ${str(b.industry)} · ${str(b.price)} positioning · audience ${str(b.audience?.age)} ${str(b.audience?.geo)} · personality: ${str(b.voice?.adjectives) || 'not set'} (premium ${b.voice?.premium || 3}/5, witty ${b.voice?.witty || 3}/5)
+BRAND KIT: colours ${str(k.colors) || 'not set'} · fonts ${str(k.fonts) || 'not set'}
+POST: ${p.channel} ${p.format}${p.storyType ? ' (' + p.storyType + ')' : ''} · pillar ${str(p.pillar)} · topic ${str(p.topic)}${p.product ? ' · product ' + p.product : ''}${p.topical ? ' · occasion ' + p.topical : ''}
+ON-IMAGE COPY (exact, do not change): headline "${str(p.onImage?.headline || p.topic)}" · subline "${str(p.onImage?.subline)}" · CTA "${str(p.onImage?.cta)}"
+DESIGN BRIEF: layout ${str(d.layout)} · mood ${str(d.mood)} · palette ${str(d.palette)} · elements ${str(d.elements)}
+LAYOUTS (pick from these keys): ${Object.entries(LAYOUTS).filter(([x]) => !only || x === only).map(([x, v]) => `${x} [zones: ${v.zones.join('/')}] = ${v.hint}`).join(' | ')}
+FONTS (pick from this list only${kitFont(b) ? ', or the brand font "' + kitFont(b) + '"' : ''}): ${Object.keys(FONTS).join(', ')}
+Return JSON {"options":[{"layout":"key","zone":"one of that layout's zones","head":"headline font","body":"body font","caps":false,"emphasis":"1-3 consecutive words copied exactly from the headline to highlight, or empty","kicker":"2-4 word label above the headline (e.g. pillar, occasion, collection name) or empty; never a claim, number or offer not in the copy","cta":"pill|link|none","panel":"#hex from the brand kit for panels/frames, or empty","badge":"offer layout only: the offer words exactly as in the copy, e.g. 20% OFF, else empty","scene":"one or two sentences telling the photographer the composition: where the subject sits (opposite the text zone), camera angle, lens, lighting, props, colour grade; the text zone must stay calm and empty","why":"one line"}]}
+RULES: ${n > 1 ? 'every option uses a different layout. ' : ''}Match the brand: luxury → serif headline, restraint, lots of air; youthful/D2C → bolder sans or display, energy; B2B/finance → clean sans, split or card. Use the brand font for headlines when it fits. Pair fonts with contrast (serif + sans, or display + sans). Uppercase (caps) only with display or sans fonts and short headlines. Offer layout only if the copy has a real offer.`;
+  let list = [];
+  try { const j = await ai(prompt, {brandId:p.brandId}); list = arr(j?.options || j); } catch (e){}
+  const out = []; const used = new Set();
+  for (let i = 0; i < n; i++){
+    let s = cleanSpec(list[i], p, b, i, only);
+    if (!only && n > 1 && used.has(s.layout)){ let j = i; do { s = cleanSpec({...list[i], layout:defaultSpec(p, b, j++).layout}, p, b, i); } while (used.has(s.layout) && j < i + 8); }
+    used.add(s.layout); out.push(s);
+  }
+  return out;
+}
+const ZONE_WORDS = {bottom:'the bottom third', top:'the top third', left:'the left half', right:'the right half', center:'the centre', tl:'the top-left area', tr:'the top-right area', bl:'the bottom-left area', br:'the bottom-right area'};
+function imagePrompt(p, b, spec){
+  const d = p.design || {}; const k = b.brain?.kit || {}; const pr = findProd(b, p.product); const L = spec?.layout || 'poster'; const z = ZONE_WORDS[spec?.zone] || 'the bottom third';
+  const comp = L === 'split' ? `The photo will be cropped to one part of the post next to a solid colour panel, so keep the subject well centred with generous margin.`
+    : L === 'frame' ? `The photo will sit inside a frame; keep the subject centred with breathing room.`
+    : L === 'quote' ? `Soft, low-detail, atmospheric background that will be dimmed behind a large quote.`
+    : L === 'minimal' ? `Very minimal composition: one subject, small in frame, large calm empty areas, especially ${z}.`
+    : L === 'none' ? `Full-bleed hero image, no space needs to be left.`
+    : `Keep ${z} calm and empty (soft, even background: sky, wall, fabric, table, bokeh) for text; place the subject away from it.`;
+  return `Create a premium social media photograph for the brand "${b.name}" (${str(b.industry)}, ${str(b.price)} positioning, audience ${str(b.audience?.geo || 'India')}).
 Post: ${p.channel} ${p.format}${p.format === 'Story' && p.storyType ? ' (' + p.storyType + ')' : ''} · topic: ${str(p.topic)}${p.product ? ' · product: ' + p.product + (pr ? ' — ' + str(pr.what) : '') : ''}${p.topical ? ' · occasion: ' + p.topical : ''}
-Headline this visual must support (do NOT write it): "${str(p.onImage?.headline || p.hook)}"
-Design brief — layout: ${str(d.layout)}; mood: ${str(d.mood)}; palette: ${str(d.palette || k.colors)}; elements: ${str(d.elements)}; do: ${str(d.dos)}; don't: ${str(d.donts)}.
-Brand colours: ${str(k.colors) || 'as per mood'}. Look and feel: ${str(p.design?.refSearch)}.
+The headline this image supports (do NOT write it): "${str(p.onImage?.headline || p.hook)}"
+Art direction: ${spec?.scene || str(d.layout)}. Mood: ${str(d.mood)}. Palette: ${str(d.palette || k.colors)} (brand colours ${str(k.colors) || 'as per mood'}). Elements: ${str(d.elements)}. Do: ${str(d.dos)}. Don't: ${str(d.donts)}.
+Composition: ${comp}
 ${p.notes || d.note ? 'Note to designer: ' + str(p.notes || d.note) : ''}
-RULES: absolutely no text, letters, numbers, logos, watermarks or UI in the image. Leave clean, uncluttered negative space in ${area} for text that will be added later. Real, high-end, editorial quality; natural lighting; Indian context where people or places appear; no distorted hands or faces.${pr?.photo ? ' Use the attached product photo: keep the product, packaging, label and shape exactly as it is and build the scene around it.' : ''}`;
+RULES: absolutely no text, letters, numbers, logos, watermarks, frames or UI in the image. Photographic, editorial, art-directed, like a real campaign shoot; natural light; considered colour grade; Indian context where people or places appear; no plastic CGI look, no distorted hands or faces.${pr?.photo ? ' Use the attached product photo: keep the product, packaging, label and shape exactly as it is and build the scene around it.' : ''}`;
 }
-function wrapLines(ctx, text, maxW, maxLines){
-  const words = str(text).split(/\s+/).filter(Boolean); const lines = []; let cur = '';
-  for (const w of words){ const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; } }
-  if (cur) lines.push(cur);
-  if (lines.length > maxLines){ const keep = lines.slice(0, maxLines); keep[maxLines - 1] = keep[maxLines - 1].replace(/\s*\S*$/, '') + '…'; return keep; }
-  return lines;
+
+/* ---- image analysis ---- */
+function imgStats(cv){
+  const G = 60, gh = Math.max(8, Math.round(G * cv.height / cv.width)); const s = document.createElement('canvas'); s.width = G; s.height = gh;
+  const c = s.getContext('2d', {willReadFrequently:true}); c.drawImage(cv, 0, 0, G, gh); const px = c.getImageData(0, 0, G, gh).data;
+  const L = new Float32Array(G * gh); for (let i = 0; i < G * gh; i++) L[i] = (.2126 * px[i * 4] + .7152 * px[i * 4 + 1] + .0722 * px[i * 4 + 2]) / 255;
+  const E = new Float32Array(G * gh); for (let y = 0; y < gh; y++) for (let x = 0; x < G; x++){ const i = y * G + x; E[i] = Math.abs(L[i] - L[y * G + Math.min(G - 1, x + 1)]) + Math.abs(L[i] - L[Math.min(gh - 1, y + 1) * G + x]); }
+  const region = r => { const x0 = Math.max(0, Math.floor(r.x / cv.width * G)), x1 = Math.min(G, Math.ceil((r.x + r.w) / cv.width * G)), y0 = Math.max(0, Math.floor(r.y / cv.height * gh)), y1 = Math.min(gh, Math.ceil((r.y + r.h) / cv.height * gh));
+    let n = 0, sl = 0, sl2 = 0, se = 0; for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++){ const i = y * G + x; n++; sl += L[i]; sl2 += L[i] * L[i]; se += E[i]; }
+    if (!n) return {lum:.5, busy:0, sd:0}; const m = sl / n; return {lum:m, busy:se / n, sd:Math.sqrt(Math.max(0, sl2 / n - m * m))}; };
+  return {region};
+}
+function zoneBox(zone, w, h, sa){
+  const P = Math.round(w * .075), T = sa.top + P, B = h - sa.bottom - P, W = w - 2 * P, H = B - T;
+  const r = {bottom:{x:P, y:B - H * .42, w:W, h:H * .42, v:'bottom', a:'left'}, top:{x:P, y:T, w:W, h:H * .4, v:'top', a:'left'}, center:{x:P, y:T + H * .2, w:W, h:H * .6, v:'middle', a:'center'},
+    left:{x:P, y:T, w:W * .56, h:H, v:'middle', a:'left'}, right:{x:P + W * .44, y:T, w:W * .56, h:H, v:'middle', a:'left'},
+    tl:{x:P, y:T, w:W * .64, h:H * .45, v:'top', a:'left'}, tr:{x:P + W * .36, y:T, w:W * .64, h:H * .45, v:'top', a:'right'}, bl:{x:P, y:B - H * .45, w:W * .64, h:H * .45, v:'bottom', a:'left'}, br:{x:P + W * .36, y:B - H * .45, w:W * .64, h:H * .45, v:'bottom', a:'right'}}[zone];
+  return r || zoneBox('bottom', w, h, sa);
+}
+const zoneScore = st => st.busy * 10 + st.sd * 1.6;
+function calmBox(st, box){
+  if (box.v === 'middle') return box; const N = 12, sh = box.h / N; const fromTop = box.v === 'top'; let ref = null, keep = N;
+  for (let i = 0; i < N; i++){ const y = fromTop ? box.y + i * sh : box.y + box.h - (i + 1) * sh; const r = st.region({x:box.x, y, w:box.w, h:sh}); const sc = zoneScore(r);
+    if (i < 3){ ref = ref == null ? sc : Math.min(ref, sc); continue; }
+    if (sc > Math.max(.5, ref * 2.6) || Math.abs(r.lum - st.region({x:box.x, y:fromTop ? box.y : box.y + box.h - sh * 3, w:box.w, h:sh * 3}).lum) > .22){ keep = i; break; } }
+  const nh = Math.max(box.h * .5, keep * sh); return fromTop ? {...box, h:nh} : {...box, y:box.y + box.h - nh, h:nh};
+}
+function bestZone(st, spec, w, h, sa){
+  const zs = LAYOUTS[spec.layout]?.zones || ['bottom']; let best = spec.zone, bs = Infinity;
+  for (const z of zs){ const s = zoneScore(st.region(zoneBox(z, w, h, sa))) * (z === spec.zone ? .85 : 1); if (s < bs){ bs = s; best = z; } }
+  return best;
+}
+
+/* ---- typography ---- */
+function fitWords(c, words, maxW){ const lines = []; let cur = []; for (const w of words){ const t = [...cur, w].join(' '); if (!cur.length || c.measureText(t).width <= maxW) cur.push(w); else { lines.push(cur); cur = [w]; } } if (cur.length) lines.push(cur); return lines; }
+function balanced(c, text, maxW){   // same number of lines as greedy wrapping, but with even line lengths (no single-word last line)
+  const words = str(text).split(/\s+/).filter(Boolean); if (!words.length) return [];
+  const n = fitWords(c, words, maxW).length; if (n < 2) return fitWords(c, words, maxW);
+  let lo = maxW * .4, hi = maxW; for (let i = 0; i < 14; i++){ const m = (lo + hi) / 2; if (fitWords(c, words, m).length > n) lo = m; else hi = m; }
+  return fitWords(c, words, hi);
+}
+function setLS(c, px){ if ('letterSpacing' in c) c.letterSpacing = px + 'px'; }
+function drawRich(c, lines, emphSet, x, y, lh, align, col, emph){
+  lines.forEach((ws, li) => {
+    const sp = c.measureText(' ').width; const widths = ws.map(w => c.measureText(w).width); const tot = widths.reduce((a, b) => a + b, 0) + sp * (ws.length - 1);
+    let cx = align === 'center' ? x - tot / 2 : align === 'right' ? x - tot : x; const yy = y + li * lh;
+    ws.forEach((w, i) => { const on = emphSet.has(li + ':' + i);
+      if (on && emph.box){ c.fillStyle = emph.box; c.fillRect(cx - sp * .25, yy + lh * .06, widths[i] + sp * .5, lh * .92); }
+      c.fillStyle = on ? emph.color : col; c.fillText(w, cx, yy); cx += widths[i] + sp; });
+  });
+}
+function emphIndex(lines, emphasis){
+  const set = new Set(); const target = str(emphasis).toLowerCase().split(/\s+/).filter(Boolean); if (!target.length) return set;
+  const flat = []; lines.forEach((ws, li) => ws.forEach((w, i) => flat.push({k:li + ':' + i, w:w.toLowerCase().replace(/[^\p{L}\p{N}%₹]/gu, '')})));
+  for (let s = 0; s + target.length <= flat.length; s++){ if (target.every((t, j) => flat[s + j].w === t.replace(/[^\p{L}\p{N}%₹]/gu, ''))){ for (let j = 0; j < target.length; j++) set.add(flat[s + j].k); break; } }
+  return set;
+}
+// measures (and optionally draws) the text block inside box; returns its height
+function textBlock(c, t, spec, F, box, look, draw, yTop){
+  if (!look._fit){ const s0 = look.scale || 1; const tries = [[1, 0, 0], [.88, 0, 0], [.78, 0, 0], [.78, 1, 0], [.78, 1, 1], [.68, 1, 1], [.6, 1, 1], [.52, 1, 1]];
+    for (const [k, nk, ns] of tries){ const lk = {...look, scale:s0 * k, noKicker:look.noKicker || !!nk}; const tt = ns ? {...t, subline:''} : t; if (textBlock0(c, tt, spec, F, box, lk, false) <= box.h){ look._fit = {sc:s0 * k, nk, ns}; break; } }
+    look._fit = look._fit || {sc:s0 * .52, nk:1, ns:1}; }
+  const f = look._fit; return textBlock0(c, f.ns ? {...t, subline:''} : t, spec, F, box, {...look, scale:f.sc, noKicker:look.noKicker || !!f.nk}, draw, yTop);
+}
+function textBlock0(c, t, spec, F, box, look, draw, yTop){
+  const w = box.w, a = box.a || 'left', X = a === 'center' ? box.x + w / 2 : a === 'right' ? box.x + w : box.x;
+  const L = spec.layout, big = {poster:.125, editorial:.085, split:.078, card:.07, frame:.07, minimal:.055, quote:.07, offer:.085}[L] || .08;
+  const W0 = look.W; let hs = Math.round(W0 * big * (look.scale || 1)); const hw = fw(spec.head, L === 'minimal' ? 500 : L === 'editorial' || L === 'quote' ? 500 : 800);
+  const head = spec.caps ? str(t.headline).toUpperCase() : str(t.headline);
+  const k2 = Math.max(.8, look.scale || 1); const ss = Math.round(W0 * (L === 'minimal' ? .03 : .036) * k2), ks = Math.round(W0 * .024 * k2), cs = Math.round(W0 * .03 * k2);
+  const lead = spec.caps || /Bebas|Anton|Archivo/.test(spec.head) ? .98 : L === 'poster' ? 1.02 : 1.1;
+  let hl; for (let i = 0; i < 30; i++){ c.font = `${hw} ${hs}px ${F.H}`; setLS(c, spec.caps ? hs * .01 : -hs * .015); hl = balanced(c, head, w); const tooWide = hl.some(ws => c.measureText(ws.join(' ')).width > w * 1.001);
+    if ((hl.length <= (L === 'poster' ? 3 : 4) && !tooWide && hl.length * hs * lead <= box.h * .62) || hs < W0 * .04) break; hs = Math.round(hs * .93); }
+  c.font = `${fw(spec.body, 500)} ${ss}px ${F.B}`; setLS(c, 0); const sl = t.subline ? balanced(c, t.subline, Math.min(w, W0 * .78)) : [];
+  const kick = spec.kicker && !look.noKicker ? (/^[\x00-\x7F]*$/.test(spec.kicker) ? spec.kicker.toUpperCase() : spec.kicker) : '';
+  const ctaT = t.cta && spec.cta !== 'none' ? (spec.cta === 'pill' ? str(t.cta).toUpperCase() : str(t.cta) + '  →') : '';
+  const gap = hs * .42; let y = yTop;
+  const H = (kick ? ks * 1.2 + gap * .8 : 0) + hl.length * hs * lead + (L === 'editorial' ? gap * 1.1 : 0) + (sl.length ? gap * .7 + sl.length * ss * 1.35 : 0) + (ctaT ? gap + cs * 2.3 : 0) + (L === 'quote' ? hs * .9 : 0);
+  if (!draw) return H;
+  c.textBaseline = 'top'; c.textAlign = 'left';
+  if (L === 'quote'){ c.font = `${fw(spec.head, 700)} ${Math.round(hs * 2.2)}px ${F.H}`; c.fillStyle = look.accentOn; c.textAlign = 'center'; c.fillText('“', X, y - hs * .35); c.textAlign = 'left'; y += hs * .9; }
+  if (kick){ c.font = `${fw(spec.body, 700)} ${ks}px ${F.B}`; setLS(c, ks * .22); const kw = c.measureText(kick).width; c.fillStyle = look.kickerCol; const kx = a === 'center' ? X - kw / 2 : a === 'right' ? X - kw : X;
+    if (!/^[\x00-\x7F]*$/.test(kick)) setLS(c, 0);
+    if (L === 'editorial' || L === 'minimal'){ if (a === 'right'){ c.fillRect(kx - ks * 2.6, y + ks * .5, ks * 1.8, Math.max(2, ks * .09)); c.fillText(kick, kx, y); } else { const ox = a === 'center' ? kx - ks * 1.3 : kx; c.fillRect(ox, y + ks * .5, ks * 1.8, Math.max(2, ks * .09)); c.fillText(kick, ox + ks * 2.6, y); } } else c.fillText(kick, kx, y);
+    setLS(c, 0); y += ks * 1.2 + gap * .8; }
+  c.font = `${hw} ${hs}px ${F.H}`; setLS(c, spec.caps ? hs * .01 : -hs * .015);
+  if (look.shadow){ c.shadowColor = look.shadow; c.shadowBlur = hs * .35; }
+  drawRich(c, hl, emphIndex(hl, spec.emphasis), X, y, hs * lead, a, look.fg, look.emph); c.shadowBlur = 0; c.shadowColor = 'transparent'; setLS(c, 0);
+  y += hl.length * hs * lead;
+  if (L === 'editorial'){ y += gap * .55; c.fillStyle = look.accentOn; const rw = W0 * .08; c.fillRect(a === 'right' ? X - rw : a === 'center' ? X - rw / 2 : X, y, rw, Math.max(3, W0 * .004)); y += gap * .55; }
+  if (sl.length){ y += gap * .7; c.font = `${fw(spec.body, 500)} ${ss}px ${F.B}`; c.globalAlpha = .9; if (look.shadow){ c.shadowColor = look.shadow; c.shadowBlur = ss * .4; } drawRich(c, sl, new Set(), X, y, ss * 1.35, a, look.fg, look.emph); c.shadowBlur = 0; c.globalAlpha = 1; y += sl.length * ss * 1.35; }
+  if (ctaT){ y += gap; c.font = `${fw(spec.body, 700)} ${cs}px ${F.B}`;
+    if (spec.cta === 'pill'){ setLS(c, cs * .08); const tw = c.measureText(ctaT).width, bw = tw + cs * 1.8, bh = cs * 2.3, bx = a === 'center' ? X - bw / 2 : a === 'right' ? X - bw : X; c.fillStyle = look.pill; rr(c, bx, y, bw, bh, bh / 2); c.fill(); c.fillStyle = look.pillText; c.fillText(ctaT, bx + cs * .9, y + (bh - cs) / 2); setLS(c, 0); }
+    else { const tw = c.measureText(ctaT).width, bx = a === 'center' ? X - tw / 2 : a === 'right' ? X - tw : X; c.fillStyle = look.fg; c.fillText(ctaT, bx, y + cs * .5); c.fillRect(bx, y + cs * 1.75, tw, Math.max(2, cs * .07)); } }
+  return H;
 }
 function rr(ctx, x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-async function composeCreative({img, p, b, w, h, pos, slide, total, text}){
+function wrapLines(ctx, text, maxW, maxLines){ const ls = fitWords(ctx, str(text).split(/\s+/).filter(Boolean), maxW).map(x => x.join(' ')); if (ls.length > maxLines){ const k = ls.slice(0, maxLines); k[maxLines - 1] = k[maxLines - 1].replace(/\s*\S*$/, '') + '…'; return k; } return ls; }
+function cover(c, img, x, y, w, h){ const s = Math.max(w / img.width, h / img.height); const iw = img.width * s, ih = img.height * s; c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip(); c.drawImage(img, x + (w - iw) / 2, y + (h - ih) / 2, iw, ih); c.restore(); }
+const hexA = (hex, a) => { const h = hex.replace('#', ''); return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`; };
+const contrast = (a, b) => (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+function inkFor(bgLum, col){ const dark = col.dark, light = '#FFFFFF'; return contrast(bgLum, lum(dark)) >= contrast(bgLum, 1) ? dark : light; }
+function accentOn(bgLum, col, fg){ const light = fg ? lum(fg) > .5 : bgLum < .45; for (const c of col.byVivid){ if (fg && c.toLowerCase() === fg.toLowerCase()) continue; const L = lum(c); if (contrast(bgLum, L) >= 2.5 && (light ? L > bgLum + .1 : L < bgLum - .1) && sat(c) > .18) return c; } return null; }
+const sat = hex => { const h = hex.replace('#', ''); const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255); const mx = Math.max(r, g, b), mn = Math.min(r, g, b); return mx === 0 ? 0 : (mx - mn) / mx * (1 - Math.abs(mx + mn - 1) * .3); };
+async function logoLum(src){ try { const i = await loadImg(src); const s = document.createElement('canvas'); s.width = 40; s.height = 40; const c = s.getContext('2d', {willReadFrequently:true}); c.drawImage(i, 0, 0, 40, 40); const d = c.getImageData(0, 0, 40, 40).data; let n = 0, t = 0; for (let k = 0; k < d.length; k += 4){ if (d[k + 3] < 128) continue; n++; t += (.2126 * d[k] + .7152 * d[k + 1] + .0722 * d[k + 2]) / 255; } return {img:i, lum:n ? t / n : .5, opaque:n > 1500}; } catch (e){ return null; } }
+function palette(b){ const k = kitColors(b); const bc = brandColors(b); const all = [...new Set([...k, bc.bg, bc.ac, bc.fg])]; const dark = all.slice().sort((x, y) => lum(x) - lum(y))[0]; const byVivid = all.filter(c => c.length === 7).sort((x, y) => sat(y) - sat(x)); return {list:all, byVivid, vivid:byVivid[0] || bc.ac, dark:lum(dark) < .06 ? dark : '#161616', bg:bc.bg, ac:bc.ac, fg:bc.fg}; }
+
+async function composeCreative({img, p, b, w, h, spec, slide = 0, total, text}){
+  spec = spec && spec.layout ? spec : typeof spec === 'string' ? (spec === 'none' ? {layout:'none'} : {...defaultSpec(p, b, 0, 'poster'), zone:spec === 'center' ? 'bottom' : spec}) : defaultSpec(p, b);
   const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c = cv.getContext('2d');
-  const col = brandColors(b); const stack = await ensureFonts(b, p.lang);
+  const col = palette(b); const F = await ensureFonts(spec, p.lang); const W = w;
   const t = text || {headline:p.onImage?.headline || p.topic, subline:p.onImage?.subline, cta:p.onImage?.cta};
-  const must = str(findProd(b, p.product)?.must);
-  if (slide > 0){   // inner carousel slide: brand colour + copy, no AI cost
-    c.fillStyle = col.bg; c.fillRect(0, 0, w, h);
-    if (img){ c.globalAlpha = .14; const s = Math.max(w / img.width, h / img.height); c.drawImage(img, (w - img.width * s) / 2, (h - img.height * s) / 2, img.width * s, img.height * s); c.globalAlpha = 1; }
-  } else if (img){ const s = Math.max(w / img.width, h / img.height); c.drawImage(img, (w - img.width * s) / 2, (h - img.height * s) / 2, img.width * s, img.height * s); }
-  else { c.fillStyle = col.bg; c.fillRect(0, 0, w, h); }
-  const P = Math.round(w * .075), maxW = w - P * 2; const onImg = slide > 0 ? col.fg : '#FFFFFF';
-  if (pos !== 'none' && slide === 0 && img){
-    const g = pos === 'top' ? c.createLinearGradient(0, 0, 0, h * .55) : pos === 'center' ? null : c.createLinearGradient(0, h * .38, 0, h);
-    if (g){ if (pos === 'top'){ g.addColorStop(0, 'rgba(0,0,0,.72)'); g.addColorStop(1, 'rgba(0,0,0,0)'); } else { g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.78)'); } c.fillStyle = g; c.fillRect(0, 0, w, h); }
-    else { c.fillStyle = 'rgba(0,0,0,.38)'; c.fillRect(0, 0, w, h); }
+  const must = slide === 0 ? str(findProd(b, p.product)?.must) : '';
+  const story = h / w > 1.6; const sa = story ? {top:h * .12, bottom:h * .17} : {top:0, bottom:must ? w * .05 : 0};
+  const P = Math.round(w * .075); const lg = b.logo ? await logoLum(b.logo) : null;
+  const panel = spec.panel || col.bg; const panelLum = lum(panel);
+  const look0 = pl => { const fg = inkFor(pl, col), ac = accentOn(pl, col, fg); const box = col.vivid && contrast(pl, lum(col.vivid)) >= 1.6 ? col.vivid : col.list.find(c => contrast(pl, lum(c)) >= 1.6) || fg;
+    const elegant = ['editorial','minimal','frame','quote'].includes(spec.layout); const soft = elegant && !ac ? col.byVivid.find(c => c.toLowerCase() !== fg.toLowerCase() && contrast(pl, lum(c)) >= 1.7 && (lum(fg) > .5 ? lum(c) > pl : lum(c) < pl)) : null;
+    return {W, fg, kickerCol:ac || soft || fg, accentOn:ac || soft || fg, emph:ac ? {color:ac} : elegant ? {color:soft || fg} : {color:lum(box) > .45 ? col.dark : '#FFFFFF', box}, pill:contrast(pl, lum(col.vivid)) >= 2 ? col.vivid : ac || fg}; };
+  const finishLook = lk => { lk.pillText = lum(lk.pill) > .45 ? col.dark : '#FFFFFF'; return lk; };
+  const drawLogo = async (x, y, maxH, bgLum, align = 'left', chip = false) => { if (!lg) return; const lh = maxH, lw = Math.min(w * .3, lg.img.width * lh / lg.img.height); const lx = align === 'right' ? x - lw : x;
+    if (lg.opaque || contrast(bgLum, lg.lum) < 2.6 || chip){ const pad = lh * .32; c.fillStyle = contrast(bgLum, 1) > contrast(bgLum, 0) || lg.lum < .5 ? 'rgba(255,255,255,.95)' : 'rgba(20,20,20,.9)'; rr(c, lx - pad, y - pad, lw + pad * 2, lh + pad * 2, (lh + pad * 2) * .3); c.fill(); }
+    c.drawImage(lg.img, lx, y, lw, lh); };
+  const mustLine = (col2, y2) => { if (!must) return; c.font = `500 ${Math.round(w * .02)}px ${F.B}`; c.fillStyle = col2; c.globalAlpha = .82; c.textBaseline = 'top'; c.textAlign = 'left'; wrapLines(c, must, w - P * 2, 2).forEach((l, i, a) => c.fillText(l, P, y2 - (a.length - i) * w * .025)); c.globalAlpha = 1; };
+
+  /* inner carousel slides: designed continuation in the same type system */
+  if (slide > 0){
+    c.fillStyle = panel; c.fillRect(0, 0, w, h); const lk = finishLook(look0(panelLum));
+    if (img && spec.layout !== 'minimal'){ const sh = h * .3; cover(c, img, 0, h - sh, w, sh); const g = c.createLinearGradient(0, h - sh, 0, h - sh * .45); g.addColorStop(0, panel); g.addColorStop(1, hexA(panel, 0)); c.fillStyle = g; c.fillRect(0, h - sh, w, sh * .6); }
+    c.font = `${fw(spec.body, 700)} ${Math.round(w * .028)}px ${F.B}`; setLS(c, w * .006); c.fillStyle = lk.kickerCol; c.textBaseline = 'top'; c.fillText(String(slide + 1).padStart(2, '0') + ' / ' + String(total).padStart(2, '0'), P, P); setLS(c, 0);
+    const top = P + w * .1, bottom = img && spec.layout !== 'minimal' ? h * .68 : h - P - w * .08; const box = {x:P, y:top, w:w - P * 2, h:bottom - top, a:'left'}; const sp = {...spec, layout:spec.layout === 'poster' ? 'poster' : 'split', kicker:'', cta:t.cta ? 'pill' : 'none'};
+    const lk2 = {...lk, scale:1.15}; const bh = textBlock(c, t, sp, F, box, lk2, false); textBlock(c, t, sp, F, box, lk2, true, top + Math.max(0, (box.h - bh) * .42));
+    await drawLogo(w - P, h - P - w * .05, w * .05, img && spec.layout !== 'minimal' ? .4 : panelLum, 'right');
+    return cv.toDataURL('image/jpeg', .9);
   }
-  if (b.logo){ try { const lg = await loadImg(b.logo); const lh = Math.round(w * .07), lw = Math.min(w * .28, lg.width * lh / lg.height); const bx = P - 14, by = pos === 'top' && slide === 0 ? h - P - lh - 14 : P - 14; c.fillStyle = 'rgba(255,255,255,.94)'; rr(c, bx, by, lw + 28, lh + 28, 18); c.fill(); c.drawImage(lg, bx + 14, by + 14, lw, lh); } catch (e){} }
-  if (slide > 0 && total){ c.font = `700 ${Math.round(w * .03)}px ${stack}`; c.fillStyle = onImg; c.globalAlpha = .75; c.textAlign = 'right'; c.fillText(`${slide + 1}/${total}`, w - P, P + w * .03); c.globalAlpha = 1; c.textAlign = 'left'; }
-  if (pos === 'none' && slide === 0) return cv.toDataURL('image/jpeg', .86);
-  // text block
-  let hs = Math.round(w * (slide > 0 ? .07 : .085)); c.font = `800 ${hs}px ${stack}`; let hl = wrapLines(c, t.headline, maxW, 3);
-  while (hl.length === 3 && hs > w * .05 && c.measureText(hl[2]).width > maxW * .98){ hs -= 4; c.font = `800 ${hs}px ${stack}`; hl = wrapLines(c, t.headline, maxW, 3); }
-  const ss = Math.round(w * .04); c.font = `500 ${ss}px ${stack}`; const sl = t.subline ? wrapLines(c, t.subline, maxW, 3) : [];
-  const cs = Math.round(w * .034); const ctaH = t.cta ? cs * 2.3 : 0; const mustS = Math.round(w * .022);
-  const blockH = hl.length * hs * 1.12 + (sl.length ? ss * .6 + sl.length * ss * 1.3 : 0) + (ctaH ? ctaH + ss * .8 : 0);
-  let y = slide > 0 || pos === 'center' ? (h - blockH) / 2 : pos === 'top' ? P + (b.logo ? w * .13 : 0) : h - P - blockH - (must ? mustS * 2.2 : 0);
-  c.fillStyle = onImg; c.textBaseline = 'top'; c.shadowColor = slide > 0 ? 'transparent' : 'rgba(0,0,0,.35)'; c.shadowBlur = slide > 0 ? 0 : 12;
-  c.font = `800 ${hs}px ${stack}`; hl.forEach((l, i) => c.fillText(l, P, y + i * hs * 1.12)); y += hl.length * hs * 1.12;
-  if (sl.length){ y += ss * .6; c.font = `500 ${ss}px ${stack}`; c.globalAlpha = .92; sl.forEach((l, i) => c.fillText(l, P, y + i * ss * 1.3)); c.globalAlpha = 1; y += sl.length * ss * 1.3; }
-  c.shadowBlur = 0;
-  if (t.cta){ y += ss * .8; c.font = `800 ${cs}px ${stack}`; const tw = c.measureText(str(t.cta).toUpperCase()).width; c.fillStyle = col.ac; rr(c, P, y, tw + cs * 1.6, ctaH, ctaH / 2); c.fill(); c.fillStyle = lum(col.ac) > .5 ? '#111' : '#fff'; c.fillText(str(t.cta).toUpperCase(), P + cs * .8, y + (ctaH - cs) / 2); }
-  if (must && slide === 0){ c.font = `500 ${mustS}px ${stack}`; c.fillStyle = onImg; c.globalAlpha = .85; const ml = wrapLines(c, must, maxW, 2); ml.forEach((l, i) => c.fillText(l, P, h - P * .55 - (ml.length - i) * mustS * 1.25)); c.globalAlpha = 1; }
-  return cv.toDataURL('image/jpeg', .86);
+  if (spec.layout === 'none'){ if (img) cover(c, img, 0, 0, w, h); else { c.fillStyle = panel; c.fillRect(0, 0, w, h); } if (lg) await drawLogo(P, P + sa.top, w * .06, .5); return cv.toDataURL('image/jpeg', .9); }
+
+  /* split and frame: image and a solid brand panel */
+  if (spec.layout === 'split' || spec.layout === 'frame'){
+    const z = spec.layout === 'frame' ? 'bottom' : spec.zone; let ir, pr;
+    if (spec.layout === 'frame'){ const m = w * .045; const stripH = h * (story ? .3 : .34); ir = {x:m, y:m + sa.top * .5, w:w - m * 2, h:h - m - stripH - sa.top * .5 - sa.bottom * .6}; pr = {x:0, y:ir.y + ir.h, w, h:h - ir.y - ir.h}; c.fillStyle = panel; c.fillRect(0, 0, w, h); }
+    else { const f = story ? .44 : .42; ir = z === 'bottom' ? {x:0, y:0, w, h:h * (1 - f)} : z === 'top' ? {x:0, y:h * f, w, h:h * (1 - f)} : z === 'left' ? {x:w * .46, y:0, w:w * .54, h} : {x:0, y:0, w:w * .54, h}; pr = z === 'bottom' ? {x:0, y:h * (1 - f), w, h:h * f} : z === 'top' ? {x:0, y:0, w, h:h * f} : z === 'left' ? {x:0, y:0, w:w * .46, h} : {x:w * .54, y:0, w:w * .46, h}; c.fillStyle = panel; c.fillRect(0, 0, w, h); }
+    if (img) cover(c, img, ir.x, ir.y, ir.w, ir.h);
+    const lk = finishLook(look0(panelLum)); const ip = spec.layout === 'frame' ? w * .075 : P * .9;
+    const box = {x:pr.x + ip, y:pr.y + ip + (z === 'top' ? sa.top : 0), w:pr.w - ip * 2, h:pr.h - ip * 2 - (z === 'top' ? sa.top : z === 'bottom' || spec.layout === 'frame' ? sa.bottom : 0) - (must ? w * .05 : 0), a:'left'};
+    if (spec.layout === 'frame' && lg) box.w -= w * .2;
+    const bh = textBlock(c, t, spec, F, box, lk, false); const y0 = z === 'left' || z === 'right' ? box.y + (box.h - bh) / 2 : box.y + Math.max(0, (box.h - bh) / 2) * (spec.layout === 'frame' ? 1 : .6);
+    textBlock(c, t, spec, F, box, lk, true, y0);
+    if (lg){ if (spec.layout === 'frame') await drawLogo(w - ip, pr.y + ip, w * .055, panelLum, 'right'); else if (z === 'bottom' || z === 'top') await drawLogo(w - P * .9, pr.y + P * .9 + (z === 'top' ? sa.top : 0), w * .05, panelLum, 'right'); else await drawLogo(pr.x + P * .9, P + sa.top, w * .05, panelLum); }
+    mustLine(lk.fg, h - sa.bottom - P * .4);
+    return cv.toDataURL('image/jpeg', .9);
+  }
+
+  /* text over the photo: place it where the image is calm, colour it for contrast */
+  if (img) cover(c, img, 0, 0, w, h); else { c.fillStyle = panel; c.fillRect(0, 0, w, h); }
+  const st = imgStats(cv); const zone = spec.layout === 'quote' ? 'center' : bestZone(st, spec, w, h, sa); spec = {...spec, zone};
+  const box = spec.layout === 'card' || spec.layout === 'quote' ? zoneBox(zone, w, h, sa) : calmBox(st, zoneBox(zone, w, h, sa)); const reg = st.region(box); const busy = zoneScore(reg);
+  if (spec.layout === 'quote' && img){ c.save(); c.filter = `blur(${Math.round(w * .012)}px)`; cover(c, img, -w * .03, -h * .03, w * 1.06, h * 1.06); c.restore(); c.fillStyle = 'rgba(0,0,0,.5)'; c.fillRect(0, 0, w, h); }
+  let bgL = spec.layout === 'quote' ? reg.lum * .5 : reg.lum; let lk;
+  if (spec.layout === 'card'){
+    const cardCol = panelLum > .75 ? panel : bgL > .5 ? '#FFFFFF' : panel; const cl = lum(cardCol); lk = finishLook(look0(cl)); const pad = w * .05;
+    const inner = {...box, x:box.x + pad, w:box.w - pad * 2, h:box.h - pad * 2, a:'left'}; const bh = textBlock(c, t, spec, F, inner, lk, false);
+    const cy = box.v === 'bottom' ? box.y + box.h - bh - pad * 2 : box.y; c.save(); c.shadowColor = 'rgba(0,0,0,.22)'; c.shadowBlur = w * .04; c.shadowOffsetY = w * .01; c.fillStyle = hexA(cardCol.length === 7 ? cardCol : '#FFFFFF', .96); rr(c, box.x, cy, box.w, bh + pad * 2, w * .035); c.fill(); c.restore();
+    textBlock(c, t, spec, F, inner, lk, true, cy + pad);
+  } else {
+    // soft local scrim only when the zone is busy or mid-tone, shaped to the zone
+    const need = Math.min(.86, Math.max(0, (busy - .2) * 1.6) + (reg.lum > .35 && reg.lum < .62 ? .25 : 0));
+    const darkText = spec.layout !== 'quote' && reg.lum > .6 && busy < .5; const sc = darkText ? '255,255,255' : '0,0,0';
+    if (need > .02 && spec.layout !== 'quote'){
+      let g; const v = box.v; if (v === 'bottom') g = c.createLinearGradient(0, box.y - box.h * .5, 0, h); else if (v === 'top') g = c.createLinearGradient(0, box.y + box.h * 1.5, 0, 0); else if (zone === 'left') g = c.createLinearGradient(w * .75, 0, 0, 0); else if (zone === 'right') g = c.createLinearGradient(w * .25, 0, w, 0); else g = null;
+      if (['tl','tr','bl','br'].includes(zone)){ const cx = zone[1] === 'l' ? 0 : w, cy = zone[0] === 't' ? 0 : h; g = c.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * .75); }
+      if (g){ g.addColorStop(0, `rgba(${sc},${need + .1})`); g.addColorStop(.55, `rgba(${sc},${need * .6})`); g.addColorStop(1, `rgba(${sc},0)`); c.fillStyle = g; c.fillRect(0, 0, w, h); }
+      bgL = darkText ? bgL + (1 - bgL) * need * .9 : bgL * (1 - need * .9);
+    }
+    lk = finishLook(look0(bgL)); if (busy > .45 && lk.fg === '#FFFFFF') lk.shadow = 'rgba(0,0,0,.35)';
+    if (spec.layout === 'quote') box.a = 'center';
+    const bh = textBlock(c, t, spec, F, box, lk, false);
+    const y0 = box.v === 'bottom' ? box.y + box.h - bh : box.v === 'middle' ? box.y + (box.h - bh) / 2 : box.y;
+    textBlock(c, t, spec, F, box, lk, true, y0);
+    if (spec.layout === 'offer' && spec.badge){ const R = w * .15; const bx = zone[1] === 'l' ? w - P - R : P + R, by = zone[0] === 't' ? h - sa.bottom - P - R - (must ? w * .05 : 0) : sa.top + P + R;
+      const bc = col.vivid; c.save(); c.translate(bx, by); c.rotate(-.12); c.fillStyle = bc; c.beginPath(); c.arc(0, 0, R, 0, Math.PI * 2); c.fill(); c.strokeStyle = lum(bc) > .45 ? 'rgba(0,0,0,.18)' : 'rgba(255,255,255,.4)'; c.lineWidth = w * .004; c.beginPath(); c.arc(0, 0, R * .88, 0, Math.PI * 2); c.stroke();
+      const bt = spec.badge.toUpperCase().split(/\s+/); c.fillStyle = lum(bc) > .45 ? col.dark : '#FFFFFF'; c.textAlign = 'center'; c.textBaseline = 'middle'; let fs = R * .5; c.font = `${fw(spec.head, 800)} ${fs}px ${F.H}`; while (bt.some(x => c.measureText(x).width > R * 1.5) && fs > R * .2){ fs *= .9; c.font = `${fw(spec.head, 800)} ${fs}px ${F.H}`; }
+      bt.forEach((x, i) => c.fillText(x, 0, (i - (bt.length - 1) / 2) * fs * 1.02)); c.restore(); c.textAlign = 'left'; }
+  }
+  if (lg){ const top = !['tl','tr','top'].includes(zone); const right = spec.layout === 'offer' && spec.badge ? zone[1] === 'r' : ['tl','bl','left'].includes(zone);
+    const lh = w * (spec.layout === 'minimal' ? .045 : .055); const ly = top ? sa.top + P * .8 : h - sa.bottom - P * .8 - lh - (must ? w * .05 : 0); const lx = right ? w - P : P;
+    const lr = st.region({x:right ? w * .6 : 0, y:ly, w:w * .4, h:lh}); await drawLogo(lx, ly, lh, lr.lum, right ? 'right' : 'left', zoneScore(lr) > .5); }
+  mustLine(inkFor(st.region({x:0, y:h - sa.bottom - w * .08, w, h:w * .08}).lum, col), h - sa.bottom - P * .4);
+  return cv.toDataURL('image/jpeg', .9);
 }
 const dataB64 = d => String(d).split(',')[1];
 const crSig = (p, b) => [p.onImage?.headline, p.onImage?.subline, p.onImage?.cta, findProd(b, p.product)?.must, b?.logo ? 'L' : '', arr(p.slides).map(x => x.copy).join('|')].map(str).join('¦');
 async function saveImg(dataURL, old){ return (await imgApi({action:'save', data:dataB64(dataURL), mime:'image/jpeg', old:old || ''})).url; }
-async function renderAndSave(p, b, rawImg, pos, oldCr){
+const specOf = cr => cr?.spec || (cr?.pos ? cr.pos : null);
+async function renderAndSave(p, b, rawImg, spec, oldCr){
   const {w, h} = creativeSize(p);
-  const main = await composeCreative({img:rawImg, p, b, w, h, pos, slide:0});
+  const main = await composeCreative({img:rawImg, p, b, w, h, spec});
   const url = await saveImg(main, oldCr?.url);
   const slides = [];
   if (p.format === 'Carousel' && arr(p.slides).length > 1){ const tot = arr(p.slides).length;
-    for (let i = 1; i < tot; i++){ const d = await composeCreative({img:rawImg, p, b, w, h, pos, slide:i, total:tot, text:{headline:str(p.slides[i].copy), subline:'', cta:i === tot - 1 ? p.onImage?.cta : ''}}); slides.push(await saveImg(d, arr(oldCr?.slides)[i - 1])); } }
-  return {url, slides, pos, w, h, sig:crSig(p, b)};
+    for (let i = 1; i < tot; i++){ const d = await composeCreative({img:rawImg, p, b, w, h, spec, slide:i, total:tot, text:{headline:str(p.slides[i].copy), subline:'', cta:i === tot - 1 ? p.onImage?.cta : ''}}); slides.push(await saveImg(d, arr(oldCr?.slides)[i - 1])); } }
+  return {url, slides, spec:typeof spec === 'object' ? spec : null, w, h, sig:crSig(p, b)};
 }
-async function finalizeCreative(pid, rawDataURL, pos){
-  const p = D.posts[pid]; const b = D.brands[p.brandId]; const img = await loadImg(rawDataURL);
-  const {w, h} = creativeSize(p); const rc = document.createElement('canvas'); const s = Math.min(1, 1400 / Math.max(img.width, img.height)); rc.width = Math.round(img.width * s); rc.height = Math.round(img.height * s); rc.getContext('2d').drawImage(img, 0, 0, rc.width, rc.height);
-  const raw = await saveImg(rc.toDataURL('image/jpeg', .86), p.creative?.raw);
-  const out = await renderAndSave(p, b, img, pos, p.creative);
-  await patch('posts', pid, {creative:{...out, raw, at:Date.now(), by:me || ''}});
-  for (const k of kidsOf(pid)){ const ko = await renderAndSave({...k, format:p.format}, b, img, pos, k.creative); await patch('posts', k.id, {creative:{...ko, raw, at:Date.now(), fromParent:true}}); }
+async function finalizeCreative(pid, raw0, spec){
+  const p = D.posts[pid]; const b = D.brands[p.brandId]; const img = await loadImg(sameOrigin(raw0)); let raw = raw0;
+  if (String(raw0).startsWith('data:')){ const rc = document.createElement('canvas'); const s = Math.min(1, 1400 / Math.max(img.width, img.height)); rc.width = Math.round(img.width * s); rc.height = Math.round(img.height * s); rc.getContext('2d').drawImage(img, 0, 0, rc.width, rc.height); raw = await saveImg(rc.toDataURL('image/jpeg', .88), p.creative?.raw); }
+  const out = await renderAndSave(p, b, img, spec, p.creative);
+  await patch('posts', pid, {creative:{...out, raw, pos:null, at:Date.now(), by:me || ''}});
+  for (const k of kidsOf(pid)){ const ko = await renderAndSave({...k, format:p.format}, b, img, spec, k.creative); await patch('posts', k.id, {creative:{...ko, raw, pos:null, at:Date.now(), fromParent:true}}); }
 }
-async function genCreative(pid, n, pos){
-  const p = D.posts[pid]; if (!p) return; const b = D.brands[p.brandId]; if (!HOSTED) throw {message:'Creatives are generated on the hosted version.'};
+async function previews(p, b, list){ const {w, h} = creativeSize(p); const out = []; for (const o of list){ try { const img = await loadImg(sameOrigin(o.raw)); out.push({...o, preview:await composeCreative({img, p, b, w, h, spec:o.spec})}); } catch (e){} } return out; }
+// n images, each generated for its own art-directed layout
+async function genCreative(pid, n, layout){
+  const p = D.posts[pid]; if (!p) return []; const b = D.brands[p.brandId]; if (!HOSTED) throw {message:'Creatives are generated on the hosted version.'};
   const pr = findProd(b, p.product); const refs = pr?.photo ? [await toB64(pr.photo)] : [];
-  const j = await imgApi({action:'generate', prompt:imagePrompt(p, b, pos), aspect:creativeSize(p).aspect, n, refs, brandId:p.brandId});
-  const opts = arr(j.images).map(x => `data:${x.mime};base64,${x.data}`);
-  if (!opts.length) throw {message:'No image came back. Try again.'};
-  await patch('posts', pid, {creativeTries:(p.creativeTries || 0) + opts.length});
-  return opts;
+  const specs = layout === 'none' ? Array.from({length:n}, () => ({layout:'none'})) : await artDirect(p, b, n, layout === 'auto' ? '' : layout);
+  const res = await Promise.all(specs.map(sp => imgApi({action:'generate', prompt:imagePrompt(p, b, sp), aspect:creativeSize(p).aspect, n:1, refs, brandId:p.brandId}).then(j => arr(j.images)[0] ? {raw:`data:${j.images[0].mime};base64,${j.images[0].data}`, spec:sp} : null).catch(e => ({err:e}))));
+  const ok = res.filter(x => x && x.raw); if (!ok.length){ const e = res.find(x => x?.err)?.err; throw e || {message:'No image came back. Try again.'}; }
+  await patch('posts', pid, {creativeTries:(p.creativeTries || 0) + ok.length});
+  return ok;
 }
-async function recompose(pid){
+async function recompose(pid, spec){
   const p = D.posts[pid]; const cr = p?.creative; if (!cr?.raw) return; const src = p.parentId && D.posts[p.parentId] ? D.posts[p.parentId] : p;
-  const b = D.brands[p.brandId]; const img = await loadImg(sameOrigin(cr.raw));
-  const out = await renderAndSave({...p, format:src.format}, b, img, cr.pos || 'bottom', cr); await patch('posts', pid, {creative:{...cr, ...out, at:Date.now()}});
+  const b = D.brands[p.brandId]; const img = await loadImg(sameOrigin(cr.raw)); const sp = spec || (p.parentId ? specOf(src.creative) : null) || specOf(cr) || defaultSpec(src, b);
+  const out = await renderAndSave({...p, format:src.format}, b, img, sp, cr); await patch('posts', pid, {creative:{...cr, ...out, at:Date.now()}});
 }
 async function autoCreatives(pid, signal){
   const plan = D.plans[pid]; const fm = arr(plan.opts?.creatives?.formats).length ? plan.opts.creatives.formats : CFORMATS;
   const todo = postsOf(pid).filter(p => !p.parentId && p.hasContent && fm.includes(p.format) && !p.creative?.url);
   let done = 0, failed = 0; gen[pid].total = todo.length; gen[pid].done = 0;
-  await pool(todo, 2, async p => { if (signal?.aborted) return; busy[p.id] = 'Creating the creative…'; sched();
-    try { const o = await genCreative(p.id, 1, 'bottom'); await finalizeCreative(p.id, o[0], 'bottom'); done++; } catch (e){ failed++; if (e?.code === 'rate_limited') await new Promise(r => setTimeout(r, 8000)); }
+  await pool(todo, 2, async p => { if (signal?.aborted) return; busy[p.id] = 'Designing the creative…'; sched();
+    try { const o = await genCreative(p.id, 1, 'auto'); await finalizeCreative(p.id, o[0].raw, o[0].spec); done++; } catch (e){ failed++; if (e?.code === 'rate_limited') await new Promise(r => setTimeout(r, 8000)); }
     finally { delete busy[p.id]; gen[pid].done++; step(pid, `Creating creatives · ${gen[pid].done} of ${todo.length}`); } });
   return {done, failed};
 }
+
+if (location.hostname === 'localhost') window.__cr = {composeCreative, cleanSpec, loadImg, artDirect, imgStats, LAYOUTS};
 
 /* ---------- AI post tools ---------- */
 const TOOL = {
@@ -3678,13 +3903,21 @@ const ACT = {
     ui.view = 'brand'; ui.brandId = id; ui.btab = 'profile'; renderAll(); window.scrollTo(0, 0); toast('Client created from the pitch: pillars, products, competitors and 12 ideas carried over');
   },
   capMood: a => capRewrite(a.dataset.m),
-  crGen: async a => { const id = ui.postId; const n = +a.dataset.n || 1; const pos = $('#cr-pos')?.value || 'bottom'; busy[id] = n > 1 ? `Creating ${n} creative options…` : 'Creating the creative…'; sched();
-    try { const o = await genCreative(id, n, pos); if (n === 1){ busy[id] = 'Adding text and logo…'; sched(); await finalizeCreative(id, o[0], pos); toast('Creative ready'); } else { ui.copts = {...(ui.copts || {}), [id]:o}; ui.cpos = pos; toast('Pick the option you like'); } }
+  crGen: async a => { const id = ui.postId; const n = +a.dataset.n || 1; const lay = $('#cr-lay')?.value || 'auto'; busy[id] = n > 1 ? `Art-directing and shooting ${n} designs…` : 'Art-directing and shooting the design…'; sched();
+    try { const o = await genCreative(id, n, lay); const p = D.posts[id], b = D.brands[p.brandId];
+      if (o.length === 1){ busy[id] = 'Setting the type and logo…'; sched(); await finalizeCreative(id, o[0].raw, o[0].spec); toast('Creative ready'); }
+      else { busy[id] = 'Setting the type on each design…'; sched(); ui.copts = {...(ui.copts || {}), [id]:await previews(p, b, o)}; toast('Pick the design you like'); } }
     catch (e){ toast(e.message || errCopy(e)); } finally { delete busy[id]; sched(); } },
-  crPick: async a => { const id = ui.postId; const u = arr(ui.copts?.[id])[+a.dataset.i]; if (!u) return; busy[id] = 'Adding text, logo and brand fonts…'; sched();
-    try { await finalizeCreative(id, u, $('#cr-pos')?.value || ui.cpos || 'bottom'); delete ui.copts[id]; toast(kidsOf(id).length ? 'Creative ready, language versions updated too' : 'Creative ready'); } catch (e){ toast(e.message || 'Could not save the creative'); } finally { delete busy[id]; sched(); } },
+  crPick: async a => { const id = ui.postId; const o = arr(ui.copts?.[id])[+a.dataset.i]; if (!o) return; busy[id] = 'Saving the design…'; sched();
+    try { await finalizeCreative(id, o.raw, o.spec); delete ui.copts[id]; toast(kidsOf(id).length ? 'Creative ready, language versions updated too' : 'Creative ready'); } catch (e){ toast(e.message || 'Could not save the creative'); } finally { delete busy[id]; sched(); } },
+  crDrop: () => { if (ui.copts) delete ui.copts[ui.postId]; },
+  crRestyle: async () => { const id = ui.postId; const p = D.posts[id], b = D.brands[p.brandId]; if (!p?.creative?.raw) return; busy[id] = 'Art-directing 3 new layouts for this image…'; sched();
+    try { const cur = p.creative.spec?.layout; const sp = (await artDirect(p, b, 4, '')).filter(x => x.layout !== cur).slice(0, 3); ui.copts = {...(ui.copts || {}), [id]:await previews(p, b, sp.map(x => ({raw:p.creative.raw, spec:x})))}; toast('Pick a layout'); }
+    catch (e){ toast(e.message || errCopy(e)); } finally { delete busy[id]; sched(); } },
   crRecompose: async () => { const id = ui.postId; busy[id] = 'Updating the text on the image…'; sched(); try { await recompose(id); toast('Creative updated'); } catch (e){ toast(e.message || 'Could not update'); } finally { delete busy[id]; sched(); } },
-  crPosApply: async () => { const id = ui.postId; const pos = $('#cr-pos')?.value || 'bottom'; await patch('posts', id, {creative:{pos}}); busy[id] = 'Moving the text…'; sched(); try { await recompose(id); for (const k of kidsOf(id)) if (k.creative?.raw){ await patch('posts', k.id, {creative:{pos}}); await recompose(k.id); } toast('Text moved'); } catch (e){ toast(e.message || 'Could not update'); } finally { delete busy[id]; sched(); } },
+  crPosApply: async () => { const id = ui.postId; const p = D.posts[id], b = D.brands[p.brandId]; const lay = $('#cr-lay')?.value || 'auto'; busy[id] = 'Re-laying the design…'; sched();
+    try { const spec = lay === 'none' ? {layout:'none'} : lay === 'auto' ? (await artDirect(p, b, 1, ''))[0] : cleanSpec({...(p.creative?.spec || {}), layout:lay, zone:''}, p, b, 0, lay);
+      await recompose(id, spec); for (const k of kidsOf(id)) if (k.creative?.raw) await recompose(k.id); toast('Layout applied'); } catch (e){ toast(e.message || 'Could not update'); } finally { delete busy[id]; sched(); } },
   crDel: async () => { const id = ui.postId; ui.confirm = null; const cr = D.posts[id]?.creative; if (cr){ [cr.url, cr.raw, ...arr(cr.slides)].forEach(u => imgApi({action:'delete', url:u}).catch(() => {})); } await patch('posts', id, {creative:null}); for (const k of kidsOf(id)) if (k.creative){ [k.creative.url, ...arr(k.creative.slides)].forEach(u => imgApi({action:'delete', url:u}).catch(() => {})); await patch('posts', k.id, {creative:null}); } toast('Creative removed'); },
   storyType: a => patch('posts', ui.postId, {storyType:a.dataset.t}),
   fillStories: async a => { const n = +a.dataset.n; if (!n) return; ui.storyBusy = true; renderAll(); try { const k = await placeStories(ui.planId, n, true); toast(`${k} Stories added on days without a feed post and written`); } finally { ui.storyBusy = false; renderAll(); } },
