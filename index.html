@@ -594,6 +594,9 @@ const LANGS = ['English','Hinglish','English + Hindi mix','Hindi','English + reg
 const XLANGS = ['Hindi','Hinglish','Kannada','Tamil','Telugu','Malayalam','Marathi','Bengali','Gujarati','Punjabi','Odia'];
 const LSCOPES = [['all','All posts'],['Instagram','Instagram posts'],['LinkedIn','LinkedIn posts'],['video','Reels, videos & stories'],['static','Statics & carousels']];
 const inScope = (p, sc) => sc === 'all' || !sc ? true : sc === 'video' ? ['Reel','Video','Story'].includes(p.format) : sc === 'static' ? ['Static','Carousel'].includes(p.format) : p.channel === sc;
+const STYPES = ['Static','Multi-frame','Video','Poll','Quiz','Question box','Countdown','Link sticker','Product tag','Repost / UGC'];
+const STYPE_HINT = {Static:'One designed frame', 'Multi-frame':'3–5 frames, swipe through like a carousel', Video:'Vertical video story (reel-style)', Poll:'Poll sticker with 2 options', Quiz:'Quiz sticker with 3–4 options', 'Question box':'Ask-me-anything question sticker', Countdown:'Countdown sticker to a launch / date', 'Link sticker':'Frame with a link sticker to site or product', 'Product tag':'Product shot with shopping tag', 'Repost / UGC':'Reshare a customer or creator post with a frame'};
+const STYPE_ROT = ['Static','Poll','Video','Multi-frame','Question box','Static','Quiz','Link sticker','Video','Countdown','Product tag','Repost / UGC'];
 const MOODS = ['Witty','Emotional','Bold','Premium','Minimal','Conversational','Storytelling','Urgent','Hinglish','Inspiring'];
 const TREGIONS = ['Pan-India','North India','South India','West India','East & North-East','Delhi NCR','Karnataka','Maharashtra','Tamil Nadu','Kerala','Telangana & Andhra','West Bengal','Gujarat','Punjab','Global / International','UAE / GCC','UK / Europe','USA'];
 const REGIONS = ['India (pan-India)','India — North','India — South','India — West','India — East','Global','UAE / GCC','UK / Europe','USA'];
@@ -992,7 +995,7 @@ Reply with only a JSON array with one object per slot, in order:
 function promptD(b, plan, posts, instr){
   const st = plan?.strategy || {};
   const used = Object.values(D.posts).filter(p => p.planId === plan?.id && p.hook && !posts.some(x => x.id === p.id)).map(p => p.hook).slice(0, 40);
-  const slots = posts.map(p => ({id:p.id, date:p.date, day:validD(p.date) ? DOW[pdate(p.date).getDay()] : '', channel:p.channel, format:p.format, pillar:p.pillar, topic:p.topic, hook:p.hook, topical:p.topical, objective:p.objective, product:p.product}));
+  const slots = posts.map(p => ({id:p.id, ...(p.format === 'Story' ? {storyType:p.storyType || ''} : {}), date:p.date, day:validD(p.date) ? DOW[pdate(p.date).getDay()] : '', channel:p.channel, format:p.format, pillar:p.pillar, topic:p.topic, hook:p.hook, topical:p.topical, objective:p.objective, product:p.product}));
   return `${PRE}
 
 ${brandCtx(b, 9000)}
@@ -1024,8 +1027,9 @@ Writing rules:
 - Caption length: Instagram/Facebook/Threads 60-150 words with line breaks; LinkedIn 120-220 words with a strong first line and no hashtag wall; X max 260 characters; YouTube description 50-120 words; Pinterest 30-60 words; WhatsApp 30-70 words.
 - Hashtags: Instagram 8-12, LinkedIn 3-5, X 1-2, others 0-5. Build each post's set as a MIX: (a) the approved-bank tags that genuinely fit THIS post (pick from the sets whose "use for" matches the post's pillar, product, occasion or format, never paste a whole set blindly), plus (b) 3-6 post-specific tags about this exact topic, product, place or occasion that real people search. Same-post relevance beats volume; no banned, spammy or unrelated tags; do not repeat the identical set across posts.
 - CTA: use the approved CTA that best fits the post's objective if one fits, else write a short one in the brand voice.
-- "slides" only for Carousel (5-8 slides, slide 1 = hook, last = CTA), else [].
-- "script" only for Reel, Video or Story (15-45 seconds, 5-8 timed rows), else [].
+- "slides" for Carousel (5-8 slides, slide 1 = hook, last = CTA) and for Stories as frames (Multi-frame 3-5 frames; every other story type 1-2 frames showing what is on screen, including where the sticker sits), else [].
+- "script" only for Reel, Video or a Video story (15-45 seconds, 5-8 timed rows), else [].
+- Stories: keep the given "storyType" (${STYPES.join(', ')}); if empty choose the best fit and vary types across the month. Fill "sticker" for interactive types: Poll {"question","options":[2]}, Quiz {"question","options":[3-4],"answer"}, Question box {"question"}, Countdown {"question":"countdown title","date":"YYYY-MM-DD"}, Link sticker {"question":"sticker text","url":""}, Product tag {"question":"product name"}; else {}. Story captions are short (the on-screen text does the work).
 - hooks: 5 different opening lines (question, bold claim, relatable, curiosity, specific/number); "hook" = the strongest.
 - The on-image copy, caption, slides/script and CTA must tell one connected story.
 - design: direction for the designer using the brand kit colours and fonts; refSearch = 3-5 keywords to search Pinterest/Behance for visual references.
@@ -1033,7 +1037,7 @@ Writing rules:
 - compliance: the mandatory disclaimer text if the category or brand rules need one, else "".
 
 Reply with only a JSON array, one object per post, in this shape:
-[{"id":"same id as given","topic":"short title (keep the given topic if there is one)","pillar":"keep the given pillar, or choose one if empty","product":"keep the given product, or choose one (empty for brand-level)","insight":"the human truth","idea":"the creative twist in one line","inspiredBy":"reference used or empty","concept":"1-2 lines","hooks":["","","","",""],"hook":"","onImage":{"headline":"","subline":"","cta":""},"slides":[{"n":1,"visual":"","copy":""}],"script":[{"t":"0-3s","visual":"","onscreen":"","vo":"","audio":""}],"caption":"","hashtags":["#tag"],"altText":"","design":{"layout":"","typography":"","palette":"","mood":"","elements":"","dos":"","donts":"","refSearch":""},"builtFrom":[""],"compliance":""}]`;
+[{"id":"same id as given","topic":"short title (keep the given topic if there is one)","pillar":"keep the given pillar, or choose one if empty","product":"keep the given product, or choose one (empty for brand-level)","insight":"the human truth","idea":"the creative twist in one line","inspiredBy":"reference used or empty","concept":"1-2 lines","hooks":["","","","",""],"hook":"","onImage":{"headline":"","subline":"","cta":""},"slides":[{"n":1,"visual":"","copy":""}],"script":[{"t":"0-3s","visual":"","onscreen":"","vo":"","audio":""}],"caption":"","hashtags":["#tag"],"altText":"","design":{"layout":"","typography":"","palette":"","mood":"","elements":"","dos":"","donts":"","refSearch":""},"storyType":"only for Story","sticker":{"question":"","options":[""],"answer":"","date":"","url":""},"builtFrom":[""],"compliance":""}]`;
 }
 
 /* ---------- derived ---------- */
@@ -1863,7 +1867,7 @@ function vDeck(plan, ps){
   <div class="deck">${list.map(p => { const fl = flags(p); return `<button class="post ${p.hasContent ? '' : 'unwritten'}" data-act="open" data-id="${p.id}" draggable="true" data-drag="${p.id}" data-drop-post="${p.id}" title="Drag onto another post to swap their dates">
     ${creative(p)}
     <div class="pb"><div class="pmeta"><span class="mono">${fmtD(p.date)}${p.time ? ' · ' + esc(p.time) : ''}</span>${stPill(p.status)}</div>
-    <div class="pmeta" style="justify-content:flex-start">${chBadge(p.channel)}<span class="chip">${esc(p.format)}</span>${p.lang ? `<span class="chip" style="background:var(--c5s);border-color:var(--c5);color:var(--c5);font-weight:700">${esc(p.lang)} version</span>` : kidsOf(p.id).length ? `<span class="chip">+ ${kidsOf(p.id).map(c => LABB[c.lang] || c.lang).join(', ')}</span>` : ''}${p.topical ? `<span class="tday">${esc(p.topical)}</span>` : ''}</div>
+    <div class="pmeta" style="justify-content:flex-start">${chBadge(p.channel)}<span class="chip">${esc(p.format)}${p.format === 'Story' && p.storyType ? ' · ' + esc(p.storyType) : ''}</span>${p.lang ? `<span class="chip" style="background:var(--c5s);border-color:var(--c5);color:var(--c5);font-weight:700">${esc(p.lang)} version</span>` : kidsOf(p.id).length ? `<span class="chip">+ ${kidsOf(p.id).map(c => LABB[c.lang] || c.lang).join(', ')}</span>` : ''}${p.topical ? `<span class="tday">${esc(p.topical)}</span>` : ''}</div>
     <b style="font-size:14px;line-height:1.3">${esc(p.topic || 'Untitled post')}</b>
     <p class="cap">${p.hasContent ? esc(p.caption) : busy[p.id] ? 'Writing…' : 'Not written yet'}</p>
     ${p.hasContent && (p.design?.layout || p.design?.mood) ? `<p class="sm" style="color:var(--ink-2);border-top:1px dashed var(--line);padding-top:7px"><b style="color:var(--accent)">Design ref:</b> ${esc(str(p.design.mood || p.design.layout).slice(0, 90))}</p>` : ''}
@@ -1879,7 +1883,7 @@ function vCal(plan, ps){
   const td = today();
   let cells = '';
   for (let i = 0; i < lead; i++) cells += `<div class="cell off"></div>`;
-  days.forEach(d => { const dw = pdate(d).getDay(); cells += `<div class="cell ${d === td ? 'today' : ''} ${dw === 0 || dw === 6 ? 'we' : ''}" data-drop-date="${d}"><div class="dn"><span>${pdate(d).getDate()}</span><button data-act="addPost" data-date="${d}" aria-label="Add post on ${d}" title="Add post">+</button></div>${(tmap[d] || []).map(t => `<div class="tday">${esc(t)}</div>`).join('')}${(pmap[d] || []).map(p => `<button class="pc" draggable="true" data-drag="${p.id}" data-drop-post="${p.id}" data-act="open" data-id="${p.id}" style="--chc:${CHC[p.channel] || '#666'};--c:var(${STC[p.status]})" data-tip="${esc(p.status)} · ${esc(p.channel)} ${esc(p.format)}"><b>${CHA[p.channel] || esc(p.channel)}</b>${langTag(p)}<span>${esc(p.topic || 'Untitled')}</span><i aria-hidden="true"></i></button>`).join('')}</div>`; });
+  days.forEach(d => { const dw = pdate(d).getDay(); cells += `<div class="cell ${d === td ? 'today' : ''} ${dw === 0 || dw === 6 ? 'we' : ''}" data-drop-date="${d}"><div class="dn"><span>${pdate(d).getDate()}</span><button data-act="addPost" data-date="${d}" aria-label="Add post on ${d}" title="Add post">+</button></div>${(tmap[d] || []).map(t => `<div class="tday">${esc(t)}</div>`).join('')}${(pmap[d] || []).map(p => `<button class="pc" draggable="true" data-drag="${p.id}" data-drop-post="${p.id}" data-act="open" data-id="${p.id}" style="--chc:${CHC[p.channel] || '#666'};--c:var(${STC[p.status]})" data-tip="${esc(p.status)} · ${esc(p.channel)} ${esc(p.format)}${p.format === 'Story' && p.storyType ? ' · ' + esc(p.storyType) : ''}"><b>${CHA[p.channel] || esc(p.channel)}</b>${langTag(p)}<span>${esc(p.topic || 'Untitled')}</span><i aria-hidden="true"></i></button>`).join('')}</div>`; });
   const tail = (7 - (lead + days.length) % 7) % 7;
   for (let i = 0; i < tail; i++) cells += `<div class="cell off"></div>`;
   const rows = ps.map(p => [`<span class="mono">${fmtD(p.date)}</span>`, esc(p.time), chBadge(p.channel), esc(p.format), `<span class="pil" style="--pc:${pillarColor(plan, p.pillar)}">${esc(p.pillar)}</span>`, `<b>${esc(p.topic)}</b>`, esc(p.hook), esc(p.topical), stPill(p.status)]);
@@ -2258,7 +2262,8 @@ function designerRows(p, b){
   return [
     ['Date', [fmtD(p.date), p.time].filter(Boolean).join(' · ') + (due ? `   (design due ${fmtD(due)})` : '')],
     ['Platform', p.channel],
-    ['Format', [p.format, sizeFor(p.channel, p.format)].filter(Boolean).join(' · ')],
+    ['Format', [p.format + (p.format === 'Story' && p.storyType ? ' · ' + p.storyType : ''), sizeFor(p.channel, p.format)].filter(Boolean).join(' · ')],
+    ...(p.format === 'Story' && p.sticker?.question ? [['Sticker', [`${p.storyType}: ${p.sticker.question}`, arr(p.sticker.options).length ? 'Options: ' + arr(p.sticker.options).join(' / ') : '', p.sticker.answer ? 'Answer: ' + p.sticker.answer : '', p.sticker.date ? 'Counts down to ' + fmtD(p.sticker.date) : '', p.sticker.url ? 'Link: ' + p.sticker.url : ''].filter(Boolean).join('\n')]] : []),
     ['Content Pillar', p.pillar],
     ['Topic', p.topic + (p.topical ? `  (Topical: ${p.topical})` : '')],
     ['Product', (() => { const pr = findProd(b, p.product); return [arr(p.products).length ? arr(p.products).join(', ') : p.product, pr ? prodFacts(b, pr) : '', pr?.must ? 'Must include: ' + pr.must : ''].filter(Boolean).join('\n'); })()],
@@ -2268,7 +2273,7 @@ function designerRows(p, b){
     ['Post Copy', [p.caption, p.hashtags].filter(Boolean).join('\n\n')],
     ['Design Ref', ref],
     ['Note To Designer', notes]
-  ].filter(([k, v], i) => i < 5 || i === 6 || i >= 9 || str(v).trim()).concat([]).flatMap((r, i) => i === 0 && p.lang ? [r, ['Language', `${p.lang} version of “${str(D.posts[p.parentId]?.topic || '').replace(/\s·\s[A-Za-z]+$/, '')}” (separate creative)`]] : [r]);
+  ].filter(([k, v]) => ['Date','Platform','Format','Content Pillar','Topic','Image Copy','Post Copy','Design Ref','Note To Designer'].includes(k) || str(v).trim()).concat([]).flatMap((r, i) => i === 0 && p.lang ? [r, ['Language', `${p.lang} version of “${str(D.posts[p.parentId]?.topic || '').replace(/\s·\s[A-Za-z]+$/, '')}” (separate creative)`]] : [r]);
 }
 async function downloadDesignerDeck(o = {}){
   const plan = o.plan || D.plans[ui.planId]; if (!plan) return; const b = o.b || D.brands[plan.brandId] || {};
@@ -2804,8 +2809,8 @@ function vDrawer(p){
   const ta = (label, path, val, rows=3) => `<label class="f">${label}<textarea class="in" rows="${rows}" data-pf="${path}" id="pf-${path.replace(/\./g,'-')}">${esc(val)}</textarea></label>`;
   const bz = busy[p.id];
   const v = variants[p.id];
-  const showSlides = p.format === 'Carousel' || arr(p.slides).length;
-  const showScript = ['Reel','Video','Story'].includes(p.format) || arr(p.script).length;
+  const showSlides = p.format === 'Carousel' || (p.format === 'Story' && p.storyType === 'Multi-frame') || arr(p.slides).length;
+  const showScript = ['Reel','Video'].includes(p.format) || (p.format === 'Story' && p.storyType === 'Video') || arr(p.script).length;
   const designRefs = arr(b.brain?.refs).filter(r => r.tag === 'Design');
   const rs = str(p.design?.refSearch || p.topic);
   const next = nextStatus(p);
@@ -2856,6 +2861,12 @@ function vDrawer(p){
 
       ${showScript ? `<section class="sec"><h3>Video script <button class="btn sm" data-act="addRow" data-k="script">+ Add row</button></h3>
         <div class="tw"><table style="min-width:640px"><thead><tr><th>Time</th><th>Visual / shot</th><th>On-screen text</th><th>Voiceover</th><th>Audio</th><th></th></tr></thead><tbody>${arr(p.script).map((s,i) => `<tr><td style="width:80px"><input class="in" data-pf="script.${i}.t" id="pf-st-${i}" value="${esc(s.t)}"></td><td><textarea class="in" rows="2" data-pf="script.${i}.visual" id="pf-sv2-${i}">${esc(s.visual)}</textarea></td><td><textarea class="in" rows="2" data-pf="script.${i}.onscreen" id="pf-so-${i}">${esc(s.onscreen)}</textarea></td><td><textarea class="in" rows="2" data-pf="script.${i}.vo" id="pf-vo-${i}">${esc(s.vo)}</textarea></td><td><input class="in" data-pf="script.${i}.audio" id="pf-au-${i}" value="${esc(s.audio)}"></td><td><button class="btn sm ghost" data-act="rmRow" data-k="script" data-i="${i}" aria-label="Remove row">×</button></td></tr>`).join('')}</tbody></table></div></section>` : ''}
+
+      ${p.format === 'Story' ? `<section class="sec"><h3>Story type <small>${esc(STYPE_HINT[p.storyType || 'Static'] || '')}</small></h3>
+        <div class="capvars">${STYPES.map(t => `<button class="chip ${(p.storyType || 'Static') === t ? 'on' : ''}" data-act="storyType" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+        ${['Poll','Quiz','Question box','Countdown','Link sticker','Product tag'].includes(p.storyType) ? `<div class="fg">${inp(p.storyType === 'Countdown' ? 'Countdown title' : p.storyType === 'Link sticker' ? 'Sticker text' : p.storyType === 'Product tag' ? 'Product' : 'Question', 'sticker.question', p.sticker?.question)}${['Poll','Quiz'].includes(p.storyType) ? inp('Options (comma separated)', 'sticker.optionsText', arr(p.sticker?.options).join(', ')) : ''}${p.storyType === 'Quiz' ? inp('Right answer', 'sticker.answer', p.sticker?.answer) : ''}${p.storyType === 'Countdown' ? `<label class="f">Counts down to<input class="in" type="date" data-pf="sticker.date" id="pf-sticker-date" value="${esc(p.sticker?.date)}"></label>` : ''}${p.storyType === 'Link sticker' ? inp('Link', 'sticker.url', p.sticker?.url) : ''}</div>` : ''}
+        ${p.hasContent ? '<p class="muted sm">Changed the type? Press Regenerate post below to rewrite it for the new type.</p>' : ''}
+      </section>` : ''}
 
       ${showScript ? `<section class="sec"><h3>Shot list <small>For the production team</small>${arr(p.shots).length ? '<button class="btn sm" data-act="copyShots">Copy</button>' : ''}<button class="btn sm ${arr(p.shots).length ? '' : 'pri'}" data-act="makeShots" ${bz || aiOff() || !p.hasContent ? 'disabled' : ''}>${arr(p.shots).length ? 'Redo shot list' : '✦ Make shot list'}</button></h3>
         ${arr(p.shots).length ? `<div class="tw"><table style="min-width:760px"><thead><tr><th>#</th><th>Shot</th><th>Framing / move</th><th>Action</th><th>On screen</th><th>Audio / VO</th><th>Time</th></tr></thead><tbody>${arr(p.shots).map(x => `<tr><td class="num">${x.n}</td><td><b>${esc(x.shot)}</b></td><td>${esc(x.framing)}${x.move ? `<br><span class="muted sm">${esc(x.move)}</span>` : ''}</td><td>${esc(x.action)}</td><td>${esc(x.onscreen)}</td><td>${esc(x.audio)}</td><td class="mono">${esc(x.duration)}</td></tr>`).join('')}</tbody></table></div>
@@ -3009,6 +3020,7 @@ function contentPart(r, p){
     script:arr(r.script).map(s => ({t:str(s.t), visual:str(s.visual), onscreen:str(s.onscreen), vo:str(s.vo), audio:str(s.audio)})),
     caption:withMust(D.brands[p.brandId], (p.product == null || p.product === '') ? r.product : p.product, str(r.caption)), hashtags:hs, altText:str(r.altText),
     design:{layout:str(r.design?.layout), typography:str(r.design?.typography), palette:str(r.design?.palette), mood:str(r.design?.mood), elements:str(r.design?.elements), dos:str(r.design?.dos), donts:str(r.design?.donts), refSearch:str(r.design?.refSearch)},
+    ...(p.format === 'Story' ? {storyType:STYPES.includes(p.storyType) ? p.storyType : STYPES.includes(r.storyType) ? r.storyType : 'Static', sticker:r.sticker && typeof r.sticker === 'object' ? {question:str(r.sticker.question), options:arr(r.sticker.options).map(str).filter(Boolean).slice(0, 4), answer:str(r.sticker.answer), date:str(r.sticker.date), url:str(r.sticker.url)} : {}} : {}),
     builtFrom:arr(r.builtFrom).map(str).slice(0,10), compliance:str(r.compliance), hasContent:true, writtenAt:Date.now()
   };
 }
@@ -3306,10 +3318,10 @@ async function placeStories(pid, n, write){
   const plan = D.plans[pid]; const b = D.brands[plan.brandId]; if (!plan || !b || n <= 0) return 0;
   const m = plan.opts?.mix?.Story || {}; const chs = arr(m.ch).length ? m.ch : fmtChoices(b, 'Story').length ? fmtChoices(b, 'Story') : ['Instagram'];
   const prods = typeof fmtProducts === 'function' ? fmtProducts(m) : []; const pls = arr(m.pillars);
-  const dates = storyDates(pid, plan.month, n); const ids = [];
+  const dates = storyDates(pid, plan.month, n); const ids = []; const done0 = postsOf(pid).filter(x => x.format === 'Story' && !x.parentId).length;
   for (let i = 0; i < dates.length; i++){
     const id = uid(); const pr = prods.length ? prods[i % prods.length] : '';
-    await put('posts', id, newPost(b, pid, {id, brandId:plan.brandId, date:dates[i], time:'11:00', channel:chs[i % chs.length], format:'Story', pillar:pls.length ? pls[i % pls.length] : '', product:pr === '__brand' ? '' : pr, brandLevel:pr === '__brand'})); ids.push(id);
+    await put('posts', id, newPost(b, pid, {id, brandId:plan.brandId, date:dates[i], time:'11:00', channel:chs[i % chs.length], format:'Story', storyType:STYPE_ROT[(done0 + i) % STYPE_ROT.length], pillar:pls.length ? pls[i % pls.length] : '', product:pr === '__brand' ? '' : pr, brandLevel:pr === '__brand'})); ids.push(id);
   }
   if (write && ids.length){ const bs = []; for (let i = 0; i < ids.length; i += 4) bs.push(ids.slice(i, i + 4)); for (const bt of bs){ bt.forEach(id => busy[id] = 'Writing…'); sched(); try { await writePosts(bt.map(id => D.posts[id]), 'These are Instagram Stories on days without a feed post: keep them light and interactive (polls, questions, behind the scenes, reminders, countdowns) and connected to the month\'s theme.'); } catch (e){ toast(errCopy(e)); } finally { bt.forEach(id => delete busy[id]); sched(); } } }
   return ids.length;
@@ -3359,6 +3371,7 @@ Reply with only JSON: ${many ? '{"options":["","",""]}' : '{"text":""}'}`;
   finally { delete busy[p.id]; sched(); }
 }
 async function setField(id, path, value){
+  if (path === 'sticker.optionsText') return patch('posts', id, {sticker:{options:str(value).split(',').map(x => x.trim()).filter(Boolean).slice(0, 4)}});
   const p = D.posts[id]; if (!p) return;
   const c = clone(p); setPath(c, path, value);
   const top = path.split('.')[0];
@@ -3499,6 +3512,7 @@ const ACT = {
     ui.view = 'brand'; ui.brandId = id; ui.btab = 'profile'; renderAll(); window.scrollTo(0, 0); toast('Client created from the pitch: pillars, products, competitors and 12 ideas carried over');
   },
   capMood: a => capRewrite(a.dataset.m),
+  storyType: a => patch('posts', ui.postId, {storyType:a.dataset.t}),
   fillStories: async a => { const n = +a.dataset.n; if (!n) return; ui.storyBusy = true; renderAll(); try { const k = await placeStories(ui.planId, n, true); toast(`${k} Stories added on days without a feed post and written`); } finally { ui.storyBusy = false; renderAll(); } },
   genTopical: () => genTopical(),
   goTopCal: a => { ui.topMonth = a.dataset.m; ui.btab = 'topical'; renderAll(); window.scrollTo(0, 0); },
