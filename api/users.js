@@ -37,7 +37,7 @@ export default async function handler(req, res){
     }
 
     // ----- admins only -----
-    if (me.role !== 'admin') return res.status(403).json({ error: 'Only admins can manage logins' });
+    if (me.role !== 'admin') return res.status(403).json({ error: ['freeMode', 'chatLimit'].includes(a) ? 'Only admins can change Lumi settings. Ask your admin.' : 'Only admins can manage logins' });
     if (a === 'list'){
       const flat = await redis(['HGETALL', USERS]) || []; const out = [];
       for (let i = 0; i < flat.length; i += 2){ try { const u = JSON.parse(flat[i + 1]); out.push({ ...publicUser(u), disabled: !!u.disabled, lastLogin: u.lastLogin || 0, createdAt: u.createdAt || 0, createdBy: u.createdBy || '' }); } catch (e){} }
