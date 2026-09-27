@@ -733,9 +733,9 @@ const FMT_CH = {Static:['Instagram','Facebook','LinkedIn','X','Threads','Pintere
 const FMT_HINT = {Static:'Single image post', Carousel:'Swipe post, 5–8 slides', Reel:'Short vertical video, 15–45s', Story:'24-hour vertical post', Video:'Longer or landscape video', Text:'Copy-only post'};
 function fmtChoices(b, f){ const act = activeCh(b); const l = FMT_CH[f].filter(c => act.includes(c)); return l.length ? l : FMT_CH[f].filter(c => act.length ? false : true); }
 function defaultMix(b){
-  if (b.mixDefault) return b.mixDefault;
   const rt = b.retainer || {};
-  if (FORMATS.some(f => +rt[f] > 0)){ const m = {}; FORMATS.forEach(f => { const ch = fmtChoices(b, f); m[f] = {n:+rt[f] || 0, ch:ch.length ? ch : FMT_CH[f].filter(c => activeCh(b).includes(c))}; }); return m; }
+  if (FORMATS.some(f => +rt[f] > 0)){ const saved = b.mixDefault || {}; const m = {}; FORMATS.forEach(f => { const ch = fmtChoices(b, f); m[f] = {...(saved[f] || {}), n:+rt[f] || 0, ch:arr(saved[f]?.ch).length ? saved[f].ch : ch.length ? ch : FMT_CH[f].filter(c => activeCh(b).includes(c))}; }); return m; }
+  if (b.mixDefault) return b.mixDefault;
   const wk = activeCh(b).reduce((s, c) => s + (+b.channels[c].perWeek || 0), 0);
   const total = Math.min(60, Math.max(4, Math.round(wk * 4.3)));
   const pct = {Reel:.35, Carousel:.25, Static:.3, Story:.1, Video:0, Text:0};
@@ -898,7 +898,8 @@ TASK: Build this month's social media strategy and list the topical days.
 - engagement: 4-6 concrete community/engagement tactics.
 - paid: ${o.paid ? '3 boost suggestions' : 'return []'}.
 - influencer: ${o.inf ? '2-3 creator suggestions' : 'return []'}.
-- topicalDays: ${o.topical && arr(topMaster(b, plan.month)?.days).length ? `use EXACTLY these topical days from the brand's master calendar (ticked = use; do not add or change any): ${JSON.stringify(arr(topMaster(b, plan.month).days).filter(d => d.include).map(d => ({date:d.date, occasion:d.occasion, idea:d.idea})))}. Return them as given (you may improve "idea").` : o.topical ? `10-18 festivals, national/international days, awareness days, industry days, sports and cultural moments falling inside ${mLabel(plan.month)} for ${o.region}. Exact dates in YYYY-MM-DD within the month. For lunar-calendar festivals append " (verify date)" to occasion. relevance = High/Medium/Low for this brand. Set sensitive = true for solemn or tragic days and give a respectful idea or "Skip".` : 'return []'}
+${o.mix?.Story?.n > 0 && o.mode !== 'schedule' ? `- Stories: ${o.mix.Story.n} Stories this month on the days without a feed post (so the brand shows up almost every day). Give Stories a clear role in "channels" and, if useful, a light recurring series (polls, behind the scenes, reminders, countdowns).
+` : ''}- topicalDays: ${o.topical && arr(topMaster(b, plan.month)?.days).length ? `use EXACTLY these topical days from the brand's master calendar (ticked = use; do not add or change any): ${JSON.stringify(arr(topMaster(b, plan.month).days).filter(d => d.include).map(d => ({date:d.date, occasion:d.occasion, idea:d.idea})))}. Return them as given (you may improve "idea").` : o.topical ? `10-18 festivals, national/international days, awareness days, industry days, sports and cultural moments falling inside ${mLabel(plan.month)} for ${o.region}. Exact dates in YYYY-MM-DD within the month. For lunar-calendar festivals append " (verify date)" to occasion. relevance = High/Medium/Low for this brand. Set sensitive = true for solemn or tragic days and give a respectful idea or "Skip".` : 'return []'}
 
 Reply with only JSON in exactly this shape:
 ${JSON_B}`;
@@ -911,7 +912,7 @@ function splitCounts(b, ym){
   return {c, total};
 }
 function promptC(b, plan){
-  const mixE = plan.opts.mix ? Object.entries(plan.opts.mix).filter(([,v]) => +v.n > 0) : null;
+  const mixE = plan.opts.mix ? Object.entries(plan.opts.mix).filter(([f, v]) => +v.n > 0 && f !== 'Story') : null;
   let {c, total} = splitCounts(b, plan.month);
   let splitLine, chList;
   if (mixE && mixE.length){
@@ -951,7 +952,7 @@ ${tdays}
 
 DATES IN ${mLabel(plan.month).toUpperCase()}: ${dates}
 
-TASK: Build the content calendar. Create exactly ${total} posts with ${splitLine}.
+TASK: Build the content calendar. Create exactly ${total} posts with ${splitLine}.${plan.opts.mix?.Story?.n > 0 ? ` Do NOT create Stories: ${plan.opts.mix.Story.n} Stories are added separately on the days without a feed post.` : ''}
 Rules: spread posts evenly across the month; honour each channel's format preferences and the format mix${plan.opts.reels ? '' : '; avoid Reels and video'}; run each series on its cadence; put a post on each included topical day on the best-fit channel (these count within the split); follow the pillar split exactly when given, otherwise rotate pillars by their mix; follow the product-per-format and hero product instructions when given; each topic must be a specific idea (not a category like "product showcase"); feature real products across the month ("product" field, empty for brand-level posts); no repeated topics or hooks; post times in IST, 24h.
 format must be one of: ${mixE && mixE.length ? mixE.map(([f]) => f).join(', ') : 'Static, Carousel, Reel, Story, Video, Text'}. channel must be one of: ${chList.join(', ')}.
 
@@ -1177,7 +1178,7 @@ function contractBar(plan, ps){
   const lab = {less:`${-d} less than contracted`, par:'At par with contract', more:`${d} more than contracted`}[st];
   const fmts = [...new Set(Object.keys(ct).concat(main.map(p => p.format)))].filter(f => FORMATS.includes(f));
   return `<div class="ctbar ${st}"><div class="cttop"><div class="ctbig"><b>${n}</b><span>vs</span><b>${c}</b><small>planned vs contracted</small></div><span class="ctlab">${st === 'less' ? '▼' : st === 'more' ? '▲' : '●'} ${lab}</span><button class="lnk ctedit" data-act="goBrandTab" data-id="${plan.brandId}" data-k="profile">Edit contract</button></div>
-    <div class="ctf"><span class="muted sm" style="margin-right:2px">By format</span>${fmts.map(f => { const pn = main.filter(p => p.format === f).length, cn = ct[f] || 0, dd = pn - cn; return `<span class="chip ${dd < 0 ? 'lo' : dd > 0 ? 'hi' : 'ok'}"><b>${esc(f)}</b> ${pn}/${cn}${dd ? ` (${dd > 0 ? '+' : ''}${dd})` : ' ✓'}</span>`; }).join('')}${kids ? `<span class="chip">+ ${kids} language versions (not counted)</span>` : ''}</div></div>`;
+    <div class="ctf"><span class="muted sm" style="margin-right:2px">By format</span>${fmts.map(f => { const pn = main.filter(p => p.format === f).length, cn = ct[f] || 0, dd = pn - cn; return `<span class="chip ${dd < 0 ? 'lo' : dd > 0 ? 'hi' : 'ok'}"><b>${esc(f)}</b> ${pn}/${cn}${dd ? ` (${dd > 0 ? '+' : ''}${dd})` : ' ✓'}</span>`; }).join('')}${kids ? `<span class="chip">+ ${kids} language versions (not counted)</span>` : ''}${(ct.Story || 0) > main.filter(p => p.format === 'Story').length ? `<button class="btn sm pri" data-act="fillStories" data-n="${ct.Story - main.filter(p => p.format === 'Story').length}" ${aiOff() || ui.storyBusy ? 'disabled' : ''}>${ui.storyBusy ? '<span class="spin"></span> Adding…' : `+ Add ${ct.Story - main.filter(p => p.format === 'Story').length} Stories on free days`}</button>` : ''}</div></div>`;
 }
 function vRetainers(brands, ym){
   const list = brands.filter(([, b]) => FORMATS.some(f => +(b.retainer || {})[f] > 0));
@@ -3107,9 +3108,10 @@ async function runPlan(pid){
     }
     if (!postsOf(pid).length){
       step(pid, 'Planning the content calendar…');
-      const slots = await ai(promptC(b, plan), {signal});
-      const list = (Array.isArray(slots) ? slots : arr(slots?.posts)).filter(s => s && validD(s.date));
-      if (!list.length) throw {code:'invalid_json'};
+      const feedN = plan.opts.mix ? Object.entries(plan.opts.mix).filter(([f]) => f !== 'Story').reduce((t, [, v]) => t + (+v.n || 0), 0) : 1;
+      const slots = feedN ? await ai(promptC(b, plan), {signal}) : [];
+      const list = (Array.isArray(slots) ? slots : arr(slots?.posts)).filter(s => s && validD(s.date) && (!plan.opts.mix?.Story?.n || s.format !== 'Story'));
+      if (!list.length && feedN) throw {code:'invalid_json'};
       step(pid, `Adding ${list.length} posts to the calendar…`);
       const rr = {}; const used = {};
       const pick = (f, kind, want, pool0) => { if (!pool0.length) return want; const key = f + kind; used[key] = used[key] || {}; if (pool0.includes(want) && !used[key][want]){ used[key][want] = 1; return want; } const free = pool0.filter(x => !used[key][x]); const v = free.length ? free[0] : pool0[(rr[key] = ((rr[key] ?? -1) + 1)) % pool0.length]; used[key][v] = 1; return v; };
@@ -3118,6 +3120,7 @@ async function runPlan(pid){
         const id = uid();
         await put('posts', id, newPost(b, pid, {id, date:s.date, time:str(s.time) || '19:00', format:FORMATS.includes(s.format) ? s.format : 'Static', product:s._product, brandLevel:!!s._brand, channel:(() => { const f = FORMATS.includes(s.format) ? s.format : 'Static'; const allow = plan.opts.mix?.[f]?.ch; return CH.includes(s.channel) && (!allow || !allow.length || allow.includes(s.channel)) ? s.channel : (allow && allow[0]) || activeCh(b)[0]; })(), pillar:str(s.pillar), topic:str(s.topic), hook:str(s.hook), topical:str(s.topical), objective:str(s.objective)}));
       });
+      if (plan.opts.mix?.Story?.n > 0 && plan.opts.mode !== 'schedule'){ step(pid, 'Placing Stories on the days without a feed post…'); await placeStories(pid, +plan.opts.mix.Story.n, false); }
     }
     const todo = postsOf(pid).filter(p => !p.hasContent);
     const batches = []; for (let i = 0; i < todo.length; i += 4) batches.push(todo.slice(i, i+4));
@@ -3286,6 +3289,30 @@ function histHTML(p){
   const vs = h.versions.map((v, i) => `<div class="li"><span class="tx"><b>${esc(Object.keys(v.prev).map(k => FLD[k] || k).join(', '))}</b><span class="muted sm">Before ${esc(v.by)}'s edit · ${ago(v.at)}</span>${v.prev.caption ? `<span class="sm" style="white-space:pre-wrap">${esc(str(v.prev.caption).slice(0, 220))}${str(v.prev.caption).length > 220 ? '…' : ''}</span>` : v.prev.hook ? `<span class="sm">${esc(v.prev.hook)}</span>` : ''}</span><button class="btn sm" data-act="histRestore" data-i="${i}">Restore</button></div>`).join('');
   const lg = h.log.map(e => `<div class="li"><span class="tx"><span class="sm"><b>${esc(e.by)}</b> ${e.op === 'set' ? 'created' : e.op === 'delete' ? 'deleted' : 'changed ' + esc(arr(e.keys).map(k => FLD[k] || k).join(', '))}</span><span class="muted sm">${ago(e.at)}</span></span></div>`).join('');
   return `<div class="grid2" style="gap:14px"><div><p class="eyebrow">Earlier versions</p><div class="list">${vs || '<p class="muted sm">No earlier versions yet. They are saved each time copy is changed.</p>'}</div></div><div><p class="eyebrow">Activity</p><div class="list">${lg || '<p class="muted sm">No activity recorded yet.</p>'}</div></div></div><button class="lnk" data-act="histLoad">Refresh</button>`;
+}
+
+/* ---------- stories: placed on days without a feed post, spread out (alternate days), up to the count ---------- */
+function storyDates(pid, month, n){
+  const ps = postsOf(pid); const days = monthDays(month);
+  const feed = new Set(ps.filter(p => p.format !== 'Story' && !p.parentId).map(p => p.date));
+  const have = {}; ps.filter(p => p.format === 'Story' && !p.parentId).forEach(p => have[p.date] = (have[p.date] || 0) + 1);
+  const free = days.filter(d => !feed.has(d) && !have[d]);
+  const out = [];
+  if (n <= free.length){ for (let i = 0; i < n; i++) out.push(free[Math.min(free.length - 1, Math.floor((i + 0.5) * free.length / n))]); }
+  else { out.push(...free); const rest = n - free.length; const pool0 = days.slice(); for (let i = 0; i < rest; i++) out.push(pool0[Math.floor((i + 0.5) * pool0.length / rest)]); }
+  return [...out].sort();
+}
+async function placeStories(pid, n, write){
+  const plan = D.plans[pid]; const b = D.brands[plan.brandId]; if (!plan || !b || n <= 0) return 0;
+  const m = plan.opts?.mix?.Story || {}; const chs = arr(m.ch).length ? m.ch : fmtChoices(b, 'Story').length ? fmtChoices(b, 'Story') : ['Instagram'];
+  const prods = typeof fmtProducts === 'function' ? fmtProducts(m) : []; const pls = arr(m.pillars);
+  const dates = storyDates(pid, plan.month, n); const ids = [];
+  for (let i = 0; i < dates.length; i++){
+    const id = uid(); const pr = prods.length ? prods[i % prods.length] : '';
+    await put('posts', id, newPost(b, pid, {id, brandId:plan.brandId, date:dates[i], time:'11:00', channel:chs[i % chs.length], format:'Story', pillar:pls.length ? pls[i % pls.length] : '', product:pr === '__brand' ? '' : pr, brandLevel:pr === '__brand'})); ids.push(id);
+  }
+  if (write && ids.length){ const bs = []; for (let i = 0; i < ids.length; i += 4) bs.push(ids.slice(i, i + 4)); for (const bt of bs){ bt.forEach(id => busy[id] = 'Writing…'); sched(); try { await writePosts(bt.map(id => D.posts[id]), 'These are Instagram Stories on days without a feed post: keep them light and interactive (polls, questions, behind the scenes, reminders, countdowns) and connected to the month\'s theme.'); } catch (e){ toast(errCopy(e)); } finally { bt.forEach(id => delete busy[id]); sched(); } } }
+  return ids.length;
 }
 
 /* ---------- AI post tools ---------- */
@@ -3472,6 +3499,7 @@ const ACT = {
     ui.view = 'brand'; ui.brandId = id; ui.btab = 'profile'; renderAll(); window.scrollTo(0, 0); toast('Client created from the pitch: pillars, products, competitors and 12 ideas carried over');
   },
   capMood: a => capRewrite(a.dataset.m),
+  fillStories: async a => { const n = +a.dataset.n; if (!n) return; ui.storyBusy = true; renderAll(); try { const k = await placeStories(ui.planId, n, true); toast(`${k} Stories added on days without a feed post and written`); } finally { ui.storyBusy = false; renderAll(); } },
   genTopical: () => genTopical(),
   goTopCal: a => { ui.topMonth = a.dataset.m; ui.btab = 'topical'; renderAll(); window.scrollTo(0, 0); },
   topMonthGo: a => { ui.topMonth = a.dataset.m; renderAll(); },
