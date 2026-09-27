@@ -2646,7 +2646,7 @@ function goSearch(i){
 }
 
 /* ---------- AI usage & cost per client (admins) ---------- */
-function usagePrice(){ let x = {}; try { x = JSON.parse(localStorage.getItem('dce_price') || '{}'); } catch (e){} return {in:+x.in || 0.30, out:+x.out || 2.50, search:x.search != null ? +x.search : 0.035, fx:+x.fx || 88}; }
+function usagePrice(){ let x = {}; try { x = JSON.parse(localStorage.getItem('dce_price') || '{}'); } catch (e){} return {in:+x.in || 0.75, out:+x.out || 3.75, search:x.search != null ? +x.search : 0.014, fx:+x.fx || 88}; }
 function vUsage(){
   if (!HOSTED || ui.user?.role !== 'admin') return '';
   if (ui.usage == null && !ui.usageBusy){ ui.usageBusy = true; fetch('/api/usage', {credentials:'same-origin'}).then(r => r.json()).then(j => { ui.usage = j.months || {}; }).catch(() => { ui.usage = {}; }).finally(() => { ui.usageBusy = false; sched(); }); }
@@ -2661,7 +2661,7 @@ function vUsage(){
       return [`<b>${esc(nm(r.bid))}</b>`, `<span class="mono">${r.x.calls || 0}</span>`, `<span class="mono">${k(r.x.in)}</span>`, `<span class="mono">${k(r.x.out)}</span>`, `<span class="mono">${r.x.search || 0}</span>`, `<b class="mono">${inr(r.inr)}</b>`, rc ? `<span class="muted sm">${inr(r.inr / rc)} per contracted post</span>` : '']; }).concat(rows.length ? [[`<b>Total</b>`, `<b class="mono">${tot.calls}</b>`, `<b class="mono">${k(tot.inT)}</b>`, `<b class="mono">${k(tot.outT)}</b>`, `<b class="mono">${tot.search}</b>`, `<b class="mono">${inr(tot.inr)}</b>`, '']] : []))}
     <details><summary class="sm" style="cursor:pointer;font-weight:700">Rates used for the estimate</summary><div class="rowline" style="margin-top:8px">
       <label class="f">Input $ per 1M tokens<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="in" value="${P.in}"></label><label class="f">Output $ per 1M tokens<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="out" value="${P.out}"></label><label class="f">$ per web search<input class="in" type="number" step="0.001" data-chg="usagePrice" data-k="search" value="${P.search}"></label><label class="f">₹ per $<input class="in" type="number" step="0.5" data-chg="usagePrice" data-k="fx" value="${P.fx}"></label></div>
-      <p class="muted sm">Defaults are Gemini Flash list prices; Google gives some free searches a day, so the search part may be lower. Update these if your model or plan differs.</p></details>
+      <p class="muted sm">Defaults are current Gemini Flash prices (Sep 2026, promotional until 1 Jan 2027, when they double). The first 5,000 web searches a month are free, so the search part is usually lower. Update these if your model or plan changes.</p></details>
   </section>`;
 }
 
