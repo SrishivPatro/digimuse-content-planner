@@ -40,6 +40,19 @@ html{color-scheme:light}
 .zrow{display:flex;gap:8px;align-items:center}.zgrid{display:grid;grid-template-columns:repeat(3,26px);gap:4px}.zgrid button{height:26px;border:1.5px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;padding:0}.zgrid button.on{background:var(--accent);border-color:var(--accent)}.zgrid button:disabled{opacity:.25;cursor:not-allowed}
 .sws{display:flex;gap:6px;flex-wrap:wrap}.sw{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);cursor:pointer;font:700 11px/1 inherit;color:var(--muted);background:var(--surface)}.sw.on{outline:2.5px solid var(--accent);outline-offset:2px}
 .cedimg{border-top:1px dashed var(--line);padding-top:8px}.ced input[type=range]{width:100%}
+#lumi-fab{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:85;display:inline-flex;align-items:center;gap:7px;padding:11px 18px;border-radius:999px;border:0;cursor:pointer;font:800 14px/1 inherit;color:#fff;background:linear-gradient(135deg,var(--accent),#5B3FD9);box-shadow:0 10px 30px rgba(0,40,120,.28)}#lumi-fab:hover{transform:translateY(-1px)}
+.lspark{display:inline-grid;place-items:center}.lspark.big{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#5B3FD9);color:#fff;font-size:17px;flex:0 0 auto}
+#lumi{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:90;width:min(430px,calc(100vw - 24px));height:min(680px,calc(100vh - 32px))}
+.lbox{height:100%;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 70px rgba(10,20,50,.28);overflow:hidden}
+.lbox header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}.lbox .lt{display:flex;gap:10px;align-items:center;min-width:0}.lbox .lt small{display:block;color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}.lbox .lh{display:flex;gap:4px}
+.lmsgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}.lm{max-width:92%;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.5;overflow-wrap:anywhere}.lm p{margin:0 0 6px}.lm p:last-child{margin-bottom:0}.lm ul,.lm ol{margin:4px 0 6px 18px;padding:0}.lm li{margin:2px 0}
+.lm.u{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:5px}.lm.l{align-self:flex-start;background:var(--bg);border:1px solid var(--line);border-bottom-left-radius:5px}
+.lideas,.lapply{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.lapply p{margin:2px 0 4px;white-space:normal}.lsrc{font-size:12px;color:var(--muted);margin-top:6px}.lacts{display:flex;justify-content:flex-end;margin-top:2px}
+.lhello{display:flex;gap:10px;align-items:flex-start;color:var(--ink);font-size:14px;line-height:1.5}.lfoot{border-top:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:7px}.lchips{display:flex;gap:6px;flex-wrap:wrap}.lchips .chip{cursor:pointer;font-size:12.5px}
+.lin{display:flex;gap:8px;align-items:flex-end}.lin textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font:inherit;font-size:14px;background:var(--bg);color:var(--ink);max-height:140px}
+.typing span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted);margin-right:3px;animation:lb 1s infinite}.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}.typing em{font-style:normal;color:var(--muted);font-size:12.5px}@keyframes lb{0%,80%,100%{opacity:.25}40%{opacity:1}}
+@media(max-width:640px){#lumi{right:0;bottom:0;width:100vw;height:100dvh}.lbox{border-radius:0}#lumi-fab{padding:12px 14px}}
+@media print{#lumi,#lumi-fab{display:none!important}}
 .lumi{display:inline-flex;align-items:center;gap:3px;font-weight:800;color:var(--accent);white-space:nowrap}.lumi .spark{font-size:.9em}
 .copts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.copt{display:flex;flex-direction:column;gap:6px;padding:6px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;color:var(--ink)}.copt:hover{border-color:var(--accent)}.copt img{width:100%;border-radius:8px;display:block}
 .optgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.optcol{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}.optcol .eyebrow{margin:0 0 2px}.optcol .chk{align-items:flex-start;line-height:1.4}.tophint{display:block;line-height:1.5;padding-top:6px;border-top:1px dashed var(--line)}
@@ -543,6 +556,8 @@ th{background:var(--surface-2)}
 .modes input{accent-color:var(--accent)}
 .modes label:has(input:checked){background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
 .week{display:grid;grid-template-columns:repeat(7,minmax(138px,1fr));gap:8px;overflow-x:auto;padding-bottom:6px}
+</head>
+<body>
 .dayc{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:8px;min-width:138px}
 .dayc > header{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13px}
 .slot{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--chc,var(--accent));border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:5px}
@@ -556,8 +571,6 @@ th{background:var(--surface-2)}
 .mxcell{display:flex;flex-direction:column;gap:6px;min-width:200px}
 @media print{
   @page{size:13.333in 7.5in;margin:0}
-</head>
-<body>
   body *{visibility:hidden}
   #printdeck,#printdeck *{visibility:visible}
   #printdeck{display:block;position:absolute;left:0;top:0;width:13.333in}
@@ -579,6 +592,8 @@ th{background:var(--surface-2)}
 <div id="spal" hidden><div class="box" role="dialog" aria-label="Search"><input id="spal-q" placeholder="Search brands, posts, captions, ideas, briefs…" autocomplete="off" spellcheck="false"><div class="res" id="spal-res"></div></div></div>
 <div id="pwbox" hidden><form class="box" id="pwForm"><h2 style="font-size:20px" id="pw-title">Change your password</h2><p class="muted sm" id="pw-note"></p><label class="f">Current password<input class="in" type="password" id="pw-old" autocomplete="current-password" required></label><label class="f">New password <span class="hint">at least 8 characters</span><input class="in" type="password" id="pw-new" autocomplete="new-password" minlength="8" required></label><label class="f">Repeat new password<input class="in" type="password" id="pw-new2" autocomplete="new-password" minlength="8" required></label><p class="err" id="pw-err" hidden></p><div class="acts"><button class="btn pri" type="submit">Save password</button><button class="btn ghost" type="button" id="pw-cancel">Cancel</button></div></form></div>
 <div id="toast" role="status" aria-live="polite"></div>
+<button id="lumi-fab" data-act="lumiOpen" aria-label="Chat with Lumi"><span class="lspark">✦</span> Chat with Lumi</button>
+<div id="lumi" hidden></div>
 
 <script>
 (() => {
@@ -1126,7 +1141,7 @@ let rq = false, pendingR = false;
 function isEditing(){ const a = document.activeElement; if (!a || !a.closest || !a.closest('#main,#drawer')) return false; return a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !['checkbox','radio','button','range','month','date','file'].includes(a.type)); }
 function sched(){ if (rq) return; rq = true; requestAnimationFrame(() => { rq = false; if (isEditing()){ pendingR = true; return; } renderAll(); }); }
 document.addEventListener('focusout', () => { if (pendingR) setTimeout(() => { if (!isEditing() && pendingR){ pendingR = false; renderAll(); } }, 30); });
-function renderAll(){
+function renderAll(){ if (LUMI.open) setTimeout(() => { const c = $('#lumi-ctx'); if (c) c.textContent = 'Looking at: ' + lumiCtxLabel(); }, 0);
   $('#side').innerHTML = vSide();
   const v = ui.view;
   let html;
@@ -1166,7 +1181,7 @@ function vSide(){
   const team = Object.entries(D.team).sort((a,b) => str(a[1].name).localeCompare(str(b[1].name))).map(([id,m]) => [id, `${m.name} · ${m.role}`]);
   return `<div class="logo" style="flex-direction:column;align-items:flex-start;gap:0;cursor:pointer" data-act="go" data-v="home" role="link" tabindex="0" title="Go to Dashboard" aria-label="Digimuse Content Engine, go to Dashboard">${LOGO_IMG}<small class="eng">Content Engine<sup class="tm">™</sup></small></div>
   <button class="searchbtn" data-act="search">⌕ Search everything <kbd>${/Mac/.test(navigator.platform) ? '⌘' : 'Ctrl'} K</kbd></button>
-  <nav class="nav" aria-label="Main">${nb('home','Dashboard','home','--c1')}${nb('tasks','My tasks','tasks','--c2', me ? myTasks().length : 0)}${nb('briefs','Briefs','doc','--c5', Object.values(D.reports).filter(r => r.type === 'brief' && r.status !== 'Delivered').length)}${nb('pitch','Pitch mode','spark','--c2')}${nb('team','Team','team','--c4')}${nb('live','Go live guide','rocket','--c3')}</nav>
+  <nav class="nav" aria-label="Main">${nb('home','Dashboard','home','--c1')}${nb('tasks','My tasks','tasks','--c2', me ? myTasks().length : 0)}<button class="${LUMI.open ? 'on' : ''}" data-act="lumiOpen"><span class="ico" style="--ics:var(--c5s);--ic:var(--c5)">${IC.spark}</span>Chat with Lumi</button>${nb('briefs','Briefs','doc','--c5', Object.values(D.reports).filter(r => r.type === 'brief' && r.status !== 'Delivered').length)}${nb('pitch','Pitch mode','spark','--c2')}${nb('team','Team','team','--c4')}${nb('live','Go live guide','rocket','--c3')}</nav>
   <div><div class="slabel">Brands <button class="lnk" data-act="newBrand">+ New brand</button></div>
     <div class="blist">${sortedBrands().map(([id,b]) => { const c = brandColors(b); return `<button class="bitem ${ui.brandId===id && (ui.view==='brand'||ui.view==='plan') ? 'on' : ''}" data-act="goBrand" data-id="${id}">${bav(b)}${esc(str(b.name).trim() || 'Untitled brand')}</button>`; }).join('') || '<p class="sm" style="padding:0 10px;color:var(--side-muted)">No brands yet</p>'}</div></div>
   <button class="themebtn" data-act="theme" aria-label="Toggle dark mode">${isDark() ? '☾ Dark mode' : '☀︎ Light mode'}<span class="sw2" aria-hidden="true"></span></button>
@@ -2834,7 +2849,7 @@ function vLive(){
 }
 
 /* ---------- post drawer ---------- */
-function renderDrawer(){
+function renderDrawer(){ if (LUMI.open) setTimeout(() => { const c = $('#lumi-ctx'); if (c) c.textContent = 'Looking at: ' + lumiCtxLabel(); }, 0);
   const dw = $('#drawer');
   const p = ui.postId && D.posts[ui.postId];
   if (!p){ if (!dw.hidden){ dw.hidden = true; dw.innerHTML = ''; } return; }
@@ -3837,6 +3852,85 @@ async function autoCreatives(pid, signal){
   return {done, failed};
 }
 
+/* ---------- Chat with Lumi: the tool's intelligence, aware of what you are looking at ---------- */
+const LUMI = {open:false, busy:false, msgs:(() => { try { return JSON.parse(lsGet('dce_lumi') || '[]').slice(-40); } catch (e){ return []; } })()};
+const lumiSave = () => lsSet('dce_lumi', JSON.stringify(LUMI.msgs.slice(-40).map(m => ({...m, sources:arr(m.sources).slice(0, 6)}))));
+const LUMI_GUIDE = `Sidebar: Dashboard, My tasks, Chat with Lumi, Briefs (upload a client brief; Lumi plans the response and tasks), Pitch mode (sample plan + pitch deck for a prospect), Team (logins, activity, Lumi usage & cost for admins), Go live guide, Search everything (Ctrl/Cmd K), brands list, light/dark mode.
+Brand tabs: Monthly plans (+ New plan: month, content mix or weekly schedule, pillars, products, topical days, language versions, Lumi creatives), Topical calendar (master list per month with regions), Competitors (benchmark Instagram/LinkedIn), Research (trend, audience, competitor, campaign research to the Ideas bank), Reports, Ideas bank (one-click write), Brand Brain (products with industry fields, rules, references, reply bank, hashtag & CTA bank, brand kit colours/fonts, logo), Profile & team (retainer: posts and stories contracted per month, creatives default, team).
+Plan tabs: Client deck (present, PowerPoint, 4 themes), Posts, Calendar, Board (workflow), Research, Strategy, Topical days, Client review, Performance (results, Instagram import, report), Export (Excel workbook, client document, calendar CSV, design briefs, designer deck with references, Creatives: design all + download zip; platform filter on top).
+Post panel: write/regenerate with Lumi, Lumi writing tools, caption moods, hooks, on-image copy, language versions (each its own creative), Creative (3 designs, Edit design: position/size/fonts/colours/highlight/decoration/logo, own photo, regenerate with a note, carousel slide images, size), reel shot lists, design references, version history, status.`;
+function lumiScope(){
+  const post = ui.postId ? D.posts[ui.postId] : null; const pid = post?.planId || (ui.view === 'plan' ? ui.planId : '');
+  const plan = pid ? D.plans[pid] : null; const bid = post?.brandId || plan?.brandId || (['brand','briefs'].includes(ui.view) ? ui.brandId : '');
+  return {b:bid ? D.brands[bid] : null, bid, plan, pid, post};
+}
+function lumiCtxLabel(){ const {b, plan, post} = lumiScope(); return [b?.name, plan ? mLabel(plan.month) + ' plan' : '', post ? 'post: ' + str(post.topic).slice(0, 34) : ''].filter(Boolean).join(' · ') || 'All clients'; }
+function lumiContext(){
+  const {b, plan, pid, post} = lumiScope(); const L = [];
+  if (b) L.push('BRAND BRAIN:\n' + brandCtx(b, 7000));
+  else L.push('STUDIO: clients ' + Object.values(D.brands).map(x => `${x.name} (${str(x.industry)})`).join(', ') + '.');
+  if (plan){ const st = plan.strategy || {}; L.push(`PLAN ${mLabel(plan.month)} · theme: ${str(st.theme?.name)} — ${str(st.theme?.bigIdea)} · pillars: ${arr(st.pillars).map(x => x.name).join(', ')}\nPOSTS:\n` + postsOf(pid).filter(x => !x.parentId).slice(0, 45).map(x => `${x.date} ${x.channel} ${x.format}${x.format === 'Story' && x.storyType ? '/' + x.storyType : ''} · ${str(x.pillar)} · ${str(x.topic)} · ${str(x.status)}`).join('\n')); }
+  if (post) L.push(`OPEN POST (${post.date} ${post.channel} ${post.format}${post.lang ? ' · ' + post.lang + ' version' : ''}):\ntopic: ${str(post.topic)}\npillar: ${str(post.pillar)}${post.product ? '\nproduct: ' + post.product : ''}\nhook: ${str(post.hook)}\nheadline: ${str(post.onImage?.headline)}\nsubline: ${str(post.onImage?.subline)}\nCTA: ${str(post.onImage?.cta)}\ncaption: ${str(post.caption)}\nhashtags: ${str(post.hashtags)}${arr(post.slides).length ? '\nslides: ' + arr(post.slides).map((x, i) => `${i + 1}. ${str(x.copy)}`).join(' | ') : ''}${post.design?.mood ? '\ndesign brief: ' + [post.design.layout, post.design.mood, post.design.palette].map(str).join(' · ') : ''}`);
+  if (!b && ui.view === 'home') L.push('The user is on the dashboard.');
+  return L.join('\n\n');
+}
+function lumiMd(t){
+  const lines = esc(str(t)).split('\n'); let html = '', list = '';
+  const inl = x => x.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(^|\s)_(.+?)_(?=\s|$)/g, '$1<i>$2</i>');
+  for (const ln of lines){ const m = ln.match(/^\s*(?:[-•*]|\d+[.)])\s+(.*)$/); const ol = /^\s*\d+[.)]/.test(ln);
+    if (m){ const tag = ol ? 'ol' : 'ul'; if (list !== tag){ if (list) html += `</${list}>`; html += `<${tag}>`; list = tag; } html += `<li>${inl(m[1])}</li>`; continue; }
+    if (list){ html += `</${list}>`; list = ''; } if (ln.trim()) html += `<p>${inl(ln)}</p>`; }
+  if (list) html += `</${list}>`; return html;
+}
+function lumiChips(){ const {b, post, plan} = lumiScope();
+  if (post) return ['Make the caption punchier', 'Give me 3 new hooks', 'Suggest hashtags for this', 'Is this on-brand? Be honest'];
+  if (plan) return ['What is missing from this month?', 'Give me 5 more post ideas', 'Which posts feel weak and why?', 'Write a WhatsApp update for the client'];
+  if (b) return [`What's trending in ${str(b.industry) || 'this category'} right now?`, 'Give me 5 post ideas for this month', 'Suggest 3 campaign ideas', 'Who should we benchmark against?'];
+  return ['How do I plan a month for a new client?', 'How do Lumi creatives work?', 'Give me a 1-page pitch idea for a D2C brand', 'Write a LinkedIn post for Digimuse'];
+}
+const FIELD_LABEL = {hook:'hook', caption:'caption', hashtags:'hashtags', 'onImage.headline':'headline', 'onImage.subline':'subline', 'onImage.cta':'CTA'};
+function paintLumi(){
+  const el = $('#lumi'), fab = $('#lumi-fab'); if (!el) return; el.hidden = !LUMI.open; if (fab) fab.hidden = LUMI.open; if (!LUMI.open) return;
+  if (!el.firstChild){ el.innerHTML = `<div class="lbox" role="dialog" aria-label="Chat with Lumi"><header><div class="lt"><span class="lspark big">✦</span><div><b>Lumi</b><small id="lumi-ctx"></small></div></div><div class="lh"><button class="btn sm ghost" data-act="lumiNew">New chat</button><button class="btn sm ghost" data-act="lumiClose" aria-label="Close">✕</button></div></header>
+    <div class="lmsgs" id="lumi-msgs" aria-live="polite"></div>
+    <div class="lfoot"><div class="lchips" id="lumi-chips"></div><div class="lin"><textarea id="lumi-in" rows="2" placeholder="Ask Lumi anything… (Enter to send, Shift+Enter for a new line)"></textarea><button class="btn pri" data-act="lumiSend" id="lumi-send">Send</button></div>
+    <label class="chk sm"><input type="checkbox" id="lumi-web"> Search the web${HOSTED ? '' : ' (hosted version only)'}</label></div></div>`;
+    $('#lumi-in').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); ACT.lumiSend(); } if (e.key === 'Escape') ACT.lumiClose(); }); }
+  $('#lumi-ctx').textContent = 'Looking at: ' + lumiCtxLabel();
+  const {b, post} = lumiScope();
+  $('#lumi-msgs').innerHTML = (LUMI.msgs.length ? '' : `<div class="lhello"><span class="lspark big">✦</span><p><b>Hi${mName(me) ? ' ' + esc(str(mName(me)).replace(/\s*\(.*\)/, '').split(' ')[0]) : ''}, I'm Lumi.</b> I know your clients' Brand Brains and whatever you have open. Ask me to brainstorm, write, critique, research trends or explain the tool.</p></div>`)
+    + LUMI.msgs.map((m, i) => m.r === 'u' ? `<div class="lm u">${lumiMd(m.t)}</div>` : `<div class="lm l">${lumiMd(m.t)}
+      ${arr(m.ideas).length ? `<div class="lideas">${m.ideas.map(x => `<div><b>${esc(x.title)}</b>${x.channel || x.format ? ` <span class="muted sm">${esc([x.channel, x.format].filter(Boolean).join(' · '))}</span>` : ''}${x.hook ? `<br><span class="sm">Hook: ${esc(x.hook)}</span>` : ''}</div>`).join('')}${m.bid && D.brands[m.bid] ? `<button class="btn sm ${m.saved ? '' : 'pri'}" data-act="lumiIdeas" data-i="${i}" ${m.saved ? 'disabled' : ''}>${m.saved ? '✓ Saved to Ideas bank' : `Save ${m.ideas.length} to ${esc(D.brands[m.bid].name)}'s Ideas bank`}</button>` : ''}</div>` : ''}
+      ${arr(m.apply).length && m.postId && D.posts[m.postId] ? `<div class="lapply">${m.apply.map((x, j) => `<div><span class="eyebrow">${esc(x.label || FIELD_LABEL[x.field] || x.field)}</span><p>${esc(x.value).replace(/\n/g, '<br>')}</p><button class="btn sm ${arr(m.applied).includes(j) ? '' : 'pri'}" data-act="lumiApply" data-i="${i}" data-j="${j}" ${arr(m.applied).includes(j) ? 'disabled' : ''}>${arr(m.applied).includes(j) ? '✓ Applied' : 'Use as ' + esc(FIELD_LABEL[x.field] || x.field)}</button></div>`).join('')}</div>` : ''}
+      ${arr(m.sources).length ? `<p class="lsrc">Sources: ${m.sources.slice(0, 5).map(x => `<a href="${esc(x.url || x.uri || '')}" target="_blank" rel="noopener">${esc(x.title || x.domain || 'link')}</a>`).join(' · ')}</p>` : ''}
+      <div class="lacts"><button class="btn sm ghost" data-act="lumiCopy" data-i="${i}">Copy</button></div></div>`).join('')
+    + (LUMI.busy ? `<div class="lm l typing"><span></span><span></span><span></span> <em>Lumi is ${$('#lumi-web')?.checked ? 'searching and ' : ''}thinking…</em></div>` : '');
+  $('#lumi-chips').innerHTML = LUMI.msgs.length ? '' : lumiChips().map(c => `<button class="chip" data-act="lumiChip">${esc(c)}</button>`).join('');
+  $('#lumi-send').disabled = LUMI.busy; const box = $('#lumi-msgs'); box.scrollTop = box.scrollHeight;
+}
+async function lumiAsk(text){
+  text = str(text).trim(); if (!text || LUMI.busy) return; if (aiOff()){ toast('Lumi is not available in this view'); return; }
+  const {b, bid, post} = lumiScope(); const web = !!$('#lumi-web')?.checked && HOSTED;
+  const hist = LUMI.msgs.slice(-12).map(m => (m.r === 'u' ? 'USER: ' : 'LUMI: ') + str(m.t).slice(0, 1500)).join('\n');
+  LUMI.msgs.push({r:'u', t:text, at:Date.now()}); LUMI.busy = true; paintLumi();
+  const prompt = `You are Lumi, the intelligence inside Digimuse Content Engine™, the internal tool of Digimuse, an Indian digital marketing agency (social media, performance, influencer, branding, production, SEO). You work with account managers, strategists, writers and designers: brainstorming, strategy, copy, captions, hooks, hashtags, trends, critique, client communication, and how to use the tool.
+STYLE: warm, sharp, specific; Indian market context; short paragraphs and bullets; no generic filler or AI clichés (never: elevate, unlock, game-changer, delve, in today's fast-paced world). Give a clear recommendation when asked. Use the Brand Brain; never invent facts about a client (prices, claims, offers); say when you are unsure. Follow the brand rules and compliance lines exactly.${web ? ' Use web search for anything current and name your sources.' : ''}
+TOOL GUIDE (for "how do I" questions): ${LUMI_GUIDE}
+CONTEXT — what the user has open:
+${lumiContext()}
+${hist ? 'CONVERSATION SO FAR:\n' + hist + '\n' : ''}USER: ${text}
+Return JSON {"reply":"your answer; plain text with **bold** and - bullets allowed","ideas":[ONLY if the user asked for post/content/campaign ideas for this brand: {"title":"","channel":"Instagram|LinkedIn|…","format":"Static|Carousel|Reel|Story|Text","hook":"","why":""}],"apply":[ONLY if a post is open AND the user asked you to write or rewrite part of it: {"field":"hook|caption|hashtags|onImage.headline|onImage.subline|onImage.cta","label":"short label","value":"the final text, ready to use"}]}`;
+  try {
+    let data, sources = [];
+    if (web){ const w = await webJSON(prompt); data = w.data; sources = w.sources; } else data = await ai(prompt, {brandId:bid || 'other'});
+    const reply = typeof data === 'string' ? data : str(data?.reply) || 'I could not put that into words. Try asking again.';
+    const ideas = arr(data?.ideas).filter(x => x && x.title).slice(0, 12).map(x => ({title:str(x.title).slice(0, 200), channel:CH.includes(x.channel) ? x.channel : '', format:FORMATS.includes(x.format) ? x.format : '', hook:str(x.hook).slice(0, 300), why:str(x.why).slice(0, 300)}));
+    const apply = post ? arr(data?.apply).filter(x => FIELD_LABEL[x?.field] && str(x.value).trim()).slice(0, 6).map(x => ({field:x.field, label:str(x.label).slice(0, 40), value:str(x.value)})) : [];
+    LUMI.msgs.push({r:'l', t:reply, ideas, apply, bid:ideas.length ? bid : '', postId:apply.length ? post.id : '', sources:arr(sources).map(x => ({url:x.url || x.uri, title:x.title})).filter(x => x.url), at:Date.now()});
+  } catch (e){ LUMI.msgs.push({r:'l', t:e.message || errCopy(e) || 'Something went wrong. Try again.', at:Date.now()}); }
+  finally { LUMI.busy = false; lumiSave(); paintLumi(); }
+}
+
 /* ---- design editor ---- */
 const fileToDataURL = file => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(file); });
 const imgCache = {};
@@ -4207,6 +4301,19 @@ const ACT = {
       try { const o = await genCreative(p.id, 1, 'auto'); await finalizeCreative(p.id, o[0].raw, o[0].spec); done++; } catch (e){ fail++; if (e?.code === 'rate_limited') await new Promise(r => setTimeout(r, 8000)); }
       finally { delete busy[p.id]; ui.crJob = `Designing ${done + fail} of ${todo.length}…`; sched(); } });
     ui.crJob = ''; toast(`${done} creative${done === 1 ? '' : 's'} designed${fail ? `, ${fail} failed (try those again)` : ''}${ui.crStop ? ' · stopped' : ''}`); sched(); },
+  lumiOpen: () => { LUMI.open = true; paintLumi(); renderAll(); setTimeout(() => $('#lumi-in')?.focus(), 30); },
+  lumiClose: () => { LUMI.open = false; paintLumi(); renderAll(); },
+  lumiNew: () => { if (LUMI.busy) return; LUMI.msgs = []; lumiSave(); paintLumi(); $('#lumi-in')?.focus(); },
+  lumiSend: () => { const i = $('#lumi-in'); const t = i?.value || ''; if (!t.trim()) return; i.value = ''; lumiAsk(t); },
+  lumiChip: a => lumiAsk(a.textContent),
+  lumiCopy: a => { const m = LUMI.msgs[+a.dataset.i]; if (!m) return; const extra = [...arr(m.ideas).map(x => `- ${x.title}${x.hook ? ' — Hook: ' + x.hook : ''}`), ...arr(m.apply).map(x => `${x.label || x.field}: ${x.value}`)].join('\n');
+    navigator.clipboard?.writeText(m.t + (extra ? '\n\n' + extra : '')).then(() => toast('Copied'), () => toast('Could not copy')); },
+  lumiIdeas: a => { const m = LUMI.msgs[+a.dataset.i]; const b = D.brands[m?.bid]; if (!b) return;
+    patch('brands', m.bid, {ideas:arr(b.ideas).concat(m.ideas.map(x => ({text:x.title + (x.hook ? ' — Hook: ' + x.hook : ''), why:x.why ? 'From Lumi chat: ' + x.why : 'From Lumi chat', channel:x.channel, format:x.format, ai:true, at:Date.now(), used:false, by:me || ''})))});
+    m.saved = true; lumiSave(); paintLumi(); toast(`Saved to ${b.name}'s Ideas bank`); },
+  lumiApply: a => { const m = LUMI.msgs[+a.dataset.i]; const x = arr(m?.apply)[+a.dataset.j]; const p = D.posts[m?.postId]; if (!x || !p) return;
+    const [k1, k2] = x.field.split('.'); patch('posts', p.id, k2 ? {[k1]:{[k2]:x.value}} : {[k1]:x.value});
+    m.applied = [...arr(m.applied), +a.dataset.j]; lumiSave(); paintLumi(); toast(`Updated the ${FIELD_LABEL[x.field] || x.field}${p.creative?.url && x.field.startsWith('onImage') ? '. Update the text on the creative from the post' : ''}`); },
   crAllStop: () => { ui.crStop = true; ui.crJob = 'Stopping after the current ones…'; },
   crZip: async () => { const plan = D.plans[ui.planId]; const list = expPosts().filter(p => p.creative?.url).sort(byDate); if (!list.length) return; ui.zipJob = 'Preparing…'; sched();
     try { const Z = await loadJSZip(); const z = new Z(); const rows = [['File','Date','Time','Platform','Format','Language','Headline','Caption','Hashtags']]; let n = 0; const tot = list.reduce((a, p) => a + 1 + arr(p.creative.slides).length, 0);
