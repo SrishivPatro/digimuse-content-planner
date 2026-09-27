@@ -49,6 +49,7 @@ html{color-scheme:light}
 .lm.u{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:5px}.lm.l{align-self:flex-start;background:var(--bg);border:1px solid var(--line);border-bottom-left-radius:5px}
 .lideas,.lapply{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.lapply p{margin:2px 0 4px;white-space:normal}.lsrc{font-size:12px;color:var(--muted);margin-top:6px}.lacts{display:flex;justify-content:flex-end;margin-top:2px}
 .lhello{display:flex;gap:10px;align-items:flex-start;color:var(--ink);font-size:14px;line-height:1.5}.lfoot{border-top:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:7px}.lchips{display:flex;gap:6px;flex-wrap:wrap}.lchips .chip{cursor:pointer;font-size:12.5px}
+.lmeta{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.lmeta small{color:var(--muted);font-size:11.5px}
 .lin{display:flex;gap:8px;align-items:flex-end}.lin textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font:inherit;font-size:14px;background:var(--bg);color:var(--ink);max-height:140px}
 .typing span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted);margin-right:3px;animation:lb 1s infinite}.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}.typing em{font-style:normal;color:var(--muted);font-size:12.5px}@keyframes lb{0%,80%,100%{opacity:.25}40%{opacity:1}}
 @media(max-width:640px){#lumi{right:0;bottom:0;width:100vw;height:100dvh}.lbox{border-radius:0}#lumi-fab{padding:12px 14px}}
@@ -555,9 +556,9 @@ th{background:var(--surface-2)}
 .modes label{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:9px;cursor:pointer;font-weight:700;font-size:13px;color:var(--ink-2)}
 .modes input{accent-color:var(--accent)}
 .modes label:has(input:checked){background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
-.week{display:grid;grid-template-columns:repeat(7,minmax(138px,1fr));gap:8px;overflow-x:auto;padding-bottom:6px}
 </head>
 <body>
+.week{display:grid;grid-template-columns:repeat(7,minmax(138px,1fr));gap:8px;overflow-x:auto;padding-bottom:6px}
 .dayc{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:8px;min-width:138px}
 .dayc > header{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:13px}
 .slot{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--chc,var(--accent));border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:5px}
@@ -2706,21 +2707,21 @@ function goSearch(i){
 }
 
 /* ---------- AI usage & cost per client (admins) ---------- */
-function usagePrice(){ let x = {}; try { x = JSON.parse(localStorage.getItem('dce_price') || '{}'); } catch (e){} return {in:+x.in || 0.75, out:+x.out || 3.75, search:x.search != null ? +x.search : 0.014, img:x.img != null ? +x.img : 0.039, fx:+x.fx || 88}; }
+function usagePrice(){ let x = {}; try { x = JSON.parse(localStorage.getItem('dce_price') || '{}'); } catch (e){} return {in:+x.in || 0.75, out:+x.out || 3.75, cin:+x.cin || 0.10, cout:+x.cout || 0.40, search:x.search != null ? +x.search : 0.014, img:x.img != null ? +x.img : 0.039, fx:+x.fx || 88}; }
 function vUsage(){
   if (!HOSTED || ui.user?.role !== 'admin') return '';
   if (ui.usage == null && !ui.usageBusy){ ui.usageBusy = true; fetch('/api/log?usage=1', {credentials:'same-origin'}).then(r => r.json()).then(j => { ui.usage = j.months || {}; }).catch(() => { ui.usage = {}; }).finally(() => { ui.usageBusy = false; sched(); }); }
   const U = ui.usage || {}; const months = Object.keys(U).sort().reverse(); const m = ui.usageMonth && U[ui.usageMonth] ? ui.usageMonth : months[0];
-  const P = usagePrice(); const rows = Object.entries(U[m] || {}).map(([bid, x]) => { const usd = (x.in || 0) / 1e6 * P.in + (x.out || 0) / 1e6 * P.out + (x.search || 0) * P.search + (x.img || 0) * P.img; return {bid, x, usd, inr:usd * P.fx}; }).sort((a, c) => c.usd - a.usd);
+  const P = usagePrice(); const rows = Object.entries(U[m] || {}).map(([bid, x]) => { const chat = bid === 'chat'; const usd = (x.in || 0) / 1e6 * (chat ? P.cin : P.in) + (x.out || 0) / 1e6 * (chat ? P.cout : P.out) + (x.search || 0) * P.search + (x.img || 0) * P.img; return {bid, x, usd, inr:usd * P.fx}; }).sort((a, c) => c.usd - a.usd);
   const tot = rows.reduce((s, r) => ({calls:s.calls + (r.x.calls || 0), inT:s.inT + (r.x.in || 0), outT:s.outT + (r.x.out || 0), search:s.search + (r.x.search || 0), img:s.img + (r.x.img || 0), inr:s.inr + r.inr}), {calls:0, inT:0, outT:0, search:0, img:0, inr:0});
-  const nm = bid => bid === 'pitch' ? 'Pitch mode' : bid === 'other' ? 'Other / general' : D.brands[bid]?.name || 'Deleted brand';
+  const nm = bid => bid === 'pitch' ? 'Pitch mode' : bid === 'chat' ? 'Chat with Lumi (all clients)' : bid === 'other' ? 'Other / general' : D.brands[bid]?.name || 'Deleted brand';
   const k = n => n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : String(n || 0);
   const inr = v => '₹' + Math.round(v).toLocaleString('en-IN');
-  return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Lumi usage & cost by client <span class="chip">Admins only</span></h2><p>Counted from every Lumi request on the hosted app. Cost is an estimate from the rates below; check the real bill in Google Cloud → Billing.</p></div><label class="f" style="flex:0 0 170px">Month<select class="in" data-chg="usageMonth">${opts(months.map(x => [x, mLabel(x)]), m)}</select></label></header>
+  return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Lumi usage & cost by client <span class="chip">Admins only</span></h2><p>Counted from every Lumi request on the hosted app. Cost is an estimate from the rates below; check the real bill in Google Cloud → Billing.</p></div><label class="f" style="flex:0 0 190px" title="Each person can send this many Chat with Lumi messages a day. Resets at midnight IST.">Lumi chat limit / person / day<input class="in" type="number" min="1" max="1000" data-chg="chatLimit" value="${ui.chatLimit || 40}"></label><label class="f" style="flex:0 0 170px">Month<select class="in" data-chg="usageMonth">${opts(months.map(x => [x, mLabel(x)]), m)}</select></label></header>
     ${ui.usageBusy && !ui.usage ? '<p class="muted sm"><span class="spin"></span> Loading…</p>' : tbl(['Client', 'Lumi requests', 'Tokens in', 'Tokens out', 'Web searches', 'Images', 'Est. cost', 'Per retainer'], rows.map(r => { const b = D.brands[r.bid]; const rc = b ? FORMATS.reduce((s, f) => s + (+(b.retainer || {})[f] || 0), 0) : 0;
       return [`<b>${esc(nm(r.bid))}</b>`, `<span class="mono">${r.x.calls || 0}</span>`, `<span class="mono">${k(r.x.in)}</span>`, `<span class="mono">${k(r.x.out)}</span>`, `<span class="mono">${r.x.search || 0}</span>`, `<span class="mono">${r.x.img || 0}</span>`, `<b class="mono">${inr(r.inr)}</b>`, rc ? `<span class="muted sm">${inr(r.inr / rc)} per contracted post</span>` : '']; }).concat(rows.length ? [[`<b>Total</b>`, `<b class="mono">${tot.calls}</b>`, `<b class="mono">${k(tot.inT)}</b>`, `<b class="mono">${k(tot.outT)}</b>`, `<b class="mono">${tot.search}</b>`, `<b class="mono">${tot.img}</b>`, `<b class="mono">${inr(tot.inr)}</b>`, '']] : []))}
     <details><summary class="sm" style="cursor:pointer;font-weight:700">Rates used for the estimate</summary><div class="rowline" style="margin-top:8px">
-      <label class="f">Input $ per 1M tokens<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="in" value="${P.in}"></label><label class="f">Output $ per 1M tokens<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="out" value="${P.out}"></label><label class="f">$ per web search<input class="in" type="number" step="0.001" data-chg="usagePrice" data-k="search" value="${P.search}"></label><label class="f">$ per image<input class="in" type="number" step="0.001" data-chg="usagePrice" data-k="img" value="${P.img}"></label><label class="f">₹ per $<input class="in" type="number" step="0.5" data-chg="usagePrice" data-k="fx" value="${P.fx}"></label></div>
+      <label class="f">Input $ per 1M tokens<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="in" value="${P.in}"></label><label class="f">Output $ per 1M tokens<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="out" value="${P.out}"></label><label class="f">Chat input $ per 1M (lite)<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="cin" value="${P.cin}"></label><label class="f">Chat output $ per 1M (lite)<input class="in" type="number" step="0.01" data-chg="usagePrice" data-k="cout" value="${P.cout}"></label><label class="f">$ per web search<input class="in" type="number" step="0.001" data-chg="usagePrice" data-k="search" value="${P.search}"></label><label class="f">$ per image<input class="in" type="number" step="0.001" data-chg="usagePrice" data-k="img" value="${P.img}"></label><label class="f">₹ per $<input class="in" type="number" step="0.5" data-chg="usagePrice" data-k="fx" value="${P.fx}"></label></div>
       <p class="muted sm">Defaults are current Gemini Flash prices (Sep 2026, promotional until 1 Jan 2027, when they double). The first 5,000 web searches a month are free, so the search part is usually lower. Update these if your model or plan changes.</p></details>
   </section>`;
 }
@@ -3867,9 +3868,9 @@ function lumiScope(){
 function lumiCtxLabel(){ const {b, plan, post} = lumiScope(); return [b?.name, plan ? mLabel(plan.month) + ' plan' : '', post ? 'post: ' + str(post.topic).slice(0, 34) : ''].filter(Boolean).join(' · ') || 'All clients'; }
 function lumiContext(){
   const {b, plan, pid, post} = lumiScope(); const L = [];
-  if (b) L.push('BRAND BRAIN:\n' + brandCtx(b, 7000));
+  if (b) L.push('BRAND BRAIN (summary):\n' + brandCtx(b, 2500));
   else L.push('STUDIO: clients ' + Object.values(D.brands).map(x => `${x.name} (${str(x.industry)})`).join(', ') + '.');
-  if (plan){ const st = plan.strategy || {}; L.push(`PLAN ${mLabel(plan.month)} · theme: ${str(st.theme?.name)} — ${str(st.theme?.bigIdea)} · pillars: ${arr(st.pillars).map(x => x.name).join(', ')}\nPOSTS:\n` + postsOf(pid).filter(x => !x.parentId).slice(0, 45).map(x => `${x.date} ${x.channel} ${x.format}${x.format === 'Story' && x.storyType ? '/' + x.storyType : ''} · ${str(x.pillar)} · ${str(x.topic)} · ${str(x.status)}`).join('\n')); }
+  if (plan){ const st = plan.strategy || {}; L.push(`PLAN ${mLabel(plan.month)} · theme: ${str(st.theme?.name)} — ${str(st.theme?.bigIdea)} · pillars: ${arr(st.pillars).map(x => x.name).join(', ')}\nPOSTS:\n` + postsOf(pid).filter(x => !x.parentId).slice(0, 25).map(x => `${x.date.slice(5)} ${CHA[x.channel] || x.channel} ${x.format} · ${str(x.topic).slice(0, 60)}`).join('\n')); }
   if (post) L.push(`OPEN POST (${post.date} ${post.channel} ${post.format}${post.lang ? ' · ' + post.lang + ' version' : ''}):\ntopic: ${str(post.topic)}\npillar: ${str(post.pillar)}${post.product ? '\nproduct: ' + post.product : ''}\nhook: ${str(post.hook)}\nheadline: ${str(post.onImage?.headline)}\nsubline: ${str(post.onImage?.subline)}\nCTA: ${str(post.onImage?.cta)}\ncaption: ${str(post.caption)}\nhashtags: ${str(post.hashtags)}${arr(post.slides).length ? '\nslides: ' + arr(post.slides).map((x, i) => `${i + 1}. ${str(x.copy)}`).join(' | ') : ''}${post.design?.mood ? '\ndesign brief: ' + [post.design.layout, post.design.mood, post.design.palette].map(str).join(' · ') : ''}`);
   if (!b && ui.view === 'home') L.push('The user is on the dashboard.');
   return L.join('\n\n');
@@ -3894,9 +3895,10 @@ function paintLumi(){
   if (!el.firstChild){ el.innerHTML = `<div class="lbox" role="dialog" aria-label="Chat with Lumi"><header><div class="lt"><span class="lspark big">✦</span><div><b>Lumi</b><small id="lumi-ctx"></small></div></div><div class="lh"><button class="btn sm ghost" data-act="lumiNew">New chat</button><button class="btn sm ghost" data-act="lumiClose" aria-label="Close">✕</button></div></header>
     <div class="lmsgs" id="lumi-msgs" aria-live="polite"></div>
     <div class="lfoot"><div class="lchips" id="lumi-chips"></div><div class="lin"><textarea id="lumi-in" rows="2" placeholder="Ask Lumi anything… (Enter to send, Shift+Enter for a new line)"></textarea><button class="btn pri" data-act="lumiSend" id="lumi-send">Send</button></div>
-    <label class="chk sm"><input type="checkbox" id="lumi-web"> Search the web${HOSTED ? '' : ' (hosted version only)'}</label></div></div>`;
+    <div class="lmeta"><label class="chk sm"><input type="checkbox" id="lumi-web"> Search the web${HOSTED ? '' : ' (hosted version only)'}</label><small id="lumi-meta"></small></div></div></div>`;
     $('#lumi-in').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); ACT.lumiSend(); } if (e.key === 'Escape') ACT.lumiClose(); }); }
   $('#lumi-ctx').textContent = 'Looking at: ' + lumiCtxLabel();
+  $('#lumi-meta').textContent = `Lite mode · about ₹0.03 a message${LUMI.left != null ? ` · ${LUMI.left} left today` : ui.chatLimit ? ` · ${ui.chatLimit} a day` : ''}`;
   const {b, post} = lumiScope();
   $('#lumi-msgs').innerHTML = (LUMI.msgs.length ? '' : `<div class="lhello"><span class="lspark big">✦</span><p><b>Hi${mName(me) ? ' ' + esc(str(mName(me)).replace(/\s*\(.*\)/, '').split(' ')[0]) : ''}, I'm Lumi.</b> I know your clients' Brand Brains and whatever you have open. Ask me to brainstorm, write, critique, research trends or explain the tool.</p></div>`)
     + LUMI.msgs.map((m, i) => m.r === 'u' ? `<div class="lm u">${lumiMd(m.t)}</div>` : `<div class="lm l">${lumiMd(m.t)}
@@ -3911,18 +3913,19 @@ function paintLumi(){
 async function lumiAsk(text){
   text = str(text).trim(); if (!text || LUMI.busy) return; if (aiOff()){ toast('Lumi is not available in this view'); return; }
   const {b, bid, post} = lumiScope(); const web = !!$('#lumi-web')?.checked && HOSTED;
-  const hist = LUMI.msgs.slice(-12).map(m => (m.r === 'u' ? 'USER: ' : 'LUMI: ') + str(m.t).slice(0, 1500)).join('\n');
+  const hist = LUMI.msgs.slice(-6).map(m => (m.r === 'u' ? 'USER: ' : 'LUMI: ') + str(m.t).slice(0, 400)).join('\n');
+  const howTo = /\b(how|where|tool|feature|button|export|download|upload|setting|login|password|can i|can lumi|creative|deck|plan a|set up|setup)\b/i.test(text);
   LUMI.msgs.push({r:'u', t:text, at:Date.now()}); LUMI.busy = true; paintLumi();
   const prompt = `You are Lumi, the intelligence inside Digimuse Content Engine™, the internal tool of Digimuse, an Indian digital marketing agency (social media, performance, influencer, branding, production, SEO). You work with account managers, strategists, writers and designers: brainstorming, strategy, copy, captions, hooks, hashtags, trends, critique, client communication, and how to use the tool.
-STYLE: warm, sharp, specific; Indian market context; short paragraphs and bullets; no generic filler or AI clichés (never: elevate, unlock, game-changer, delve, in today's fast-paced world). Give a clear recommendation when asked. Use the Brand Brain; never invent facts about a client (prices, claims, offers); say when you are unsure. Follow the brand rules and compliance lines exactly.${web ? ' Use web search for anything current and name your sources.' : ''}
-TOOL GUIDE (for "how do I" questions): ${LUMI_GUIDE}
-CONTEXT — what the user has open:
+STYLE: warm, sharp, specific; Indian market context; keep replies under 120 words unless the user asks for more; short bullets; no generic filler or AI clichés (never: elevate, unlock, game-changer, delve, in today's fast-paced world). Give a clear recommendation when asked. Use the Brand Brain; never invent facts about a client (prices, claims, offers); say when you are unsure. Follow the brand rules and compliance lines exactly.${web ? ' Use web search for anything current and name your sources.' : ''}
+${howTo ? 'TOOL GUIDE: ' + LUMI_GUIDE + '\n' : ''}CONTEXT — what the user has open:
 ${lumiContext()}
 ${hist ? 'CONVERSATION SO FAR:\n' + hist + '\n' : ''}USER: ${text}
 Return JSON {"reply":"your answer; plain text with **bold** and - bullets allowed","ideas":[ONLY if the user asked for post/content/campaign ideas for this brand: {"title":"","channel":"Instagram|LinkedIn|…","format":"Static|Carousel|Reel|Story|Text","hook":"","why":""}],"apply":[ONLY if a post is open AND the user asked you to write or rewrite part of it: {"field":"hook|caption|hashtags|onImage.headline|onImage.subline|onImage.cta","label":"short label","value":"the final text, ready to use"}]}`;
   try {
     let data, sources = [];
-    if (web){ const w = await webJSON(prompt); data = w.data; sources = w.sources; } else data = await ai(prompt, {brandId:bid || 'other'});
+    if (HOSTED){ const j = await hostedCall(prompt, {json:!web, raw:true, search:web, modelTier:'chat', brandId:'chat'}); data = parseLoose(j.text); if (data === undefined) data = str(j.text); sources = arr(j.sources); if (j.chatLeft != null) LUMI.left = j.chatLeft; }
+    else data = await ai(prompt, {brandId:'chat'});
     const reply = typeof data === 'string' ? data : str(data?.reply) || 'I could not put that into words. Try asking again.';
     const ideas = arr(data?.ideas).filter(x => x && x.title).slice(0, 12).map(x => ({title:str(x.title).slice(0, 200), channel:CH.includes(x.channel) ? x.channel : '', format:FORMATS.includes(x.format) ? x.format : '', hook:str(x.hook).slice(0, 300), why:str(x.why).slice(0, 300)}));
     const apply = post ? arr(data?.apply).filter(x => FIELD_LABEL[x?.field] && str(x.value).trim()).slice(0, 6).map(x => ({field:x.field, label:str(x.label).slice(0, 40), value:str(x.value)})) : [];
@@ -4652,6 +4655,7 @@ const CHG = {
   topMonth: t => { ui.topMonth = t.value; renderAll(); },
   mtInc: async t => { const b = D.brands[ui.brandId]; const ym = ui.topMonth || nextMonth(); const d = clone(arr(topMaster(b, ym)?.days)); if (!d[+t.dataset.i]) return; d[+t.dataset.i].include = t.checked; await saveMaster(ui.brandId, ym, {days:d}); await syncPlansFromMaster(ui.brandId, ym); renderAll(); },
   usageMonth: t => { ui.usageMonth = t.value; renderAll(); },
+  chatLimit: async t => { try { const j = await usersApi({action:'chatLimit', value:+t.value}); ui.chatLimit = j.chatLimit; toast(`Chat limit set to ${j.chatLimit} messages per person per day`); } catch (e){ toast(e.message); } renderAll(); },
   usagePrice: t => { const P = usagePrice(); P[t.dataset.k] = +t.value; try { localStorage.setItem('dce_price', JSON.stringify(P)); } catch (e){} renderAll(); },
   briefClient: t => { ui.briefClient = t.value; renderAll(); },
   briefStatus: t => patch('reports', t.dataset.id, {status:t.value}),
@@ -4796,7 +4800,7 @@ async function loadMe(){
   try {
     const r = await fetch('/api/users', {credentials:'same-origin', cache:'no-store'});
     if (r.status === 401){ showLogin(); return; }
-    const j = await r.json(); ui.user = j.user || null; ui.userCount = +j.users || 0;
+    const j = await r.json(); ui.user = j.user || null; ui.userCount = +j.users || 0; ui.chatLimit = +j.chatLimit || 40;
     if (ui.user?.teamId){ me = ui.user.teamId; lsSet('mp_me', me); }
     if (ui.user?.mustChange) openPw(true);
     sched();

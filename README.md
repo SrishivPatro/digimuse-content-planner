@@ -25,7 +25,7 @@ Internal social media planning tool for the Digimuse team.
 - **Briefs** (upload PDF / Word / text, Lumi plans the response and tasks) and **Pitch mode** (sample plan and pitch deck for prospects, convert to client)
 - **Competitors**, **Instagram results import**, **monthly reports**, **retainer tracker**
 - **Lumi creatives** (optional): Lumi art-directs and designs every post uniquely — visual style (photo, still life, flat lay, lifestyle, macro, collage, illustration, 3D, graphic, paper-cut), layout family, text placement and width, type scale, font pairing, emphasis and decoration — and avoids repeating the brand's recent creatives. The image is generated for that design; the tool sets the exact text, logo and must-include line where the image is calm, with contrast-safe colours. **Design editor** with live preview: position (9 spots or auto), width, size, align, fonts, caps, text and panel colours, highlight words, label, CTA style, decoration, logo position, show/hide parts, per carousel slide. **Change the image**: use your own photo (no image cost) or regenerate with a note. **Carousels**: text slides in the same design (free) or an AI image on every slide as one visual series. **Size**: auto from platform and format, or 1:1, 4:5, 9:16, 16:9 per post. Language versions keep the design; exports offer images or copy only.
-- **Chat with Lumi** (from anywhere: sidebar or the button at the bottom right): knows the client, plan and post you have open; brainstorms, writes, critiques, researches (optional web search with sources) and explains the tool. Ideas save to the Ideas bank in one click; rewritten captions, hooks, headlines and hashtags apply straight to the open post.
+- **Chat with Lumi** (lite model, lean context, daily limit per person set by admins; from anywhere: sidebar or the button at the bottom right): knows the client, plan and post you have open; brainstorms, writes, critiques, researches (optional web search with sources) and explains the tool. Ideas save to the Ideas bank in one click; rewritten captions, hooks, headlines and hashtags apply straight to the open post.
 - **Team**: personal logins, activity log, Lumi usage and cost per client (admins only), search everything (Ctrl/⌘ K), light and dark mode
 
 ## Deploy on Vercel
@@ -44,6 +44,8 @@ Internal social media planning tool for the Digimuse team.
 | `CRON_SECRET` *(needed for weekly trend alerts)* | Any long random string. Vercel sends it to the weekly job so nobody else can trigger it. |
 | `BLOB_READ_WRITE_TOKEN` *(recommended for creatives)* | Added automatically when you create a **Blob** store (Storage → Create → Blob) and connect it. Without it, creatives are stored in Redis (max ~900 KB each). |
 | `GEMINI_IMAGE_MODEL` *(optional)* | Image model for creatives. Defaults to `gemini-2.5-flash-image`. Image generation needs Gemini billing on (about $0.039 per image). |
+| `GEMINI_MODEL_CHAT` *(optional)* | Model for Chat with Lumi. Defaults to `gemini-flash-lite-latest` (about ₹0.03 a message). |
+| `LUMI_CHAT_DAILY` *(optional)* | Default chat messages per person per day (40). Admins can change it on Team → Lumi usage. |
 | `ANTHROPIC_API_KEY` *(optional)* | Use Claude instead of Gemini |
    | `AI_PROVIDER` *(optional)* | `gemini` or `claude` if both keys are set |
    | `CLAUDE_MODEL` *(optional)* | Defaults to `claude-sonnet-5` |

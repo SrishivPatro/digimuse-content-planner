@@ -1,16 +1,26 @@
-import { authed, deny, recordUsage } from './_lib.js';
+import { authed, deny, recordUsage, redis, PREFIX } from './_lib.js';
+
+// Chat with Lumi runs on the lite model and has a per-person daily limit (admins set it on the Team page).
+export const chatLimitOf = async () => { const v = +(await redis(['HGET', PREFIX + 'settings', 'chatLimit'])); return Number.isFinite(v) && v >= 0 && v !== 0 ? v : (+process.env.LUMI_CHAT_DAILY || 40); };
+const istDay = () => new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);
 
 export default async function handler(req, res){
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
-  if (!(await authed(req))) return deny(res);
+  const me = await authed(req); if (!me) return deny(res);
   const { prompt, tier = 'default', json = false, search = false, brandId = '', files = [] } = req.body || {};
   if (!prompt || typeof prompt !== 'string') return res.status(400).json({ error: 'Missing prompt' });
+  let chatLeft;
+  if (tier === 'chat'){
+    try { const lim = await chatLimitOf(); const k = PREFIX + 'chat:' + String(me.username || 'owner').slice(0, 80) + ':' + istDay(); const n = +(await redis(['INCR', k])) || 1; if (n === 1) await redis(['EXPIRE', k, 172800]);
+      if (n > lim){ return res.status(429).json({ code: 'chat_limit', error: `You've used today's ${lim} Lumi chat messages. The limit resets at midnight; your admin can change it on the Team page.` }); }
+      chatLeft = lim - n; } catch (e) {}
+  }
   const fl = (Array.isArray(files) ? files : []).filter(f => f && /^(application\/pdf|image\/(png|jpe?g|webp))$/.test(f.mime) && typeof f.data === 'string').slice(0, 4);
   try {
     const out = await runAI(prompt, { tier, json, search: !!search, files: fl });
     if (!out) return res.status(500).json({ code: 'sampling_disabled', error: 'No AI key set. Add GEMINI_API_KEY (or ANTHROPIC_API_KEY) in Vercel, then redeploy.' });
     try { await recordUsage(brandId, out.usage, out.provider); } catch (e) {}
-    delete out.usage;
+    delete out.usage; if (chatLeft !== undefined) out.chatLeft = chatLeft;
     res.status(200).json(out);
   } catch (e){
     const limited = e.status === 429;
@@ -55,7 +65,7 @@ async function callGemini(model, prompt, json, search, files = []){
 }
 
 async function gemini(prompt, tier, json, search, files = []){
-  const envModel = tier === 'quick' ? (process.env.GEMINI_MODEL_FAST || process.env.GEMINI_MODEL) : process.env.GEMINI_MODEL;
+  const envModel = tier === 'chat' ? (process.env.GEMINI_MODEL_CHAT || 'gemini-flash-lite-latest') : tier === 'quick' ? (process.env.GEMINI_MODEL_FAST || process.env.GEMINI_MODEL) : process.env.GEMINI_MODEL;
   let model = picked[tier] || envModel || 'gemini-flash-latest';
   const tried = new Set();
   let useSearch = search, waits = 0, searchDropped = false;
@@ -81,7 +91,7 @@ async function gemini(prompt, tier, json, search, files = []){
     if (!retired) throw Object.assign(new Error(msg), { status: r.status });
     // Google retired this model: use the replacement it names, else the newest flash model on the account.
     const named = [...msg.matchAll(/models\/(gemini-[\w.\-]+)/g)].map(m => m[1].replace(/[.\-]+$/, '')).find(n => !tried.has(n));
-    const next = named || await latestGemini('flash');
+    const next = named || (tier === 'chat' ? (await latestGemini('flash-lite')) || (await latestGemini('flash')) : await latestGemini('flash'));
     if (!next || tried.has(next)) throw Object.assign(new Error(msg + ' Set GEMINI_MODEL in Vercel to a current model name.'), { status: 502 });
     model = next;
   }
@@ -89,7 +99,7 @@ async function gemini(prompt, tier, json, search, files = []){
 }
 
 async function claude(prompt, tier, search, files = []){
-  const model = tier === 'quick' ? (process.env.CLAUDE_MODEL_FAST || 'claude-haiku-4-5-20251001') : (process.env.CLAUDE_MODEL || 'claude-sonnet-5');
+  const model = tier === 'quick' || tier === 'chat' ? (process.env.CLAUDE_MODEL_FAST || 'claude-haiku-4-5-20251001') : (process.env.CLAUDE_MODEL || 'claude-sonnet-5');
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },

@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
-import { authed, deny, redis, USERS, getUser, putUser, userCount, hashPw, checkPw, publicUser, sessionCookie, normU } from './_lib.js';
+import { chatLimitOf } from './ai.js';
+import { authed, deny, redis, PREFIX, USERS, getUser, putUser, userCount, hashPw, checkPw, publicUser, sessionCookie, normU } from './_lib.js';
 
 const UNAME = /^[a-z0-9._@+-]{3,60}$/;
 const tempPw = () => { const c = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (const b of crypto.randomBytes(12)) s += c[b % c.length]; return s.slice(0, 4) + '-' + s.slice(4, 8) + '-' + s.slice(8, 12); };
@@ -11,7 +12,8 @@ export default async function handler(req, res){
   if (!me) return deny(res);
   try {
     if (req.method === 'GET'){
-      return res.status(200).json({ user: me, users: await userCount() });
+      let chatLimit = 40; try { chatLimit = await chatLimitOf(); } catch (e) {}
+      return res.status(200).json({ user: me, users: await userCount(), chatLimit });
     }
     if (req.method !== 'POST') return res.status(405).json({ error: 'GET or POST' });
     const b = req.body || {}; const a = b.action;
@@ -42,6 +44,7 @@ export default async function handler(req, res){
       out.sort((x, y) => x.name.localeCompare(y.name));
       return res.status(200).json({ users: out });
     }
+    if (a === 'chatLimit'){ const v = Math.round(+b.value); if (!(v >= 1 && v <= 1000)) return res.status(400).json({ error: 'Use a number from 1 to 1000' }); await redis(['HSET', PREFIX + 'settings', 'chatLimit', String(v)]); return res.status(200).json({ ok: true, chatLimit: v }); }
     const username = normU(b.username);
     if (a === 'create'){
       if (!UNAME.test(username) || username === 'owner') return res.status(400).json({ error: 'Username: 3-60 characters, letters, numbers and . _ @ + - only (not "owner")' });
