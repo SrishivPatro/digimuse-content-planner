@@ -68,14 +68,14 @@ async function latestGemini(kind, key = process.env.GEMINI_API_KEY){
   return ok[0] || null;
 }
 
-async function callGemini(model, prompt, json, search, files = [], key = process.env.GEMINI_API_KEY){
+async function callGemini(model, prompt, json, search, files = [], key = process.env.GEMINI_API_KEY, tier = 'default'){
   const r = await fetch(`${GBASE}/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [...files.map(f => ({ inline_data: { mime_type: f.mime, data: f.data } })), { text: prompt }] }],
       ...(search ? { tools: [{ google_search: {} }] } : {}),
-      generationConfig: { temperature: 0.9, maxOutputTokens: 32768, ...(json && !search ? { responseMimeType: 'application/json' } : {}) }
+      generationConfig: { temperature: tier === 'chat' ? 0.3 : 0.9, maxOutputTokens: 32768, ...(json && !search ? { responseMimeType: 'application/json' } : {}) }
     })
   });
   const j = await r.json().catch(() => ({}));
@@ -89,7 +89,7 @@ async function gemini(prompt, tier, json, search, files = [], key = process.env.
   let useSearch = search, waits = 0, searchDropped = false;
   for (let attempt = 0; attempt < 6; attempt++){
     tried.add(model);
-    const { r, j } = await callGemini(model, prompt, json, useSearch, files, key);
+    const { r, j } = await callGemini(model, prompt, json, useSearch, files, key, tier);
     const emsg = j?.error?.message || '';
     // Free keys cannot use Google Search grounding: carry on without it.
     if (!r.ok && useSearch && (r.status === 400 || r.status === 403) && /ground|google_search|search|tool|billing|free tier|not supported|not available/i.test(emsg)){ useSearch = false; searchDropped = true; continue; }
