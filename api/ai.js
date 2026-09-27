@@ -87,6 +87,7 @@ async function latestGemini(kind, key = process.env.GEMINI_API_KEY){
   return ok[0] || null;
 }
 
+const noThinkBad = {};   // models that refused thinkingConfig this instance
 async function callGemini(model, prompt, json, search, files = [], key = process.env.GEMINI_API_KEY, tier = 'default', noThink = false){
   const r = await fetch(`${GBASE}/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
@@ -105,14 +106,14 @@ async function gemini(prompt, tier, json, search, files = [], key = process.env.
   const envModel = tier === 'chat' ? (process.env.GEMINI_MODEL_CHAT || 'gemini-flash-lite-latest') : tier === 'quick' ? (process.env.GEMINI_MODEL_FAST || process.env.GEMINI_MODEL) : process.env.GEMINI_MODEL;
   const pk = kind + ':' + tier; let model = picked[pk] || envModel || 'gemini-flash-latest';
   const tried = new Set();
-  let useSearch = search, waits = 0, searchDropped = false, noThink = tier === 'chat';
+  let useSearch = search, waits = 0, searchDropped = false, noThink = tier === 'chat' && !noThinkBad[model];
   for (let attempt = 0; attempt < 6; attempt++){
     tried.add(model);
     const { r, j } = await callGemini(model, prompt, json, useSearch, files, key, tier, noThink);
     const emsg = j?.error?.message || '';
-    if (!r.ok && noThink && r.status === 400 && /think/i.test(emsg)){ noThink = false; attempt--; continue; }   // model doesn't take the setting: ask again without it
+    if (!r.ok && noThink && r.status === 400){ noThinkBad[model] = true; noThink = false; attempt--; continue; }   // model rejects the thinking setting (Google just says 'invalid argument'): ask again without it, and stop sending it   // model doesn't take the setting: ask again without it
     // Free keys cannot use Google Search grounding: carry on without it.
-    if (!r.ok && useSearch && (r.status === 400 || r.status === 403) && /ground|google_search|search|tool|billing|free tier|not supported|not available/i.test(emsg)){ useSearch = false; searchDropped = true; continue; }
+    if (!r.ok && useSearch && (r.status === 400 || r.status === 403) && /ground|google_search|search|tool|billing|free tier|not supported|not available|invalid argument/i.test(emsg)){ useSearch = false; searchDropped = true; continue; }
     // Rate limit (free tier is ~10 requests/minute): wait and retry a couple of times.
     if (r.status === 429 && kind === 'free') throw Object.assign(new Error(j?.error?.message || 'Free key is busy'), { status: 429 });   // don't wait: the paid key takes over
     if (r.status === 429 && /prepayment|credit|billing|quota exceeded for .*per ?day|per day/i.test(emsg)) throw Object.assign(new Error(emsg), { status: 429 });   // empty balance or daily cap: waiting won't help
@@ -162,14 +163,15 @@ async function streamChat(res, prompt, json, search, freeMode, chatLeft, brandId
   const model = picked['free:chat'] || picked['paid:chat'] || process.env.GEMINI_MODEL_CHAT || 'gemini-flash-lite-latest';
   for (const [kind, key] of order){
     if (!key) continue;
-    for (const noThink of [true, false]){
+    const tries = [[!noThinkBad[model], search], [false, search], ...(search ? [[false, false]] : [])].filter((t, i, a) => a.findIndex(u => u[0] === t[0] && u[1] === t[1]) === i);
+    for (const [noThink, useSearch] of tries){
       let r;
       try {
         r = await fetch(`${GBASE}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], ...(search ? { tools: [{ google_search: {} }] } : {}),
-            generationConfig: { temperature: 0.3, maxOutputTokens: 8192, ...(noThink ? { thinkingConfig: { thinkingBudget: 0 } } : {}), ...(json && !search ? { responseMimeType: 'application/json' } : {}) } }) });
+          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], ...(useSearch ? { tools: [{ google_search: {} }] } : {}),
+            generationConfig: { temperature: 0.3, maxOutputTokens: 8192, ...(noThink ? { thinkingConfig: { thinkingBudget: 0 } } : {}), ...(json && !useSearch ? { responseMimeType: 'application/json' } : {}) } }) });
       } catch (e) { break; }
-      if (!r.ok){ const t = await r.text().catch(() => ''); if (noThink && r.status === 400 && /think/i.test(t)) continue; break; }   // try without the setting, else next key
+      if (!r.ok){ await r.text().catch(() => ''); if (r.status === 400){ if (noThink) noThinkBad[model] = true; continue; } break; }   // 'invalid argument': retry without thinking setting, then without search; else next key
       res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' });
       const dec = new TextDecoder(); let buf = '', usage = {}, sources = [];
       const reader = r.body.getReader();
@@ -189,7 +191,7 @@ async function streamChat(res, prompt, json, search, freeMode, chatLeft, brandId
         }
       } catch (e) { res.write(JSON.stringify({ error: 'The reply was cut off. Try again.' }) + '\n'); }
       res.end(JSON.stringify({ done: true, sources, ...(chatLeft !== undefined ? { chatLeft } : {}) }) + '\n');
-      try { await recordUsage(brandId, { in: usage.promptTokenCount || 0, out: (usage.candidatesTokenCount || 0) + (usage.thoughtsTokenCount || 0), search: search ? 1 : 0, model, free: kind === 'free' }, 'gemini'); } catch (e) {}
+      try { await recordUsage(brandId, { in: usage.promptTokenCount || 0, out: (usage.candidatesTokenCount || 0) + (usage.thoughtsTokenCount || 0), search: useSearch ? 1 : 0, model, free: kind === 'free' }, 'gemini'); } catch (e) {}
       return true;
     }
   }
