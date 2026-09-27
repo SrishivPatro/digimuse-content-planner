@@ -699,6 +699,41 @@ const msVals = id => [...document.querySelectorAll(`#${id} input:checked`)].map(
 function fmtProducts(v){ return arr(v?.products).length ? arr(v.products) : v?.product ? [v.product] : []; }
 function mixTotal(mix){ return Object.values(mix || {}).reduce((s, v) => s + (+v.n || 0), 0); }
 function activeCh(b){ return CH.filter(c => b?.channels?.[c]?.on); }
+/* ---------- product fields that change with the brand's industry ---------- */
+const PSCHEMAS = {
+  realestate:{label:'Projects', one:'project', mustPh:'RERA No. PRM/KA/RERA/1251/446/PR/171014/000419 · T&C apply', fields:[['location','Location','Whitefield, Bengaluru'],['config','Configuration','2 & 3 BHK apartments'],['sizes','Sizes','1,150–1,650 sq ft'],['possession','Possession','Dec 2027'],['amenities','Key amenities','Clubhouse, 70% open space'],['rera','RERA number','PRM/KA/RERA/…']]},
+  finance:{label:'Products', one:'product', mustPh:'Loans at the sole discretion of the lender. T&C apply.', fields:[['rate','Rate / pricing','From 10.5% p.a.'],['eligibility','Eligibility','Salaried, 21–60 years'],['limits','Amount / tenure','Up to ₹25 L, 12–60 months'],['features','Key features','Instant approval, no collateral']]},
+  insurance:{label:'Plans', one:'plan', mustPh:'Insurance is the subject matter of solicitation. Read the policy document carefully.', fields:[['cover','Cover','Up to ₹1 Cr'],['premium','Premium','From ₹499/month'],['eligibility','Eligibility','18–65 years'],['features','Key features','Cashless at 10,000+ hospitals']]},
+  invest:{label:'Products', one:'product', mustPh:'Investments are subject to market risks. Read all scheme related documents carefully.', fields:[['type','Type','Equity mutual fund'],['risk','Risk level','Moderately high'],['returns','Returns shown (with period)','Only if the brand approves'],['features','Key features','Start with ₹500 SIP']]},
+  edu:{label:'Courses & programs', one:'course', mustPh:'', fields:[['duration','Duration','6 months, weekends'],['mode','Mode','Online / Offline / Hybrid'],['audience','Who it is for','Working professionals'],['outcome','Outcome / certification','Placement support, certificate']]},
+  health:{label:'Services & products', one:'service', mustPh:'Consult your doctor before use.', fields:[['forWho','Who it is for','Adults with joint pain'],['features','Key features','Board-certified doctors'],['availability','Availability','24x7, 12 cities']]},
+  hospitality:{label:'Properties & packages', one:'property / package', mustPh:'', fields:[['location','Location','Coorg, Karnataka'],['type','Type','Boutique resort, café, package'],['highlights','Highlights','Private pool villas'],['season','Timings / season','Best Oct–Mar']]},
+  auto:{label:'Models', one:'model', mustPh:'', fields:[['variants','Variants','Std, Plus, Max'],['specs','Key specs','120 km range, 3 hr charge'],['location','Availability','40 cities']]},
+  b2b:{label:'Services & solutions', one:'service', mustPh:'', fields:[['forWho','Who it is for','Mid-size manufacturers'],['included','What is included','Audit, setup, 6 months support'],['proof','Proof / results','30% lower downtime at Tata Steel']]},
+  retail:{label:'Products', one:'product', mustPh:'', fields:[['variants','Variants / sizes','250 ml, 1 L'],['made','Key ingredients / materials','Arabica, no sugar'],['bestFor','Best for','Office, gym bag']]}
+};
+function pschemaKey(b){
+  const o = b?.brain?.ptype; if (o && PSCHEMAS[o]) return o;
+  const i = str(b?.industry).toLowerCase();
+  if (/real estate|home & interior|property/.test(i)) return 'realestate';
+  if (/insurance/.test(i)) return 'insurance';
+  if (/wealth|invest|mutual|broking/.test(i)) return 'invest';
+  if (/fintech|bank|nbfc|lending|loan/.test(i)) return 'finance';
+  if (/edtech|education|school|coaching/.test(i)) return 'edu';
+  if (/health|hospital|clinic|pharma|wellness/.test(i)) return 'health';
+  if (/hospitality|hotel|travel|tourism|qsr|restaurant/.test(i)) return 'hospitality';
+  if (/automotive|two-wheeler|ev\b/.test(i)) return 'auto';
+  if (/saas|b2b|it services|manufactur|industrial|consult/.test(i)) return 'b2b';
+  return 'retail';
+}
+const pschema = b => PSCHEMAS[pschemaKey(b)];
+const PTYPE_OPTS = [['realestate','Real estate projects'],['finance','Loans & finance'],['insurance','Insurance plans'],['invest','Investments'],['edu','Courses'],['health','Health'],['hospitality','Hospitality & travel'],['auto','Automotive'],['b2b','B2B services'],['retail','Retail / D2C products']];
+const prodFacts = (b, p) => pschema(b).fields.map(([k, l]) => p?.x?.[k] ? `${l}: ${p.x[k]}` : '').filter(Boolean).join(' | ');
+const findProd = (b, name) => { const n = str(name).trim().toLowerCase(); return n ? arr(b?.brain?.products).find(p => str(p.name).trim().toLowerCase() === n) : null; };
+function withMust(b, prodName, caption){
+  const pr = findProd(b, prodName); const m = str(pr?.must).trim(); if (!m) return caption;
+  const c = str(caption); return c.toLowerCase().includes(m.toLowerCase().slice(0, 24)) ? c : (c ? c.replace(/\s+$/, '') + '\n\n' : '') + m;
+}
 function brandCtx(b, max=14000){
   const a = b.audience || {}, v = b.voice || {}, br = b.brain || {}, k = br.kit || {};
   const L = [];
@@ -716,8 +751,8 @@ function brandCtx(b, max=14000){
   if (b.loved) L.push(`Brands we admire: ${b.loved}`);
   L.push('=== BRAND BRAIN ===');
   const P = arr(br.products);
-  L.push('Products / services:' + (P.length ? '' : ' none added'));
-  P.slice(0, 40).forEach(p => L.push(`- ${p.name}: ${p.what||''} | Benefits: ${str(p.benefits).slice(0, 160)} | Price: ${p.price||'n/a'} | Offer: ${p.offer||'none'}`));
+  L.push(`${pschema(b).label}:` + (P.length ? ' (facts below are exact; never change numbers, dates, prices or registration numbers)' : ' none added'));
+  P.slice(0, 40).forEach(p => { const fx = prodFacts(b, p); L.push(`- ${p.name}: ${p.what||''}${fx ? ' | ' + fx : ''} | Benefits: ${str(p.benefits).slice(0, 160)} | Price: ${p.price||'n/a'} | Offer: ${p.offer||'none'}${p.must ? ' | MUST INCLUDE VERBATIM in any post about it: "' + p.must + '"' : ''}`); });
   if (P.length > 40) L.push(`- …plus ${P.length - 40} more products: ${P.slice(40, 120).map(p => p.name).join(', ')}`);
   const R = arr(br.rules);
   L.push('Brand rules:' + (R.length ? '' : ' none added'));
@@ -1575,18 +1610,22 @@ function vBrain(b){
     <div class="list">${arr(b.pillars).map((x, i) => `<div class="idea" style="--pc:var(${PAL[i % PAL.length]});border-left:4px solid var(${PAL[i % PAL.length]})"><div class="tx"><b>${esc(x.name)}</b>${x.purpose ? `<span class="sm">${esc(x.purpose)}</span>` : ''}${x.examples ? `<span class="muted sm">e.g. ${esc(str(x.examples))}</span>` : ''}${x.why ? `<span class="muted sm">Why: ${esc(x.why)}</span>` : ''}</div><div class="acts"><label class="chk sm"><input type="checkbox" data-chg="pillarOn" data-i="${i}" ${x.active !== false ? 'checked' : ''}> Use by default</label><button class="btn sm ghost" data-act="rmPillar" data-i="${i}">Remove</button></div></div>`).join('') || '<p class="muted">No pillars yet. Add your own or let AI suggest some from the Brand Brain.</p>'}</div>
     <div class="rowline"><label class="f">Pillar name<input class="in" id="npi-name" placeholder="The 3pm Ritual"></label><label class="f">What it does<input class="in" id="npi-purpose" placeholder="Relatable everyday moments that end with the product"></label><button class="btn" data-act="addPillar">Add pillar</button></div>
   </section>
-  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Products & services <span class="muted mono" style="font-size:13px">${prod.length}</span></h2><p>Every post is anchored to one of these. Import them from the brand's website, add one by one, or paste a catalogue.</p></div><div class="acts"><button class="btn sm pri" data-act="importSite" ${ui.importBusy ? 'disabled' : ''}>${ui.importBusy ? '<span class="spin"></span> Reading website…' : 'Import from website'}</button>${prod.some(p => p.source === 'website') ? '<button class="btn sm ghost" data-act="clearImported">Remove imported</button>' : ''}</div></header>
+  <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>${esc(pschema(b).label)} <span class="muted mono" style="font-size:13px">${prod.length}</span></h2><p>Every post is anchored to one of these. Import them from the brand's website, add one by one, or paste a catalogue.</p></div><div class="acts"><button class="btn sm pri" data-act="importSite" ${ui.importBusy ? 'disabled' : ''}>${ui.importBusy ? '<span class="spin"></span> Reading website…' : 'Import from website'}</button>${prod.some(p => p.source === 'website') ? '<button class="btn sm ghost" data-act="clearImported">Remove imported</button>' : ''}</div></header>
     ${b.website ? `<p class="muted sm">Website: ${linkOK(b.website) ? `<a href="${esc(b.website)}" target="_blank" rel="noopener">${esc(b.website)}</a>` : esc(b.website)}${HOSTED ? '' : ' · Website import works on the Vercel version of the planner.'}</p>` : '<p class="muted sm">Add the brand website in Profile & team, and products are pulled in automatically.</p>'}
-    ${tbl(['Name','What it is','Benefits','Price','Offer',''], prod.slice(0, ui.allProd ? 1000 : 25).map((p,i) => [`<b>${p.url && linkOK(p.url) ? `<a href="${esc(p.url)}" target="_blank" rel="noopener" style="color:inherit">${esc(p.name)}</a>` : esc(p.name)}</b>`, esc(p.what), esc(str(p.benefits).slice(0, 140)), esc(p.price), esc(p.offer), `<button class="btn sm ghost" data-act="rmItem" data-k="products" data-i="${i}">Remove</button>`]))}
+    <div class="rowline"><label class="f" style="flex:0 0 280px">Product type <span class="hint">sets the fields below</span><select class="in" data-chg="ptype">${opts(PTYPE_OPTS, pschemaKey(b))}</select></label><p class="muted sm" style="align-self:end">Picked from the industry (${esc(b.industry || 'not set')}). Change it if this brand sells something different.</p></div>
+    ${tbl(['Name','What it is','Key facts','Price / offer','Must include',''], prod.slice(0, ui.allProd ? 1000 : 25).map((p,i) => [`<b>${p.url && linkOK(p.url) ? `<a href="${esc(p.url)}" target="_blank" rel="noopener" style="color:inherit">${esc(p.name)}</a>` : esc(p.name)}</b>`, esc(p.what), `<span class="sm">${esc(prodFacts(b, p) || str(p.benefits).slice(0, 140))}</span>`, `${esc(p.price)}${p.offer ? `<br><span class="muted sm">${esc(p.offer)}</span>` : ''}`, p.must ? `<span class="sm">${esc(p.must)}</span>` : '<span class="muted sm">—</span>', `<div class="acts"><button class="btn sm" data-act="editProduct" data-i="${i}">Edit</button><button class="btn sm ghost" data-act="rmItem" data-k="products" data-i="${i}">Remove</button></div>`]))}
     ${prod.length > 25 ? `<div><button class="btn sm" data-act="toggleProd">${ui.allProd ? 'Show fewer' : `Show all ${prod.length}`}</button></div>` : ''}
-    <div class="fg">
-      <label class="f">Name<input class="in" id="np-name"></label>
-      <label class="f">What it is<input class="in" id="np-what"></label>
-      <label class="f">Key benefits<input class="in" id="np-ben"></label>
-      <label class="f">Price<input class="in" id="np-price"></label>
-      <label class="f">Current offer<input class="in" id="np-offer"></label>
-    </div>
-    <div class="acts"><button class="btn" data-act="addProduct">Add product</button></div>
+    ${(() => { const sc = pschema(b); const ed = ui.editProd != null && ui.editProd.b === ui.brandId ? prod[ui.editProd.i] : null; const v = k => esc(ed ? (['name','what','benefits','price','offer','must'].includes(k) ? ed[k] : ed.x?.[k]) || '' : '');
+      return `<p class="eyebrow" style="margin-top:6px">${ed ? 'Edit ' + esc(ed.name) : 'Add a ' + esc(sc.one)}</p><div class="fg">
+      <label class="f">Name<input class="in" id="np-name" value="${v('name')}" placeholder="${sc.one === 'project' ? 'Sattva Park Cubix' : ''}"></label>
+      <label class="f">What it is<input class="in" id="np-what" value="${v('what')}"></label>
+      ${sc.fields.map(([k, l, ph]) => `<label class="f">${esc(l)}<input class="in" id="npx-${k}" value="${v(k)}" placeholder="${esc(ph || '')}"></label>`).join('')}
+      <label class="f">Key benefits<input class="in" id="np-ben" value="${v('benefits')}"></label>
+      <label class="f">Price<input class="in" id="np-price" value="${v('price')}"></label>
+      <label class="f">Current offer<input class="in" id="np-offer" value="${v('offer')}"></label>
+      <label class="f" style="grid-column:1/-1">Must include in every post about it <span class="hint">added to the caption automatically, e.g. RERA number or disclaimer</span><input class="in" id="np-must" value="${v('must')}" placeholder="${esc(sc.mustPh || 'Optional')}"></label>
+    </div>`; })()}
+    <div class="acts"><button class="btn" data-act="addProduct">${ui.editProd != null && ui.editProd.b === ui.brandId ? 'Save changes' : 'Add ' + esc(pschema(b).one)}</button>${ui.editProd != null && ui.editProd.b === ui.brandId ? '<button class="btn ghost" data-act="cancelProd">Cancel</button>' : ''}</div>
     <details><summary class="sm" style="cursor:pointer;font-weight:700">Bulk paste catalogue</summary><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px"><textarea class="in" id="np-bulk" rows="5" placeholder="Cold Brew Classic | 250ml bottle | 12h steeped, no sugar | ₹120 | 2 for ₹199"></textarea><div><button class="btn" data-act="bulkProducts">Add all</button></div></div></details>
   </section>
   <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Brand rules</h2><p>Hard rules the AI must follow. Client feedback you save lands here too.</p></div></header>
@@ -2092,7 +2131,7 @@ function designerRows(p, b){
     ['Format', [p.format, sizeFor(p.channel, p.format)].filter(Boolean).join(' · ')],
     ['Content Pillar', p.pillar],
     ['Topic', p.topic + (p.topical ? `  (Topical: ${p.topical})` : '')],
-    ['Product', arr(p.products).length ? arr(p.products).join(', ') : p.product],
+    ['Product', (() => { const pr = findProd(b, p.product); return [arr(p.products).length ? arr(p.products).join(', ') : p.product, pr ? prodFacts(b, pr) : '', pr?.must ? 'Must include: ' + pr.must : ''].filter(Boolean).join('\n'); })()],
     ['Image Copy', imageCopy],
     ['Carousel Slides', slides],
     ['Reel / Video Script', script],
@@ -2417,7 +2456,7 @@ function contentPart(r, p){
     onImage:{headline:str(r.onImage?.headline), subline:str(r.onImage?.subline), cta:str(r.onImage?.cta)},
     slides:arr(r.slides).map((s,i) => ({n:i+1, visual:str(s.visual), copy:str(s.copy)})),
     script:arr(r.script).map(s => ({t:str(s.t), visual:str(s.visual), onscreen:str(s.onscreen), vo:str(s.vo), audio:str(s.audio)})),
-    caption:str(r.caption), hashtags:hs, altText:str(r.altText),
+    caption:withMust(D.brands[p.brandId], (p.product == null || p.product === '') ? r.product : p.product, str(r.caption)), hashtags:hs, altText:str(r.altText),
     design:{layout:str(r.design?.layout), typography:str(r.design?.typography), palette:str(r.design?.palette), mood:str(r.design?.mood), elements:str(r.design?.elements), dos:str(r.design?.dos), donts:str(r.design?.donts), refSearch:str(r.design?.refSearch)},
     builtFrom:arr(r.builtFrom).map(str).slice(0,10), compliance:str(r.compliance), hasContent:true, writtenAt:Date.now()
   };
@@ -2744,10 +2783,17 @@ const ACT = {
   delPlanRow: a => { const id = a.dataset.id; ui.confirm = null; postsOf(id).forEach(p => del('posts', p.id)); del('plans', id); toast('Plan deleted'); },
   delBrand: () => { const id = ui.brandId; ui.confirm = null; ui.view = 'home'; ui.brandId = null; plansOf(id).forEach(([pid]) => { postsOf(pid).forEach(p => del('posts', p.id)); del('plans', pid); }); Object.entries(D.reports).filter(([,r]) => r.brandId === id).forEach(([rid]) => del('reports', rid)); del('brands', id); toast('Brand deleted'); },
   addProduct: () => {
-    const b = D.brands[ui.brandId]; const v = k => ($('#np-' + k)?.value || '').trim();
-    if (!v('name')){ toast('Add a product name'); return; }
-    patch('brands', ui.brandId, {brain:{products:arr(b.brain?.products).concat([{name:v('name'), what:v('what'), benefits:v('ben'), price:v('price'), offer:v('offer')}])}}); toast('Product added');
+    const b = D.brands[ui.brandId]; const v = k => ($('#np-' + k)?.value || '').trim(); const sc = pschema(b);
+    if (!v('name')){ toast('Add a name'); return; }
+    const x = {}; sc.fields.forEach(([k]) => { const val = ($('#npx-' + k)?.value || '').trim(); if (val) x[k] = val; });
+    const l = clone(arr(b.brain?.products)); const ed = ui.editProd != null && ui.editProd.b === ui.brandId ? ui.editProd.i : null;
+    const item = {...(ed != null ? l[ed] : {}), name:v('name'), what:v('what'), benefits:v('ben'), price:v('price'), offer:v('offer'), must:v('must'), x:{...(ed != null ? l[ed]?.x : {}), ...x}};
+    sc.fields.forEach(([k]) => { if (!x[k] && item.x) delete item.x[k]; });
+    if (ed != null) l[ed] = item; else l.push(item);
+    ui.editProd = null; patch('brands', ui.brandId, {brain:{products:l}}); toast(ed != null ? 'Saved' : `${sc.one[0].toUpperCase() + sc.one.slice(1)} added`);
   },
+  editProduct: a => { ui.editProd = {b:ui.brandId, i:+a.dataset.i}; renderAll(); setTimeout(() => $('#np-name')?.scrollIntoView({block:'center', behavior:'smooth'}), 30); },
+  cancelProd: () => { ui.editProd = null; renderAll(); },
   bulkProducts: () => {
     const b = D.brands[ui.brandId]; const raw = $('#np-bulk')?.value || '';
     const add = raw.split(/\n/).map(l => l.trim()).filter(Boolean).map(l => { const c = l.split(/\t|\|/).map(s => s.trim()); return {name:c[0]||'', what:c[1]||'', benefits:c[2]||'', price:c[3]||'', offer:c[4]||''}; }).filter(x => x.name);
@@ -2999,6 +3045,7 @@ const ACT = {
   rmMember: a => { ui.confirm = null; del('team', a.dataset.id); if (me === a.dataset.id){ me = ''; lsSet('mp_me', ''); } }
 };
 const CHG = {
+  ptype: t => patch('brands', ui.brandId, {brain:{ptype:t.value}}),
   labPick: t => { ui.labId = t.value; renderAll(); },
   expCh: t => { const all = planChs(ui.planId); const cur = expSel() ? new Set(expSel()) : new Set(all); if (t.checked) cur.add(t.value); else cur.delete(t.value); if (!cur.size){ t.checked = true; toast('Keep at least one platform'); return; } ui.expCh = {pid:ui.planId, set:cur}; renderAll(); },
   me: t => { me = t.value; lsSet('mp_me', me); if (HOSTED && ui.user && !ui.user.owner){ usersApi({action:'linkMe', teamId:me}).then(j => { ui.user = j.user; sched(); }).catch(() => {}); } renderAll(); },
@@ -3098,7 +3145,9 @@ ${str(j.text).slice(0, 22000)}
 
 TASK: List every distinct product, product range or service this brand sells, using only what is on these pages. Do not invent prices or offers; leave them empty if not shown. Also write a one-line description of the brand and a one-sentence summary of what it offers.
 
-Reply with only JSON: {"description":"","offerings":"","products":[{"name":"","what":"what it is / category","benefits":"key benefits or features from the site","price":"as shown or empty","offer":"any offer shown or empty"}]}`);
+${(() => { const sc = pschema(D.brands[ui.brandId]); return `These are ${sc.label.toLowerCase()}. For each, also fill "x" with these facts when the site states them (never guess): ${sc.fields.map(([k, l]) => k + ' = ' + l).join('; ')}.${sc.fields.some(f => f[0] === 'rera') ? ' Copy RERA registration numbers exactly as written.' : ''}`; })()}
+
+Reply with only JSON: {"description":"","offerings":"","products":[{"name":"","what":"what it is / category","benefits":"key benefits or features from the site","price":"as shown or empty","offer":"any offer shown or empty","x":{}}]}`);
       prods = arr(x?.products); desc = str(x?.description); offerings = str(x?.offerings);
     }
     if (!prods.length){ toast('No products found on that site. Add them by hand or paste the catalogue.'); return; }
@@ -3107,7 +3156,7 @@ Reply with only JSON: {"description":"","offerings":"","products":[{"name":"","w
     const add = [];
     for (const p of prods){
       const n = str(p.name).trim().slice(0, 120); if (!n || have.has(n.toLowerCase())) continue; have.add(n.toLowerCase());
-      add.push({name:n, what:str(p.what).slice(0, 160), benefits:str(p.benefits).slice(0, 240), price:str(p.price).slice(0, 40), offer:str(p.offer).slice(0, 120), url:linkOK(p.url) ? p.url : '', source:'website'});
+      add.push({name:n, what:str(p.what).slice(0, 160), benefits:str(p.benefits).slice(0, 240), price:str(p.price).slice(0, 40), offer:str(p.offer).slice(0, 120), url:linkOK(p.url) ? p.url : '', source:'website', x:Object.fromEntries(Object.entries(p.x && typeof p.x === 'object' ? p.x : {}).filter(([k, v]) => pschema(D.brands[ui.brandId]).fields.some(f => f[0] === k) && str(v).trim()).map(([k, v]) => [k, str(v).slice(0, 160)]))});
       if (add.length >= 300) break;
     }
     const part = {brain:{products:arr(cur.brain?.products).concat(add)}};
