@@ -31,6 +31,7 @@ html{color-scheme:light}
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.moods,.capvars{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.moods .chip,.capvars .chip{cursor:pointer;font:inherit;font-size:12px;font-weight:600}.capvars .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}.langpick{border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--surface-2)}.langpick summary{cursor:pointer}.langgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin-top:8px}.langrow{display:flex;align-items:center;gap:8px}.langrow .chk{flex:0 0 96px}.langrow select{padding:5px 8px;font-size:12.5px}
 .bav.blogo{background:#fff;border:1px solid var(--line);overflow:hidden;padding:2px}.bav.blogo img{width:100%;height:100%;object-fit:contain;display:block}.logoup{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.logoup .bav{width:64px;height:64px;border-radius:16px;font-size:22px}.slide .clogo{position:absolute;top:3.2cqw;right:3.2cqw;height:6cqw;max-width:18cqw;background:#fff;border-radius:1.2cqw;padding:.8cqw 1.2cqw;object-fit:contain}
 .ret{display:flex;flex-direction:column;gap:3px;min-width:92px}.ret .bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden;position:relative}.ret .bar i{position:absolute;inset:0 auto 0 0;background:var(--c4);border-radius:99px}.ret .bar b{position:absolute;inset:0 auto 0 0;background:color-mix(in srgb,var(--c1) 35%,transparent);border-radius:99px}.ret small{font-size:11.5px;color:var(--muted)}.tagset{display:flex;flex-wrap:wrap;gap:6px}
 /* ---------- dark mode ---------- */
@@ -566,6 +567,10 @@ const RULE_TYPES = ['Banned word','Must use','Disclaimer','Style','Hashtag set',
 const REF_TAGS = ['Copy','Design','Format','Hook'];
 const ROLES = ['Admin','Account manager','Strategist','Copywriter','Designer','Video editor'];
 const LANGS = ['English','Hinglish','English + Hindi mix','Hindi','English + regional'];
+const XLANGS = ['Hindi','Hinglish','Kannada','Tamil','Telugu','Malayalam','Marathi','Bengali','Gujarati','Punjabi','Odia'];
+const LSCOPES = [['all','All posts'],['Instagram','Instagram posts'],['LinkedIn','LinkedIn posts'],['video','Reels, videos & stories'],['static','Statics & carousels']];
+const inScope = (p, sc) => sc === 'all' || !sc ? true : sc === 'video' ? ['Reel','Video','Story'].includes(p.format) : sc === 'static' ? ['Static','Carousel'].includes(p.format) : p.channel === sc;
+const MOODS = ['Witty','Emotional','Bold','Premium','Minimal','Conversational','Storytelling','Urgent','Hinglish','Inspiring'];
 const REGIONS = ['India (pan-India)','India — North','India — South','India — West','India — East','Global','UAE / GCC','UK / Europe','USA'];
 const CHECKS = [['proof','Copy proofread, no typos'],['brand','Brand colours, fonts and logo right'],['disc','Disclaimer added where needed'],['tags','Hashtags, tags and handles checked'],['cta','Link and CTA work'],['alt','Alt text added'],['appr','Client approved'],['sched','Scheduled in the publishing tool']];
 const METRICS = [['reach','Reach'],['impressions','Impressions'],['likes','Likes'],['comments','Comments'],['saves','Saves'],['shares','Shares'],['clicks','Link clicks'],['views','Video views']];
@@ -1225,6 +1230,10 @@ function vPlans(b){
       <label class="chk"><input type="checkbox" id="npl-cd" checked> Creative director review (sharper, a bit slower)</label>
       <label class="chk"><input type="checkbox" id="npl-top" checked> Topical days</label>
       <label class="chk"><input type="checkbox" id="npl-toprev" checked> Let me pick topical days before the calendar is built</label>
+      <details class="langpick" ${arr(b.langDefault).length ? 'open' : ''}><summary><b>Regional language versions</b> <span class="muted sm">optional · extra versions of the copy in other languages</span></summary>
+        <p class="muted sm">Tick each language you want and which posts need it. Every post is written in the main language first, then each version is written for native speakers (not translated word for word). Brand names, prices and registration numbers stay as they are.</p>
+        <div class="langgrid">${XLANGS.map(l => { const d = arr(b.langDefault).find(x => x.lang === l); return `<div class="langrow"><label class="chk"><input type="checkbox" class="npl-lang-x" value="${esc(l)}" ${d ? 'checked' : ''}> ${esc(l)}</label><select class="in npl-lang-scope" data-lang="${esc(l)}" aria-label="${esc(l)} applies to">${opts(LSCOPES, d?.scope || 'all')}</select></div>`; }).join('')}</div>
+      </details>
       <label class="chk"><input type="checkbox" id="npl-reels" checked> Reel scripts</label>
       <label class="chk"><input type="checkbox" id="npl-paid"> Paid boost ideas</label>
       <label class="chk"><input type="checkbox" id="npl-inf"> Influencer / UGC ideas</label>
@@ -1928,7 +1937,7 @@ function vExport(plan, ps){
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c1)"></span>Client document</h2><p>Strategy plus every post in Markdown. Paste into Google Docs or Notion, or download.</p></div></header><div class="acts"><button class="btn" data-act="md" ${DL ? '' : 'disabled'}>Download .md</button><button class="btn" data-act="copyMd">Copy text</button></div></section>
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c6)"></span>Calendar</h2><p>Tab-separated, ready to paste into Google Sheets.</p></div></header><div class="acts"><button class="btn" data-act="copyCal">Copy for Sheets</button><button class="btn" data-act="csv" ${DL ? '' : 'disabled'}>Download .csv</button></div></section>
     <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c2)"></span>Design briefs</h2><p>Every post's brief in one text file for the design team.</p></div></header><div class="acts"><button class="btn" data-act="briefs" ${DL ? '' : 'disabled'}>Download briefs</button><button class="btn" data-act="copyBriefs">Copy all</button></div></section>
-    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Designer deck</h2><p>One clean slide per post: date, platform, format, pillar, image copy, post copy, design ref and notes. Opens in Google Slides (upload to Drive → Open with Google Slides).</p></div></header><div class="acts"><button class="btn pri" data-act="designerDeck" ${typeof PptxGenJS === 'undefined' || !DL || !ps.length ? 'disabled' : ''}>Download deck</button><button class="btn hot" data-act="refFindAll" ${ui.refJob || aiOff() || !HOSTED || !ps.length ? 'disabled' : ''} title="${HOSTED ? 'Searches Pinterest, Behance and Dribbble and keeps only links that really open' : 'Needs the hosted version'}">${ui.refJob ? esc(ui.refJob) : 'Find real references for all posts'}</button></div><p class="muted sm">${ps.filter(p => refsOf(p).some(r => r.img)).length} of ${ps.filter(p => p.format !== 'Text').length} design posts have reference images. They appear on each slide.</p></section>
+    <section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Designer deck</h2><p>One clean slide per post: date, platform, format, pillar, image copy, post copy, design ref and notes. Opens in Google Slides (upload to Drive → Open with Google Slides).</p></div></header><div class="acts"><button class="btn pri" data-act="designerDeck" ${typeof PptxGenJS === 'undefined' || !DL || !ps.length ? 'disabled' : ''}>Download deck</button> <button class="btn" data-act="allShots" ${ui.shotJob || aiOff() || !ps.some(p => ['Reel','Video','Story'].includes(p.format)) ? 'disabled' : ''}>${ui.shotJob ? '<span class="spin"></span> Making shot lists…' : '✦ Shot lists for all reels'}</button><button class="btn hot" data-act="refFindAll" ${ui.refJob || aiOff() || !HOSTED || !ps.length ? 'disabled' : ''} title="${HOSTED ? 'Searches Pinterest, Behance and Dribbble and keeps only links that really open' : 'Needs the hosted version'}">${ui.refJob ? esc(ui.refJob) : 'Find real references for all posts'}</button></div><p class="muted sm">${ps.filter(p => refsOf(p).some(r => r.img)).length} of ${ps.filter(p => p.format !== 'Text').length} design posts have reference images. They appear on each slide.</p></section>
   </div>
   ${DL ? '' : '<p class="muted sm">Downloads are not available in this view. Use the copy buttons instead.</p>'}
   <p class="muted sm">${ps.length} posts · ${ps.filter(p => p.hasContent).length} written · ${ps.filter(p => group(p.status) === 'done').length} approved</p>`;
@@ -2193,7 +2202,7 @@ function designerRows(p, b){
     ['Post Copy', [p.caption, p.hashtags].filter(Boolean).join('\n\n')],
     ['Design Ref', ref],
     ['Note To Designer', notes]
-  ].filter(([k, v], i) => i < 5 || i === 6 || i >= 9 || str(v).trim());
+  ].filter(([k, v], i) => i < 5 || i === 6 || i >= 9 || str(v).trim()).flatMap(r => r[0] !== 'Design Ref' ? [r] : Object.entries(p.langs || {}).flatMap(([l, x]) => [[`Image Copy (${l})`, [x.headline && 'Headline: ' + x.headline, x.subline && 'Subline: ' + x.subline, x.cta && 'CTA: ' + x.cta].filter(Boolean).join('\n') + (arr(x.slides).length ? '\n' + arr(x.slides).map((c, j) => `Slide ${j + 1}: ${c}`).join('\n') : '')], [`Post Copy (${l})`, str(x.caption)]]).concat([r]));
 }
 async function downloadDesignerDeck(){
   const plan = D.plans[ui.planId]; if (!plan) return; const b = D.brands[plan.brandId] || {};
@@ -2239,6 +2248,10 @@ async function downloadDesignerDeck(){
           sl.addShape(pptx.ShapeType.rect, {x:RX, y, w:RW, h:ih, fill:{color:'F3F5FB'}, line:{color:'E6E9F2'}});
           sl.addImage({data:imgs[r.url] || r.img, x:RX, y, w:RW, h:ih, sizing:{type:'contain', w:RW, h:ih}, hyperlink:{url:r.url, tooltip:r.title || r.url}}); });
       }
+      if (arr(p.shots).length){ const s2 = pptx.addSlide(); s2.background = {color:'FFFFFF'};
+        s2.addText(`Post ${i + 1} · Shot list`, {x:X, y:0.2, w:8, h:0.35, fontFace:F, fontSize:11, bold:true, color:ACC}); s2.addText(str(p.topic), {x:X, y:0.5, w:CW, h:0.45, fontFace:F, fontSize:18, bold:true, color:INK});
+        s2.addTable([['#','Shot','Framing / move','Action','On screen','Audio / VO','Time'].map(h => ({text:h, options:{bold:true, fill:{color:'F3F5FB'}}}))].concat(arr(p.shots).map(x => [String(x.n), x.shot, [x.framing, x.move].filter(Boolean).join(' · '), x.action, x.onscreen, x.audio, x.duration].map(str))), {x:X, y:1.05, w:CW, colW:[0.4, 1.7, 1.8, 3.2, 2, 2.2, CW - 11.3], fontFace:F, fontSize:arr(p.shots).length > 9 ? 8 : 9.5, color:'252C45', border:{type:'solid', pt:0.75, color:LINE}, margin:0.05, valign:'top', autoPage:true, autoPageSlideStartY:0.6});
+        if (p.shoot) s2.addText(`Cast: ${str(p.shoot.cast)}   ·   Props: ${str(p.shoot.props)}   ·   Locations: ${str(p.shoot.locations)}   ·   Wardrobe: ${str(p.shoot.wardrobe)}\n${str(p.shoot.notes)}`, {x:X, y:6.3, w:CW, h:0.7, fontFace:F, fontSize:9, color:'444C66', valign:'top', fit:'shrink'}); }
       sl.addText([{text:'Find more on Pinterest ↗', options:{hyperlink:{url:pinSearch(p)}, color:ACC}}].concat(refsOf(p).length ? [{text:'   ·   click an image to open the reference', options:{color:GREY}}] : []), {x:X, y:7.05, w:CW, h:0.3, fontFace:F, fontSize:9});
     });
     const out = await pptx.write({outputType:'arraybuffer'});
@@ -2265,7 +2278,17 @@ function vTeam(){
     ${tbl(['Name','Role','Open tasks','Overdue',''], m.map(([id,x]) => { const open = all.filter(p => owner(p) === id && group(p.status) !== 'done'); return [`<b>${esc(x.name)}</b>`, `<select class="in" data-chg="role" data-id="${id}" aria-label="Role">${opts(ROLES, x.role)}</select>`, `<span class="mono">${open.length}</span>`, `<span class="mono ${open.filter(isLate).length ? 'late' : ''}">${open.filter(isLate).length}</span>`, confirmBtn('rmm-' + id, 'Remove', 'rmMember', `data-id="${id}"`)]; }))}
     <div class="rowline"><label class="f">Name<input class="in" id="nm-name" placeholder="Full name"></label><label class="f" style="flex:0 0 190px">Role<select class="in" id="nm-role">${opts(ROLES, 'Copywriter')}</select></label><button class="btn pri" data-act="addMember">Add member</button></div>
   </section>
-  ${vLogins(m)}`;
+  ${vLogins(m)}
+  ${vActivity()}`;
+}
+function vActivity(){
+  if (!HOSTED) return '';
+  if (ui.acts == null && !ui.actsBusy){ ui.actsBusy = true; fetch('/api/log?limit=60', {credentials:'same-origin'}).then(r => r.json()).then(j => { ui.acts = arr(j.items); }).catch(() => { ui.acts = []; }).finally(() => { ui.actsBusy = false; sched(); }); }
+  const what = e => { const col = {posts:'post', plans:'plan', brands:'brand', reports:'report', team:'team member'}[e.col] || e.col; const t = e.title ? ` “${esc(e.title)}”` : '';
+    return e.op === 'set' ? `created ${col}${t}` : e.op === 'delete' ? `deleted ${col}${t}` : `changed ${esc(arr(e.keys).map(k => FLD[k] || k).slice(0, 4).join(', '))} on ${col}${t}`; };
+  return `<section class="panel"><header><div><h2><span class="dotc" style="--dc:var(--c3)"></span>Recent activity</h2><p>Every change, by whom and when. Open a post and use History to restore earlier copy.</p></div><button class="btn sm" data-act="actsReload">Refresh</button></header>
+    ${ui.actsBusy && !ui.acts ? '<p class="muted sm"><span class="spin"></span> Loading…</p>' : `<div class="list">${arr(ui.acts).map(e => `<div class="li" ${e.col === 'posts' && D.posts[e.id] ? `data-act="open" data-id="${e.id}" style="cursor:pointer"` : ''}><span class="tx"><span class="sm"><b>${esc(e.by)}</b> ${what(e)}</span><span class="muted sm">${ago(e.at)}</span></span></div>`).join('') || '<p class="muted sm">Nothing yet.</p>'}</div>`}
+  </section>`;
 }
 function vLogins(m){
   if (!HOSTED) return '';
@@ -2380,8 +2403,25 @@ function vDrawer(p){
       ${showScript ? `<section class="sec"><h3>Video script <button class="btn sm" data-act="addRow" data-k="script">+ Add row</button></h3>
         <div class="tw"><table style="min-width:640px"><thead><tr><th>Time</th><th>Visual / shot</th><th>On-screen text</th><th>Voiceover</th><th>Audio</th><th></th></tr></thead><tbody>${arr(p.script).map((s,i) => `<tr><td style="width:80px"><input class="in" data-pf="script.${i}.t" id="pf-st-${i}" value="${esc(s.t)}"></td><td><textarea class="in" rows="2" data-pf="script.${i}.visual" id="pf-sv2-${i}">${esc(s.visual)}</textarea></td><td><textarea class="in" rows="2" data-pf="script.${i}.onscreen" id="pf-so-${i}">${esc(s.onscreen)}</textarea></td><td><textarea class="in" rows="2" data-pf="script.${i}.vo" id="pf-vo-${i}">${esc(s.vo)}</textarea></td><td><input class="in" data-pf="script.${i}.audio" id="pf-au-${i}" value="${esc(s.audio)}"></td><td><button class="btn sm ghost" data-act="rmRow" data-k="script" data-i="${i}" aria-label="Remove row">×</button></td></tr>`).join('')}</tbody></table></div></section>` : ''}
 
+      ${showScript ? `<section class="sec"><h3>Shot list <small>For the production team</small>${arr(p.shots).length ? '<button class="btn sm" data-act="copyShots">Copy</button>' : ''}<button class="btn sm ${arr(p.shots).length ? '' : 'pri'}" data-act="makeShots" ${bz || aiOff() || !p.hasContent ? 'disabled' : ''}>${arr(p.shots).length ? 'Redo shot list' : '✦ Make shot list'}</button></h3>
+        ${arr(p.shots).length ? `<div class="tw"><table style="min-width:760px"><thead><tr><th>#</th><th>Shot</th><th>Framing / move</th><th>Action</th><th>On screen</th><th>Audio / VO</th><th>Time</th></tr></thead><tbody>${arr(p.shots).map(x => `<tr><td class="num">${x.n}</td><td><b>${esc(x.shot)}</b></td><td>${esc(x.framing)}${x.move ? `<br><span class="muted sm">${esc(x.move)}</span>` : ''}</td><td>${esc(x.action)}</td><td>${esc(x.onscreen)}</td><td>${esc(x.audio)}</td><td class="mono">${esc(x.duration)}</td></tr>`).join('')}</tbody></table></div>
+        ${p.shoot ? `<dl class="dl"><dt>Cast</dt><dd>${esc(p.shoot.cast)}</dd><dt>Props</dt><dd>${esc(p.shoot.props)}</dd><dt>Locations</dt><dd>${esc(p.shoot.locations)}</dd><dt>Wardrobe</dt><dd>${esc(p.shoot.wardrobe)}</dd><dt>Notes</dt><dd>${esc(p.shoot.notes)}</dd></dl>` : ''}` : `<p class="muted sm">${p.hasContent ? 'Turns the script into shots, framing, props, locations and timings for the shoot.' : 'Write the post first, then make the shot list.'}</p>`}
+      </section>` : ''}
+
+      <section class="sec"><h3>Language versions <small>${Object.keys(p.langs || {}).length ? Object.keys(p.langs).join(' · ') : 'Optional'}</small></h3>
+        ${(() => { const ls = Object.keys(p.langs || {}); const cur = ls.includes(ui.langTab) ? ui.langTab : ls[0];
+          return (ls.length ? `<div class="capvars">${ls.map(l => `<button class="chip ${l === cur ? 'on' : ''}" data-act="langTab" data-l="${esc(l)}">${esc(l)}</button>`).join('')}</div>
+          <div class="fg">${inp('Hook (' + esc(cur) + ')', 'langs.' + cur + '.hook', p.langs[cur].hook)}${inp('Headline', 'langs.' + cur + '.headline', p.langs[cur].headline)}${inp('Subline', 'langs.' + cur + '.subline', p.langs[cur].subline)}${inp('CTA', 'langs.' + cur + '.cta', p.langs[cur].cta)}</div>
+          ${ta('Caption (' + esc(cur) + ')', 'langs.' + cur + '.caption', p.langs[cur].caption, 6)}${arr(p.langs[cur].slides).length ? `<p class="muted sm">Slides: ${arr(p.langs[cur].slides).map((x, i) => `${i + 1}. ${esc(x)}`).join(' · ')}</p>` : ''}
+          <div class="acts"><button class="btn sm" data-act="copyLang" data-l="${esc(cur)}">Copy ${esc(cur)} caption</button><button class="btn sm ghost" data-act="delLang" data-l="${esc(cur)}">Remove ${esc(cur)}</button></div>` : '')
+          + `<div class="rowline"><label class="f" style="flex:0 0 200px">Add a language<select class="in" id="lang-add">${opts(XLANGS.filter(l => !ls.includes(l)))}</select></label><button class="btn sm" data-act="addLang" ${bz || aiOff() || !p.hasContent ? 'disabled' : ''}>✦ Write version</button></div>`; })()}
+      </section>
+
       <section class="sec"><h3>Caption <small>${str(p.caption).length} characters · ${words(p.caption)} words</small></h3>
         ${ta('Post caption','caption',p.caption,9)}
+        ${arr(p.capVars).length ? `<div class="capvars"><span class="muted sm">Versions:</span>${arr(p.capVars).map((v, i) => `<button class="chip ${(p.capSel ?? arr(p.capVars).length - 1) === i ? 'on' : ''}" data-act="capUse" data-i="${i}">${esc(v.label)}</button>`).join('')}</div>` : ''}
+        <div class="moods"><span class="muted sm">Change the mood:</span>${MOODS.map(m => `<button class="chip" data-act="capMood" data-m="${esc(m)}" ${bz || aiOff() ? 'disabled' : ''}>${esc(m)}</button>`).join('')}</div>
+        <div class="rowline"><label class="f">Or describe the vibe<input class="in" id="cap-vibe" placeholder="Like a friend texting you, playful, short, ends with a question"></label><button class="btn sm pri" data-act="capVibe" ${bz || aiOff() ? 'disabled' : ''}>✦ Rewrite caption</button></div>
         ${inp('Hashtags','hashtags',p.hashtags)}
         ${arr(b.brain?.tags).length || arr(b.brain?.ctas).length ? `<div class="rowline">${arr(b.brain?.tags).length ? `<label class="f">Add a hashtag set<select class="in" data-chg="addTags"><option value="">Choose a set…</option>${arr(b.brain.tags).map((t, i) => `<option value="${i}">${esc(t.name)}${t.use ? ' · ' + esc(t.use) : ''}</option>`).join('')}</select></label>` : ''}${arr(b.brain?.ctas).length ? `<label class="f">Use a CTA<select class="in" data-chg="useCta"><option value="">Choose a CTA…</option>${arr(b.brain.ctas).map((c, i) => `<option value="${i}">${esc(c.text)}</option>`).join('')}</select></label>` : ''}</div>` : ''}
         ${ta('Alt text','altText',p.altText,2)}
@@ -2429,6 +2469,8 @@ function vDrawer(p){
         <label class="f">Live post link<input class="in" data-pf="liveUrl" id="pf-liveUrl" value="${esc(p.liveUrl)}" placeholder="https://www.instagram.com/p/…"></label>
         <div class="metrics">${METRICS.map(([k,l]) => `<label class="f">${l}<input class="in" type="number" min="0" data-mf="${k}" data-id="${p.id}" id="dm-${k}" value="${esc(p.metrics?.[k] ?? '')}"></label>`).join('')}</div>
       </section>` : ''}
+
+      <section class="sec"><h3>History <small>Who changed what, and earlier versions to restore</small></h3>${histHTML(p)}</section>
 
       <section class="sec"><h3>Danger zone</h3><div>${confirmBtn('delPost-' + p.id, 'Delete post', 'delPost')}</div></section>
      </div>
@@ -2633,13 +2675,129 @@ async function runPlan(pid){
       finally { bt.forEach(p => delete busy[p.id]); }
       gen[pid].done += bt.length; step(pid, `Writing posts · ${gen[pid].done} of ${gen[pid].total} done`);
     });
-    if (failed) await patch('plans', pid, {status:'paused', error:`${failed} posts could not be written. Press Continue to retry them.`});
+    if (!failed && arr(D.plans[pid]?.opts?.langs).length){
+      for (const L of D.plans[pid].opts.langs){
+        const need = postsOf(pid).filter(p => p.hasContent && inScope(p, L.scope) && !p.langs?.[L.lang]?.caption);
+        if (!need.length) continue;
+        const bs = []; for (let i = 0; i < need.length; i += 6) bs.push(need.slice(i, i + 6));
+        let dn = 0; step(pid, `Writing ${L.lang} versions · 0 of ${need.length}`);
+        await pool(bs, 2, async bt => { if (signal.aborted) return; try { await writeLang(bt, L.lang, signal); } catch (e){ if (e?.code === 'cancelled') throw e; failed += bt.length; } dn += bt.length; step(pid, `Writing ${L.lang} versions · ${dn} of ${need.length}`); });
+      }
+    }
+    if (failed) await patch('plans', pid, {status:'paused', error:`${failed} posts or language versions could not be written. Press Continue to retry them.`});
     else { await patch('plans', pid, {status:'ready', error:'', readyAt:Date.now()}); toast('Plan ready'); }
   } catch (e){
     await patch('plans', pid, {status:'paused', error:e?.code === 'cancelled' ? 'Stopped. Press Continue to pick up where it left off.' : errCopy(e)});
   } finally {
     gen[pid].running = false; sched();
   }
+}
+
+/* ---------- regional language versions ---------- */
+async function writeLang(posts, lang, signal){
+  const b = D.brands[posts[0].brandId];
+  const items = posts.map(p => ({id:p.id, channel:p.channel, format:p.format, product:p.product || '', hook:str(p.hook), headline:str(p.onImage?.headline), subline:str(p.onImage?.subline), cta:str(p.onImage?.cta), caption:str(p.caption).slice(0, 2200), slides:arr(p.slides).map(x => str(x.copy)).slice(0, 10)}));
+  const r = await ai(`${PRE}
+
+${brandCtx(b, 5000)}
+
+TASK: Write ${lang} versions of these social posts for native ${lang} speakers in ${b.audience?.geo || 'India'}.
+- Transcreate, never translate word for word: keep the idea and emotion, use natural everyday ${lang} the audience actually speaks on social media${lang === 'Hinglish' ? ' (Hindi-English mix in Roman script)' : ` in ${lang} script, with common English words left in English where people normally say them`}.
+- Keep brand names, product names, prices, numbers, dates, @handles, URLs and registration or RERA numbers exactly as written.
+- Keep any "must include" or disclaimer line from the brand brain exactly as it is, in English, at the end of the caption.
+- Headline max 8 words, subline max 14, CTA max 4. Keep hashtags out of the caption.
+POSTS: ${JSON.stringify(items)}
+Reply with only JSON: [{"id":"","hook":"","headline":"","subline":"","cta":"","caption":"","slides":[""]}]`, {signal});
+  const list = Array.isArray(r) ? r : arr(r?.posts);
+  let n = 0;
+  for (const p of posts){
+    const x = list.find(y => str(y?.id) === p.id); if (!x || !x.caption) continue;
+    await patch('posts', p.id, {langs:{[lang]:{hook:str(x.hook), headline:str(x.headline), subline:str(x.subline), cta:str(x.cta), caption:withMust(b, p.product, str(x.caption)), slides:arr(x.slides).map(str), at:Date.now()}}}); n++;
+  }
+  if (!n) throw {code:'invalid_json'};
+  return n;
+}
+
+/* ---------- caption mood rewrite + variants ---------- */
+async function capRewrite(mood){
+  const p = D.posts[ui.postId]; if (!p) return; const b = D.brands[p.brandId];
+  const vibe = mood || ($('#cap-vibe')?.value || '').trim(); if (!vibe){ toast('Pick a mood or describe the vibe'); return; }
+  busy[p.id] = `Rewriting the caption: ${vibe}…`; sched();
+  try {
+    const r = await ai(`${PRE}
+
+${brandCtx(b, 6000)}
+
+POST: ${p.channel} ${p.format} · pillar ${p.pillar} · topic: ${p.topic}${p.product ? ' · product: ' + p.product : ''}
+Hook: ${p.hook}
+On-image: ${p.onImage?.headline} / ${p.onImage?.subline} / ${p.onImage?.cta}
+CURRENT CAPTION:
+${str(p.caption).slice(0, 2200)}
+
+TASK: Rewrite the caption in this mood / vibe: "${vibe}".
+Keep the same idea, facts, product details, offer and CTA intent. Keep any must-include or disclaimer line exactly. Fit ${p.channel} norms for length and line breaks. It must feel genuinely different in tone, not a light edit. No clichés, no filler openers.
+Also give a matching opening hook line.
+Reply with only JSON: {"caption":"","hook":""}`, {tier:'quick'});
+    const cap = withMust(b, p.product, str(r?.caption)); if (!cap.trim()) throw {code:'invalid_json'};
+    const vars = arr(p.capVars).length ? clone(p.capVars) : [{label:'Original', caption:str(p.caption), hook:str(p.hook), at:Date.now()}];
+    vars.push({label:vibe.slice(0, 40), caption:cap, hook:str(r?.hook), at:Date.now()});
+    await patch('posts', p.id, {caption:cap, ...(r?.hook ? {hook:str(r.hook)} : {}), capVars:vars.slice(-8), capSel:Math.min(vars.length, 8) - 1});
+    toast('Caption rewritten. Switch back any time.');
+  } catch (e){ toast(errCopy(e)); } finally { delete busy[p.id]; sched(); }
+}
+
+/* ---------- reel shot list ---------- */
+async function makeShots(ids){
+  let done = 0;
+  for (const id of ids){
+    const p = D.posts[id]; if (!p) continue; const b = D.brands[p.brandId];
+    busy[id] = 'Building the shot list…'; sched();
+    try {
+      const r = await ai(`${PRE}
+
+${brandCtx(b, 5000)}
+
+POST: ${p.channel} ${p.format} · topic: ${p.topic}${p.product ? ' · product: ' + p.product : ''}
+Hook: ${p.hook}
+Concept: ${str(p.concept || p.idea)}
+SCRIPT: ${JSON.stringify(arr(p.script).map(x => ({t:x.t, visual:x.visual, onscreen:x.onscreen, vo:x.vo, audio:x.audio})))}
+Design mood: ${str(p.design?.mood)} ${str(p.design?.layout)}
+
+TASK: Turn this into a practical shoot plan for an Indian production team shooting on a phone or small crew in one session.
+Each shot: framing (e.g. close-up, top-down, POV, wide), camera move, what happens, on-screen text, audio / VO cue, duration. 6-12 shots that cover the whole script, in order, with 1-2 B-roll or safety shots at the end.
+Also list cast, props, locations, wardrobe and practical notes (light, sound, aspect ratio 9:16, captions).
+Reply with only JSON: {"shots":[{"n":1,"shot":"short name","framing":"","move":"","action":"","onscreen":"","audio":"","duration":"2s"}],"shoot":{"cast":"","props":"","locations":"","wardrobe":"","notes":""}}`, {tier:'quick'});
+      const shots = arr(r?.shots).map((x, i) => ({n:i + 1, shot:str(x.shot), framing:str(x.framing), move:str(x.move), action:str(x.action), onscreen:str(x.onscreen), audio:str(x.audio), duration:str(x.duration)}));
+      if (!shots.length) throw {code:'invalid_json'};
+      const sh = r?.shoot || {};
+      await patch('posts', id, {shots, shoot:{cast:str(sh.cast), props:str(sh.props), locations:str(sh.locations), wardrobe:str(sh.wardrobe), notes:str(sh.notes)}}); done++;
+    } catch (e){ toast(errCopy(e)); if (['rate_limited','not_granted','sampling_disabled'].includes(e?.code)) break; }
+    finally { delete busy[id]; sched(); }
+  }
+  return done;
+}
+const shotText = p => `SHOT LIST — ${p.topic} (${p.channel} ${p.format}, ${fmtD(p.date)})\n` + arr(p.shots).map(x => `${x.n}. ${x.shot} [${x.framing}${x.move ? ', ' + x.move : ''}, ${x.duration}] ${x.action}${x.onscreen ? ' | On screen: ' + x.onscreen : ''}${x.audio ? ' | Audio: ' + x.audio : ''}`).join('\n') + (p.shoot ? `\n\nCast: ${p.shoot.cast}\nProps: ${p.shoot.props}\nLocations: ${p.shoot.locations}\nWardrobe: ${p.shoot.wardrobe}\nNotes: ${p.shoot.notes}` : '');
+
+/* ---------- version history + activity ---------- */
+const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : new Date(t).toLocaleDateString(); };
+const FLD = {topic:'topic', hook:'hook', caption:'caption', hashtags:'hashtags', onImage:'on-image copy', slides:'carousel slides', script:'script', design:'design brief', langs:'language versions', shots:'shot list', status:'status', date:'date', pillar:'pillar', product:'product', channel:'channel', format:'format', comments:'comments', creatives:'creatives', metrics:'results', checklist:'checklist', writer:'writer', designer:'designer', capVars:'caption variants', capSel:'caption choice'};
+async function loadHist(id){
+  ui.hist = {id, busy:true, log:[], versions:[]}; renderDrawer();
+  if (!HOSTED){ ui.hist = {id, busy:false, log:[], versions:[], off:true}; renderDrawer(); return; }
+  try {
+    const [a, v] = await Promise.all([fetch('/api/log?doc=posts/' + encodeURIComponent(id), {credentials:'same-origin'}).then(r => r.json()), fetch('/api/log?hist=' + encodeURIComponent(id), {credentials:'same-origin'}).then(r => r.json())]);
+    ui.hist = {id, busy:false, log:arr(a.items).slice(0, 40), versions:arr(v.versions)};
+  } catch (e){ ui.hist = {id, busy:false, log:[], versions:[], err:true}; }
+  renderDrawer();
+}
+function histHTML(p){
+  const h = ui.hist && ui.hist.id === p.id ? ui.hist : null;
+  if (!h) return `<button class="btn sm" data-act="histLoad">Show history</button>`;
+  if (h.busy) return '<p class="muted sm"><span class="spin"></span> Loading…</p>';
+  if (h.off) return '<p class="muted sm">History is recorded on the hosted version.</p>';
+  const vs = h.versions.map((v, i) => `<div class="li"><span class="tx"><b>${esc(Object.keys(v.prev).map(k => FLD[k] || k).join(', '))}</b><span class="muted sm">Before ${esc(v.by)}'s edit · ${ago(v.at)}</span>${v.prev.caption ? `<span class="sm" style="white-space:pre-wrap">${esc(str(v.prev.caption).slice(0, 220))}${str(v.prev.caption).length > 220 ? '…' : ''}</span>` : v.prev.hook ? `<span class="sm">${esc(v.prev.hook)}</span>` : ''}</span><button class="btn sm" data-act="histRestore" data-i="${i}">Restore</button></div>`).join('');
+  const lg = h.log.map(e => `<div class="li"><span class="tx"><span class="sm"><b>${esc(e.by)}</b> ${e.op === 'set' ? 'created' : e.op === 'delete' ? 'deleted' : 'changed ' + esc(arr(e.keys).map(k => FLD[k] || k).join(', '))}</span><span class="muted sm">${ago(e.at)}</span></span></div>`).join('');
+  return `<div class="grid2" style="gap:14px"><div><p class="eyebrow">Earlier versions</p><div class="list">${vs || '<p class="muted sm">No earlier versions yet. They are saved each time copy is changed.</p>'}</div></div><div><p class="eyebrow">Activity</p><div class="list">${lg || '<p class="muted sm">No activity recorded yet.</p>'}</div></div></div><button class="lnk" data-act="histLoad">Refresh</button>`;
 }
 
 /* ---------- AI post tools ---------- */
@@ -2737,6 +2895,8 @@ function planMd(plan, ps){
   L.push('', '## Content deck');
   ps.forEach((p,i) => {
     L.push('', `### ${i+1}. ${p.topic} — ${fmtD(p.date)}, ${p.channel} ${p.format}`, `**Pillar:** ${p.pillar} · **Hook:** ${p.hook}`, '', `**On-image:** ${p.onImage?.headline || ''} / ${p.onImage?.subline || ''} / CTA: ${p.onImage?.cta || ''}`);
+    Object.entries(p.langs || {}).forEach(([l, x]) => L.push('', `**${l}:** ${x.headline || ''} / ${x.subline || ''} / CTA: ${x.cta || ''}`, '', str(x.caption)));
+    if (arr(p.shots).length) L.push('', '**Shot list:**', ...arr(p.shots).map(x => `${x.n}. ${x.shot} (${x.framing}, ${x.duration}) — ${x.action}`));
     if (arr(p.slides).length) L.push('', table(['#','Visual','Copy'], arr(p.slides).map((x,j) => [j+1, x.visual, x.copy])));
     if (arr(p.script).length) L.push('', table(['Time','Visual','On screen','Voiceover','Audio'], arr(p.script).map(x => [x.t,x.visual,x.onscreen,x.vo,x.audio])));
     L.push('', '**Caption**', '', str(p.caption), '', str(p.hashtags));
@@ -2774,6 +2934,19 @@ const ACT = {
   pptx: () => downloadPptx(),
   designerDeck: () => downloadDesignerDeck(),
   labKind: a => { ui.labKind = a.dataset.k; renderAll(); },
+  capMood: a => capRewrite(a.dataset.m),
+  capVibe: () => capRewrite(''),
+  capUse: a => { const p = D.posts[ui.postId]; const v = arr(p.capVars)[+a.dataset.i]; if (!v) return; const vars = clone(p.capVars); const cs = p.capSel ?? vars.length - 1; if (vars[cs] && str(vars[cs].caption) !== str(p.caption)) vars[cs] = {...vars[cs], caption:str(p.caption)}; patch('posts', p.id, {caption:v.caption, ...(v.hook ? {hook:v.hook} : {}), capVars:vars, capSel:+a.dataset.i}); },
+  makeShots: async () => { const n = await makeShots([ui.postId]); if (n) toast('Shot list ready'); },
+  copyShots: () => copyText(shotText(D.posts[ui.postId])),
+  allShots: async () => { const ids = expPosts().filter(p => ['Reel','Video','Story'].includes(p.format) && p.hasContent && !arr(p.shots).length).map(p => p.id); if (!ids.length){ toast('Every reel already has a shot list'); return; } ui.shotJob = true; renderAll(); const n = await makeShots(ids); ui.shotJob = false; renderAll(); toast(`${n} shot lists made`); },
+  langTab: a => { ui.langTab = a.dataset.l; renderDrawer(); },
+  addLang: async () => { const p = D.posts[ui.postId]; const l = $('#lang-add')?.value; if (!p || !l) return; busy[p.id] = `Writing the ${l} version…`; sched(); try { await writeLang([p], l); ui.langTab = l; toast(l + ' version ready'); } catch (e){ toast(errCopy(e)); } finally { delete busy[p.id]; sched(); } },
+  delLang: a => { const p = D.posts[ui.postId]; const l = clone(p.langs || {}); delete l[a.dataset.l]; patch('posts', p.id, {langs:null}).then(() => patch('posts', p.id, {langs:l})); },
+  copyLang: a => { const p = D.posts[ui.postId]; copyText(str(p.langs?.[a.dataset.l]?.caption) + (p.hashtags ? '\n\n' + p.hashtags : '')); },
+  histLoad: () => loadHist(ui.postId),
+  actsReload: () => { ui.acts = null; renderAll(); },
+  histRestore: async a => { const v = ui.hist?.versions?.[+a.dataset.i]; if (!v) return; await patch('posts', ui.postId, clone(v.prev)); toast('Earlier version restored'); loadHist(ui.postId); },
   logoDel: () => patch('brands', ui.brandId, {logo:''}),
   addTagSet: () => { const b = D.brands[ui.brandId]; const v = k => ($('#nt-' + k)?.value || '').trim(); let tags = v('tags'); if (!v('name') || !tags){ toast('Add a set name and hashtags'); return; }
     tags = tags.split(/[\s,]+/).filter(Boolean).map(t => t.startsWith('#') ? t : '#' + t).join(' ');
@@ -3025,7 +3198,9 @@ const ACT = {
     if (mode === 'mix' && mixTotal(mix) > 60){ toast('Keep it to 60 posts or fewer per month'); return; }
     patch('brands', ui.brandId, mode === 'schedule' ? {scheduleDefault:schedule, planMode:'schedule', lastHero:hero} : {mixDefault:mix, planMode:'mix', lastHero:hero});
     if (pls.length) patch('brands', ui.brandId, {pillars:arr(b0.pillars).map((x, i) => { const s2 = pls.find(y => y.name === x.name); return s2 ? {...x, mix:s2.mix} : x; })});
-    const o = {reviewTopical:!!$('#npl-toprev')?.checked && !!$('#npl-top')?.checked, mode, schedule, mix, pillars:pls, hero, cd:$('#npl-cd').checked, region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
+    const langs = [...document.querySelectorAll('.npl-lang-x:checked')].map(x => ({lang:x.value, scope:document.querySelector(`.npl-lang-scope[data-lang="${x.value}"]`)?.value || 'all'}));
+    if (langs.length || arr(D.brands[ui.brandId]?.langDefault).length) patch('brands', ui.brandId, {langDefault:langs});
+    const o = {langs, reviewTopical:!!$('#npl-toprev')?.checked && !!$('#npl-top')?.checked, mode, schedule, mix, pillars:pls, hero, cd:$('#npl-cd').checked, region:$('#npl-region').value, lang:$('#npl-lang').value, brief:($('#npl-brief')?.value || '').trim(), topical:$('#npl-top').checked, reels:$('#npl-reels').checked, paid:$('#npl-paid').checked, inf:$('#npl-inf').checked};
     const doc = {brandId:ui.brandId, month, opts:o, status:'generating', createdAt:Date.now(), createdBy:me};
     if (reuse){ doc.snapshot = reuse.snapshot; doc.research = reuse.research; }
     await put('plans', id, doc);
@@ -3121,6 +3296,10 @@ const ACT = {
     add('Content deck', deckRows(ps), [11,11,10,18,34,40,40,30,34,16,60,30,50,60,30,30,40,14]);
     add('Design briefs', briefRowsX(ps));
     add('Results', resRows(ps));
+    const lrows = ps.flatMap(p => Object.entries(p.langs || {}).map(([l, x]) => [p.date, p.channel, p.format, l, x.hook, x.headline, x.subline, x.cta, x.caption].map(str)));
+    if (lrows.length) add('Languages', [['Date','Channel','Format','Language','Hook','Headline','Subline','CTA','Caption']].concat(lrows), [11,10,10,10,30,28,30,14,60]);
+    const srows = ps.flatMap(p => arr(p.shots).map(x => [p.date, p.topic, x.n, x.shot, x.framing, x.move, x.action, x.onscreen, x.audio, x.duration].map(v => typeof v === 'number' ? v : str(v))));
+    if (srows.length) add('Shot lists', [['Date','Post','#','Shot','Framing','Move','Action','On screen','Audio / VO','Time']].concat(srows), [11,28,4,20,14,14,36,24,28,8]);
     add('Topical days', [['Date','Occasion','Type','Relevance','Idea','Included']].concat(arr(plan.topical).map(t => [t.date, t.occasion, t.type, t.relevance, t.idea, t.include ? 'Yes' : 'No'])));
     add('Pillars', [['Pillar','Mix %','Purpose','Framework','Examples']].concat(arr(plan.strategy?.pillars).map(p => [p.name, p.mix, p.purpose, p.framework, arr(p.examples).join('; ')])));
     save(fname(plan, 'xlsx'), XLSX.write(wb, {type:'array', bookType:'xlsx'}));
