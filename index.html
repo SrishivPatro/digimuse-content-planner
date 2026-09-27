@@ -1091,7 +1091,7 @@ function myTasks(){ if (!me) return []; return Object.values(D.posts).filter(p =
 function vSide(){
   const nb = (v, l, ico, col, c) => `<button class="${ui.view===v?'on':''}" data-act="go" data-v="${v}"><span class="ico" style="--ics:var(${col}s);--ic:var(${col})">${IC[ico]}</span>${esc(l)}${c ? `<span class="count">${c}</span>` : ''}</button>`;
   const team = Object.entries(D.team).sort((a,b) => str(a[1].name).localeCompare(str(b[1].name))).map(([id,m]) => [id, `${m.name} · ${m.role}`]);
-  return `<div class="logo" style="flex-direction:column;align-items:flex-start;gap:0">${LOGO_IMG}<small class="eng">Content Engine<sup class="tm">™</sup></small></div>
+  return `<div class="logo" style="flex-direction:column;align-items:flex-start;gap:0;cursor:pointer" data-act="go" data-v="home" role="link" tabindex="0" title="Go to Dashboard" aria-label="Digimuse Content Engine, go to Dashboard">${LOGO_IMG}<small class="eng">Content Engine<sup class="tm">™</sup></small></div>
   <nav class="nav" aria-label="Main">${nb('home','Dashboard','home','--c1')}${nb('tasks','My tasks','tasks','--c2', me ? myTasks().length : 0)}${nb('team','Team','team','--c4')}${nb('live','Go live guide','rocket','--c3')}</nav>
   <div><div class="slabel">Brands <button class="lnk" data-act="newBrand">+ New brand</button></div>
     <div class="blist">${sortedBrands().map(([id,b]) => { const c = brandColors(b); return `<button class="bitem ${ui.brandId===id && (ui.view==='brand'||ui.view==='plan') ? 'on' : ''}" data-act="goBrand" data-id="${id}"><span class="bav" style="background:${c.solid || '#2F5BEA'};color:${c.solid ? c.fg : '#fff'}">${esc(initials(b.name || 'Untitled'))}</span>${esc(str(b.name).trim() || 'Untitled brand')}</button>`; }).join('') || '<p class="sm" style="padding:0 10px;color:var(--side-muted)">No brands yet</p>'}</div></div>
@@ -3080,6 +3080,7 @@ const CHG = {
 };
 
 document.addEventListener('click', e => { document.querySelectorAll('details.ms[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }); });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches?.('[role="link"][data-act]')) e.target.click(); });
 document.addEventListener('click', e => {
   const a = e.target.closest('[data-act]'); if (!a || a.disabled) return;
   const fn = ACT[a.dataset.act]; if (!fn) return;
