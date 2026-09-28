@@ -59,6 +59,10 @@ export async function runAI(prompt, { tier = 'default', json = false, search = f
 
 const GBASE = 'https://generativelanguage.googleapis.com/v1beta';
 const picked = {};
+// When Google says a model is overloaded ("high demand", 503), try a sibling model instead of failing.
+const BUSY_ALT = { chat: ['gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-2.5-flash'], quick: ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'], default: ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-pro'] };
+const isBusy = (status, msg) => status === 503 || /high demand|overloaded|unavailable|try again later/i.test(msg || '');
+const nap = ms => new Promise(r => setTimeout(r, ms));
 const billingErr = e => /prepayment|credit|billing|quota|exceeded|RESOURCE_EXHAUSTED|permission|API key not valid|disabled/i.test(String(e?.message || '')) || [401, 402, 403, 429].includes(e?.status);
 
 async function geminiRouted(prompt, tier, json, search, files, freeMode){
@@ -106,7 +110,7 @@ async function gemini(prompt, tier, json, search, files = [], key = process.env.
   const envModel = tier === 'chat' ? (process.env.GEMINI_MODEL_CHAT || 'gemini-flash-lite-latest') : tier === 'quick' ? (process.env.GEMINI_MODEL_FAST || process.env.GEMINI_MODEL) : process.env.GEMINI_MODEL;
   const pk = kind + ':' + tier; let model = picked[pk] || envModel || 'gemini-flash-latest';
   const tried = new Set();
-  let useSearch = search, waits = 0, searchDropped = false, noThink = tier === 'chat' && !noThinkBad[model];
+  let useSearch = search, waits = 0, searchDropped = false, noThink = tier === 'chat' && !noThinkBad[model], busyTries = 0, busySwitched = false;
   for (let attempt = 0; attempt < 6; attempt++){
     tried.add(model);
     const { r, j } = await callGemini(model, prompt, json, useSearch, files, key, tier, noThink);
@@ -118,8 +122,14 @@ async function gemini(prompt, tier, json, search, files = [], key = process.env.
     if (r.status === 429 && kind === 'free') throw Object.assign(new Error(j?.error?.message || 'Free key is busy'), { status: 429 });   // don't wait: the paid key takes over
     if (r.status === 429 && /prepayment|credit|billing|quota exceeded for .*per ?day|per day/i.test(emsg)) throw Object.assign(new Error(emsg), { status: 429 });   // empty balance or daily cap: waiting won't help
     if (r.status === 429 && waits < 2){ const ra = +(r.headers.get('retry-after') || 0); await new Promise(res => setTimeout(res, Math.min(30, ra || 12 * (waits + 1)) * 1000)); waits++; attempt--; continue; }
+    if (!r.ok && isBusy(r.status, emsg) && busyTries < 3){   // Google overloaded: short pause, then a sibling model
+      busyTries++;
+      if (busyTries === 1){ await nap(1500); attempt--; continue; }
+      const alt = (BUSY_ALT[tier] || BUSY_ALT.default).find(m => !tried.has(m));
+      if (alt){ model = alt; busySwitched = true; noThink = tier === 'chat' && !noThinkBad[model]; attempt--; continue; }
+    }
     if (r.ok){
-      picked[pk] = model;
+      if (!busySwitched) picked[pk] = model;
       const c = j.candidates?.[0];
       const text = (c?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
       if (!text) throw Object.assign(new Error(`Gemini returned nothing (${c?.finishReason || j.promptFeedback?.blockReason || 'unknown'})`), { status: 502 });
@@ -161,8 +171,11 @@ async function streamChat(res, prompt, json, search, freeMode, chatLeft, brandId
   const paid = process.env.GEMINI_API_KEY, free = process.env.GEMINI_API_KEY_FREE;
   const order = free && freeMode !== 'off' ? [['free', free], ['paid', paid]] : [['paid', paid], ...(free && freeMode !== 'off' ? [['free', free]] : [])];
   const model = picked['free:chat'] || picked['paid:chat'] || process.env.GEMINI_MODEL_CHAT || 'gemini-flash-lite-latest';
+  const models = [model, ...BUSY_ALT.chat.filter(m => m !== model)].slice(0, 3);
   for (const [kind, key] of order){
     if (!key) continue;
+    for (const [mi, model] of models.entries()){
+    let busy = false;
     const tries = [[!noThinkBad[model], search], [false, search], ...(search ? [[false, false]] : [])].filter((t, i, a) => a.findIndex(u => u[0] === t[0] && u[1] === t[1]) === i);
     for (const [noThink, useSearch] of tries){
       let r;
@@ -171,7 +184,7 @@ async function streamChat(res, prompt, json, search, freeMode, chatLeft, brandId
           body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], ...(useSearch ? { tools: [{ google_search: {} }] } : {}),
             generationConfig: { temperature: 0.3, maxOutputTokens: 8192, ...(noThink ? { thinkingConfig: { thinkingBudget: 0 } } : {}), ...(json && !useSearch ? { responseMimeType: 'application/json' } : {}) } }) });
       } catch (e) { break; }
-      if (!r.ok){ await r.text().catch(() => ''); if (r.status === 400){ if (noThink) noThinkBad[model] = true; continue; } break; }   // 'invalid argument': retry without thinking setting, then without search; else next key
+      if (!r.ok){ const et = await r.text().catch(() => ''); if (r.status === 400){ if (noThink) noThinkBad[model] = true; continue; } if (isBusy(r.status, et)){ busy = true; if (mi === 0) await nap(800); } break; }   // 'invalid argument': retry without thinking setting, then without search; else next key
       res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' });
       const dec = new TextDecoder(); let buf = '', usage = {}, sources = [];
       const reader = r.body.getReader();
@@ -193,6 +206,8 @@ async function streamChat(res, prompt, json, search, freeMode, chatLeft, brandId
       res.end(JSON.stringify({ done: true, sources, ...(chatLeft !== undefined ? { chatLeft } : {}) }) + '\n');
       try { await recordUsage(brandId, { in: usage.promptTokenCount || 0, out: (usage.candidatesTokenCount || 0) + (usage.thoughtsTokenCount || 0), search: useSearch ? 1 : 0, model, free: kind === 'free' }, 'gemini'); } catch (e) {}
       return true;
+    }
+    if (!busy) break;   // only overload moves on to a sibling model; other errors go to the next key
     }
   }
   return false;

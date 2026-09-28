@@ -4975,7 +4975,7 @@ function httpDB(){
 }
 const SIG_BRAND = new WeakMap();
 const aiBrand = () => ui.aiBrand || (ui.view === 'pitch' ? 'pitch' : ui.view === 'plan' ? D.plans[ui.planId]?.brandId : ui.view === 'brand' || ui.view === 'briefs' ? ui.brandId : (ui.postId && D.posts[ui.postId]?.brandId)) || 'other';
-const billMsg = e => /Free key:/.test(str(e)) ? 'Lumi couldn\'t reach Gemini on either key. ' + str(e).replace(/Your prepayment credits are depleted[^·]*/g, 'paid credit is ₹0. ') + ' Admins: Team → Free key vs paid key → Test keys.' : /prepayment credits are depleted|credit balance|billing/i.test(str(e)) ? 'Gemini credit is ₹0. Ask the admin to top up in Google AI Studio → Billing (a new payment can take a while to show).' : '';
+const billMsg = e => /high demand|overloaded|UNAVAILABLE/i.test(str(e)) ? 'Google\'s AI is overloaded right now (on their side, not your limit). Wait a minute and try again.' : /Free key:/.test(str(e)) ? 'Lumi couldn\'t reach Gemini on either key. ' + str(e).replace(/Your prepayment credits are depleted[^·]*/g, 'paid credit is ₹0. ') + ' Admins: Team → Free key vs paid key → Test keys.' : /prepayment credits are depleted|credit balance|billing/i.test(str(e)) ? 'Gemini credit is ₹0. Ask the admin to top up in Google AI Studio → Billing (a new payment can take a while to show).' : '';
 const todayLine = () => { const d = new Date(); return `Today is ${d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone:'Asia/Kolkata'})}, ${d.toLocaleTimeString('en-IN', {hour:'numeric', minute:'2-digit', timeZone:'Asia/Kolkata'})} India time. Use this for any date, day, deadline or "this week/month" reasoning.`; };
 async function hostedCall(prompt, o={}){
   prompt = todayLine() + '\n' + prompt;
