@@ -15,9 +15,9 @@ async function listImageModel(){
   const ok = (j.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => m.name.replace(/^models\//, '')).filter(n => /image/.test(n) && /flash/.test(n));
   return ok.sort().reverse()[0] || null;
 }
-async function genOne(model, prompt, aspect, refs){
+async function genOne(model, prompt, aspect, refs, key = process.env.GEMINI_API_KEY){
   const r = await fetch(`${GBASE}/models/${encodeURIComponent(model)}:generateContent`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+    method: 'POST', signal: AbortSignal.timeout(90e3), headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({ contents: [{ role: 'user', parts: [...refs.map(f => ({ inline_data: { mime_type: f.mime, data: f.data } })), { text: prompt }] }], generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: aspect } } })
   });
   const j = await r.json().catch(() => ({}));
@@ -27,18 +27,34 @@ async function genOne(model, prompt, aspect, refs){
   if (!d?.data) throw Object.assign(new Error('The image model returned no image (' + (j.candidates?.[0]?.finishReason || j.promptFeedback?.blockReason || 'unknown') + '). Try a different brief.'), { status: 502 });
   return { mime: d.mimeType || d.mime_type || 'image/png', data: d.data };
 }
+let paidDeadUntil = 0;
+const nap = ms => new Promise(r => setTimeout(r, ms));
 async function generate(prompt, aspect, n, refs){
-  if (!process.env.GEMINI_API_KEY) throw Object.assign(new Error('Add GEMINI_API_KEY in Vercel to generate creatives.'), { status: 500 });
-  let model = picked || process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
-  const out = [];
-  for (let i = 0; i < n; i++){
-    try { out.push(await genOne(model, prompt + (n > 1 ? `\n(Variation ${i + 1} of ${n}: take a clearly different composition and angle.)` : ''), aspect, refs)); picked = model; }
-    catch (e){
-      if (!out.length && (e.status === 404 || /not found|no longer|deprecated|not supported/i.test(e.message))){ const next = await listImageModel(); if (next && next !== model){ model = next; i--; continue; } }
-      if (!out.length) throw e; break;
+  const paid = process.env.GEMINI_API_KEY, free = process.env.GEMINI_API_KEY_FREE;
+  if (!paid && !free) throw Object.assign(new Error('Add GEMINI_API_KEY in Vercel to generate creatives.'), { status: 500 });
+  // Paid key first (images mostly need billing); the free key is tried too in case its project allows images.
+  const keys = [...(paid && paidDeadUntil < Date.now() ? [['paid', paid]] : []), ...(free && free !== paid ? [['free', free]] : []), ...(paid && paidDeadUntil >= Date.now() ? [['paid', paid]] : [])];
+  let lastErr; const why = [];
+  for (const [kind, key] of keys){
+    let model = picked || process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
+    const out = []; let busyTries = 0;
+    for (let i = 0; i < n; i++){
+      try { out.push(await genOne(model, prompt + (n > 1 ? `\n(Variation ${i + 1} of ${n}: take a clearly different composition and angle.)` : ''), aspect, refs, key)); picked = model; }
+      catch (e){
+        const m = String(e.message || '');
+        if (!out.length && (e.status === 404 || /not found|no longer|deprecated|not supported/i.test(m))){ const next = await listImageModel(); if (next && next !== model){ model = next; i--; continue; } }
+        if (!out.length && (e.status >= 500 || /high demand|overloaded|unavailable|try again/i.test(m) || e.name === 'TimeoutError') && busyTries++ < 2){ await nap(2000 * busyTries); i--; continue; }
+        if (out.length) break;
+        lastErr = e; why.push(/prepayment|credit|billing/i.test(m) || e.status === 402 ? 'no_credit' : e.status === 429 || /quota|RESOURCE_EXHAUSTED/i.test(m) ? 'limit' : e.status >= 500 || /high demand|overloaded/i.test(m) ? 'busy' : 'other');
+        if (kind === 'paid' && why[why.length - 1] === 'no_credit') paidDeadUntil = Date.now() + 10 * 60e3;
+        break;
+      }
     }
+    if (out.length) return out;
   }
-  return out;
+  const code = why.includes('busy') ? 'busy' : why.every(w => w === 'no_credit' || w === 'limit') ? 'no_image_credit' : 'upstream_error';
+  throw Object.assign(lastErr || new Error('No image came back'), { code, status: code === 'busy' ? 503 : 502,
+    message: code === 'no_image_credit' ? 'AI photos need paid Gemini credit, and the balance is ₹0 right now.' : code === 'busy' ? "Google's image model is busy right now. Try again in a minute." : (lastErr?.message || 'No image came back') });
 }
 async function save(buf, mime){
   const ext = /png/.test(mime) ? 'png' : 'jpg';
@@ -103,6 +119,6 @@ export default async function handler(req, res){
     if (b.action === 'delete'){ await remove(b.url); return res.status(200).json({ ok: true }); }
     res.status(400).json({ error: 'Unknown action' });
   } catch (e){
-    res.status(e.status === 429 ? 429 : e.status || 500).json({ error: e.message, code: e.status === 429 ? 'rate_limited' : 'image_error' });
+    res.status(e.status === 429 ? 429 : e.status || 500).json({ error: e.message, code: e.code || (e.status === 429 ? 'rate_limited' : 'image_error') });
   }
 }

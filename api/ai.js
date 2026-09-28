@@ -45,8 +45,8 @@ export default async function handler(req, res){
     res.status(200).json(out);   // reply first; bookkeeping after
     try { await recordUsage(brandId, usage, out.provider); } catch (e) {}
   } catch (e){
-    const limited = e.status === 429;
-    res.status(limited ? 429 : 502).json({ code: limited ? 'rate_limited' : 'upstream_error', error: e.message });
+    const code = e.code === 'busy' || e.code === 'no_credit' || e.code === 'rate_limited' ? e.code : e.credit ? 'no_credit' : e.badKey ? 'bad_key' : e.status === 429 ? 'rate_limited' : 'upstream_error';
+    res.status(code === 'busy' ? 503 : e.status === 429 ? 429 : 502).json({ code, error: e.message });
   }
 }
 
@@ -60,23 +60,49 @@ export async function runAI(prompt, { tier = 'default', json = false, search = f
 const GBASE = 'https://generativelanguage.googleapis.com/v1beta';
 const picked = {};
 // When Google says a model is overloaded ("high demand", 503), try a sibling model instead of failing.
-const BUSY_ALT = { chat: ['gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-2.5-flash'], quick: ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'], default: ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-pro'] };
+const BUSY_ALT = { chat: ['gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-2.5-flash'], quick: ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'], default: ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-flash-lite-latest'] };   // never fall back to a pricier Pro model
 const isBusy = (status, msg) => status === 503 || /high demand|overloaded|unavailable|try again later/i.test(msg || '');
 const nap = ms => new Promise(r => setTimeout(r, ms));
-const billingErr = e => /prepayment|credit|billing|quota|exceeded|RESOURCE_EXHAUSTED|permission|API key not valid|disabled/i.test(String(e?.message || '')) || [401, 402, 403, 429].includes(e?.status);
 
+// Why a call failed, so the router knows whether another model, the other key, or a short wait can fix it.
+const noCredit = (status, msg) => /prepayment|credits? (are )?depleted|credit balance|billing (is )?(not|disabled)|billing account/i.test(msg || '') || status === 402;
+const rateLimited = (status, msg) => status === 429 || /quota|RESOURCE_EXHAUSTED|rate limit|too many requests/i.test(msg || '');
+const badKey = (status, msg) => /API key not valid|API_KEY_INVALID|permission denied|has been disabled|leaked/i.test(msg || '') || status === 401 || status === 403;
+const transient = e => e && (e.busy || e.rate || e.empty || e.net);
+let paidDeadUntil = 0;   // paid balance was ₹0 recently: skip it for a while instead of failing on it every call
+const BUSY_MSG = "Google's AI is busy right now (on Google's side, not your limit). Lumi retried and switched models but couldn't get through. Try again in a minute.";
 async function geminiRouted(prompt, tier, json, search, files, freeMode){
   const paid = process.env.GEMINI_API_KEY, free = process.env.GEMINI_API_KEY_FREE;
   const freeFirst = free && freeMode !== 'off' && (freeMode === 'all' || tier === 'chat' || tier === 'quick');
-  const order = freeFirst ? [['free', free], ['paid', paid]] : [['paid', paid], ...(free && freeMode !== 'off' ? [['free', free]] : [])];
-  let last; const errs = [];
-  for (const [kind, key] of order){
-    if (!key) continue;
-    try { const out = await gemini(prompt, tier, json, search, files, key, kind); if (kind === 'free') out.usage.free = true; out.keyUsed = kind; return out; }
-    catch (e){ errs.push(`${kind === 'free' ? 'Free key' : 'Paid key'}: ${String(e.message || '').slice(0, 160)}`); last = e; if (kind === 'paid' && !billingErr(e)) throw e; }   // free key busy/limited, or paid key out of credit: try the other key
+  const useFree = free && freeMode !== 'off';
+  const deadline = Date.now() + (tier === 'chat' ? 14e3 : 150e3);   // stay well inside the function's time limit
+  const errs = [], seen = []; let last;
+  const pass = async order => {
+    for (const [kind, key] of order){
+      if (!key) continue;
+      if (kind === 'paid' && paidDeadUntil > Date.now() && order.some(([k, x]) => k === 'free' && x)) { errs.push('Paid key: paid credit is ₹0'); continue; }
+      try { const out = await gemini(prompt, tier, json, search, files, key, kind, deadline); if (kind === 'free') out.usage.free = true; out.keyUsed = kind; return out; }
+      catch (e){
+        last = e; seen.push(e); errs.push(`${kind === 'free' ? 'Free key' : 'Paid key'}: ${String(e.message || '').slice(0, 160)}`);
+        if (kind === 'paid' && e.credit) paidDeadUntil = Date.now() + 10 * 60e3;
+        if (e.hard) throw e;   // the request itself is wrong: the other key would fail the same way
+      }
+    }
+    return null;
+  };
+  const order = freeFirst ? [['free', free], ['paid', paid]] : [['paid', paid], ...(useFree ? [['free', free]] : [])];
+  let out = await pass(order); if (out) return out;
+  // Everything was busy or rate-limited: wait a little and try once more (the per-minute limit clears in under a minute).
+  const retryOrder = useFree ? [['free', free], ...(paidDeadUntil > Date.now() ? [] : [['paid', paid]])] : [['paid', paid]];
+  if (seen.some(transient) && Date.now() + (tier === 'chat' ? 6e3 : 12e3) < deadline){
+    await nap(tier === 'chat' ? 3e3 : 10e3);
+    seen.length = 0; out = await pass(retryOrder); if (out) return out;
   }
-  if (last && errs.length > 1) last.message = errs.join(' · ');
-  throw last || Object.assign(new Error('No Gemini key set. Add GEMINI_API_KEY in Vercel.'), { status: 500 });
+  if (!last) throw Object.assign(new Error('No Gemini key set. Add GEMINI_API_KEY in Vercel.'), { status: 500 });
+  if (seen.some(e => e.busy || e.net || e.empty)) throw Object.assign(new Error(BUSY_MSG), { status: 503, code: 'busy' });
+  if (seen.some(e => e.rate)) throw Object.assign(new Error(paidDeadUntil > Date.now() ? "The free key is at Google's limit for the moment and paid credit is ₹0. Try again in a minute." : "Lumi hit Google's usage limit for the moment. Try again in a minute."), { status: 429, code: paidDeadUntil > Date.now() ? 'no_credit' : 'rate_limited' });
+  if (errs.length > 1) last.message = errs.join(' · ');
+  throw last;
 }
 
 async function latestGemini(kind, key = process.env.GEMINI_API_KEY){
@@ -94,7 +120,7 @@ async function latestGemini(kind, key = process.env.GEMINI_API_KEY){
 const noThinkBad = {};   // models that refused thinkingConfig this instance
 async function callGemini(model, prompt, json, search, files = [], key = process.env.GEMINI_API_KEY, tier = 'default', noThink = false){
   const r = await fetch(`${GBASE}/models/${encodeURIComponent(model)}:generateContent`, {
-    method: 'POST',
+    method: 'POST', signal: AbortSignal.timeout(tier === 'chat' ? 40e3 : 170e3),
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({
       contents: [{ role: 'user', parts: [...files.map(f => ({ inline_data: { mime_type: f.mime, data: f.data } })), { text: prompt }] }],
@@ -106,47 +132,56 @@ async function callGemini(model, prompt, json, search, files = [], key = process
   return { r, j };
 }
 
-async function gemini(prompt, tier, json, search, files = [], key = process.env.GEMINI_API_KEY, kind = 'paid'){
+async function gemini(prompt, tier, json, search, files = [], key = process.env.GEMINI_API_KEY, kind = 'paid', deadline = Date.now() + 150e3){
   const envModel = tier === 'chat' ? (process.env.GEMINI_MODEL_CHAT || 'gemini-flash-lite-latest') : tier === 'quick' ? (process.env.GEMINI_MODEL_FAST || process.env.GEMINI_MODEL) : process.env.GEMINI_MODEL;
-  const pk = kind + ':' + tier; let model = picked[pk] || envModel || 'gemini-flash-latest';
-  const tried = new Set();
-  let useSearch = search, waits = 0, searchDropped = false, noThink = tier === 'chat' && !noThinkBad[model], busyTries = 0, busySwitched = false;
-  for (let attempt = 0; attempt < 6; attempt++){
-    tried.add(model);
-    const { r, j } = await callGemini(model, prompt, json, useSearch, files, key, tier, noThink);
-    const emsg = j?.error?.message || '';
-    if (!r.ok && noThink && r.status === 400){ noThinkBad[model] = true; noThink = false; attempt--; continue; }   // model rejects the thinking setting (Google just says 'invalid argument'): ask again without it, and stop sending it   // model doesn't take the setting: ask again without it
-    // Free keys cannot use Google Search grounding: carry on without it.
-    if (!r.ok && useSearch && (r.status === 400 || r.status === 403) && /ground|google_search|search|tool|billing|free tier|not supported|not available|invalid argument/i.test(emsg)){ useSearch = false; searchDropped = true; continue; }
-    // Rate limit (free tier is ~10 requests/minute): wait and retry a couple of times.
-    if (r.status === 429 && kind === 'free') throw Object.assign(new Error(j?.error?.message || 'Free key is busy'), { status: 429 });   // don't wait: the paid key takes over
-    if (r.status === 429 && /prepayment|credit|billing|quota exceeded for .*per ?day|per day/i.test(emsg)) throw Object.assign(new Error(emsg), { status: 429 });   // empty balance or daily cap: waiting won't help
-    if (r.status === 429 && waits < 2){ const ra = +(r.headers.get('retry-after') || 0); await new Promise(res => setTimeout(res, Math.min(30, ra || 12 * (waits + 1)) * 1000)); waits++; attempt--; continue; }
-    if (!r.ok && isBusy(r.status, emsg) && busyTries < 3){   // Google overloaded: short pause, then a sibling model
-      busyTries++;
-      if (busyTries === 1){ await nap(1500); attempt--; continue; }
-      const alt = (BUSY_ALT[tier] || BUSY_ALT.default).find(m => !tried.has(m));
-      if (alt){ model = alt; busySwitched = true; noThink = tier === 'chat' && !noThinkBad[model]; attempt--; continue; }
+  const pk = kind + ':' + tier; const first = picked[pk] || envModel || 'gemini-flash-latest';
+  const queue = [first, ...(BUSY_ALT[tier] || BUSY_ALT.default).filter(m => m !== first)].slice(0, 3);
+  const tried = new Set(); let lastErr = null, useSearch = search, searchDropped = false;
+  while (queue.length){
+    const model = queue.shift(); if (tried.has(model)) continue; tried.add(model);
+    let noThink = tier === 'chat' && !noThinkBad[model], quick = 0, waited = 0, fail = null;
+    for (let step = 0; step < 6; step++){
+      let r, j;
+      try { ({ r, j } = await callGemini(model, prompt, json, useSearch, files, key, tier, noThink)); }
+      catch (e){ fail = Object.assign(new Error('Could not reach Google (' + e.message + ')'), { net: true, status: 502 }); if (!quick++ && Date.now() < deadline){ await nap(1200); continue; } break; }
+      const emsg = j?.error?.message || '';
+      if (r.ok){
+        const c = j.candidates?.[0];
+        const text = (c?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
+        if (!text){ fail = Object.assign(new Error(`Gemini returned nothing (${c?.finishReason || j.promptFeedback?.blockReason || 'unknown'})`), { empty: true, status: 502 }); break; }   // try a sibling model
+        if (model === first) picked[pk] = model;
+        const sources = (c?.groundingMetadata?.groundingChunks || []).map(g => g.web).filter(Boolean).map(w => ({ title: w.title || '', uri: w.uri || '' }));
+        const u = j.usageMetadata || {};
+        return { text, sources, searchDropped, usage: { in: u.promptTokenCount || 0, out: (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0), search: useSearch ? 1 : 0, model } };
+      }
+      // 400 "invalid argument" on the speed setting: ask again without it, and stop sending it to this model
+      if (noThink && r.status === 400){ noThinkBad[model] = true; noThink = false; continue; }
+      // Search grounding not allowed (free tier / region): carry on without it
+      if (useSearch && (r.status === 400 || r.status === 403) && /ground|google_search|search|tool|billing|free tier|not supported|not available|invalid argument/i.test(emsg)){ useSearch = false; searchDropped = true; continue; }
+      if (noCredit(r.status, emsg)) throw Object.assign(new Error(emsg || 'Paid credit is ₹0'), { status: 402, credit: true });   // this key has no money: next key
+      if (badKey(r.status, emsg)) throw Object.assign(new Error(emsg || 'API key not valid'), { status: r.status, badKey: true });
+      if (r.status === 404 || /no longer available|not found|deprecated|retired/i.test(emsg)){   // model retired: its named replacement, else the newest on the account
+        const named = [...emsg.matchAll(/models\/(gemini-[\w.\-]+)/g)].map(m => m[1].replace(/[.\-]+$/, '')).find(n => !tried.has(n));
+        const next = named || (tier === 'chat' ? (await latestGemini('flash-lite', key)) || (await latestGemini('flash', key)) : await latestGemini('flash', key));
+        if (next && !tried.has(next)) queue.unshift(next);
+        fail = Object.assign(new Error(emsg), { status: 404, busy: true }); break;
+      }
+      if (rateLimited(r.status, emsg)){   // free-tier limits are per model, so a sibling model usually still has room
+        fail = Object.assign(new Error(emsg || 'Rate limited'), { status: 429, rate: true });
+        if (kind === 'paid' && !waited++ && Date.now() + 15e3 < deadline){ const ra = +(r.headers.get('retry-after') || 0); await nap(Math.min(12, ra || 6) * 1000); continue; }
+        break;
+      }
+      if (r.status >= 500 || /high demand|overloaded|unavailable|try again|internal error|deadline/i.test(emsg)){   // Google overloaded or hiccup
+        fail = Object.assign(new Error(emsg || `Gemini error ${r.status}`), { status: r.status, busy: true });
+        if (!quick++ && Date.now() < deadline){ await nap(1500); continue; }
+        break;
+      }
+      throw Object.assign(new Error(emsg || `Gemini error ${r.status}`), { status: r.status, hard: r.status === 400 });   // the request itself is wrong
     }
-    if (r.ok){
-      if (!busySwitched) picked[pk] = model;
-      const c = j.candidates?.[0];
-      const text = (c?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('');
-      if (!text) throw Object.assign(new Error(`Gemini returned nothing (${c?.finishReason || j.promptFeedback?.blockReason || 'unknown'})`), { status: 502 });
-      const sources = (c?.groundingMetadata?.groundingChunks || []).map(g => g.web).filter(Boolean).map(w => ({ title: w.title || '', uri: w.uri || '' }));
-      const u = j.usageMetadata || {};
-      return { text, sources, searchDropped, usage: { in: u.promptTokenCount || 0, out: (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0), search: useSearch ? 1 : 0, model } };
-    }
-    const msg = j.error?.message || `Gemini error ${r.status}`;
-    const retired = r.status === 404 || /no longer available|not found|deprecated|not supported|retired/i.test(msg);
-    if (!retired) throw Object.assign(new Error(msg), { status: r.status });
-    // Google retired this model: use the replacement it names, else the newest flash model on the account.
-    const named = [...msg.matchAll(/models\/(gemini-[\w.\-]+)/g)].map(m => m[1].replace(/[.\-]+$/, '')).find(n => !tried.has(n));
-    const next = named || (tier === 'chat' ? (await latestGemini('flash-lite', key)) || (await latestGemini('flash', key)) : await latestGemini('flash', key));
-    if (!next || tried.has(next)) throw Object.assign(new Error(msg + ' Set GEMINI_MODEL in Vercel to a current model name.'), { status: 502 });
-    model = next;
+    lastErr = fail || lastErr;
+    if (Date.now() > deadline) break;
   }
-  throw Object.assign(new Error('No working Gemini model found. Set GEMINI_MODEL in Vercel.'), { status: 502 });
+  throw lastErr || Object.assign(new Error('No working Gemini model found.'), { status: 502, busy: true });
 }
 
 async function claude(prompt, tier, search, files = []){
@@ -174,17 +209,18 @@ async function streamChat(res, prompt, json, search, freeMode, chatLeft, brandId
   const models = [model, ...BUSY_ALT.chat.filter(m => m !== model)].slice(0, 3);
   for (const [kind, key] of order){
     if (!key) continue;
+    if (kind === 'paid' && paidDeadUntil > Date.now()) continue;   // known ₹0: the normal path reports it if nothing else works
     for (const [mi, model] of models.entries()){
     let busy = false;
     const tries = [[!noThinkBad[model], search], [false, search], ...(search ? [[false, false]] : [])].filter((t, i, a) => a.findIndex(u => u[0] === t[0] && u[1] === t[1]) === i);
     for (const [noThink, useSearch] of tries){
       let r;
       try {
-        r = await fetch(`${GBASE}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        r = await fetch(`${GBASE}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`, { method: 'POST', signal: AbortSignal.timeout(45e3), headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
           body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], ...(useSearch ? { tools: [{ google_search: {} }] } : {}),
             generationConfig: { temperature: 0.3, maxOutputTokens: 8192, ...(noThink ? { thinkingConfig: { thinkingBudget: 0 } } : {}), ...(json && !useSearch ? { responseMimeType: 'application/json' } : {}) } }) });
-      } catch (e) { break; }
-      if (!r.ok){ const et = await r.text().catch(() => ''); if (r.status === 400){ if (noThink) noThinkBad[model] = true; continue; } if (isBusy(r.status, et)){ busy = true; if (mi === 0) await nap(800); } break; }   // 'invalid argument': retry without thinking setting, then without search; else next key
+      } catch (e) { busy = true; break; }
+      if (!r.ok){ const et = await r.text().catch(() => ''); if (r.status === 400){ if (noThink) noThinkBad[model] = true; continue; } if (noCredit(r.status, et)){ if (kind === 'paid') paidDeadUntil = Date.now() + 10 * 60e3; break; } if (isBusy(r.status, et) || rateLimited(r.status, et) || r.status >= 500 || r.status === 404){ busy = true; if (mi === 0 && r.status !== 429) await nap(800); } break; }   // 'invalid argument': retry without thinking setting, then without search; else next key
       res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' });
       const dec = new TextDecoder(); let buf = '', usage = {}, sources = [];
       const reader = r.body.getReader();

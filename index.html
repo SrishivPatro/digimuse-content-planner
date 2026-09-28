@@ -751,7 +751,11 @@ async function ai(prompt, {tier='default', json=true, signal, files, brandId}={}
 }
 const ERR = {
   not_granted:'Lumi was not allowed on this page. Reload and choose Allow to use Lumi.',
-  rate_limited:'Claude usage limit reached for now. Try again in a little while.',
+  rate_limited:'Lumi hit the AI usage limit for the moment. Wait a minute and try again.',
+  busy:"Google's AI is busy right now (on Google's side, not your limit). Lumi retried and switched models automatically. Try again in a minute.",
+  no_credit:'Lumi couldn\'t get an answer: the free key is at its limit and paid credit is ₹0. Try again in a minute, or top up the paid credit.',
+  bad_key:'The Gemini key isn\'t valid any more. Admins: Team → Free key vs paid key → Test keys.',
+  no_image_credit:'AI photos need paid Gemini credit, and the balance is ₹0 right now.',
   invalid_json:'Lumi’s reply came back incomplete. Press Continue to try that step again.',
   prompt_too_large:'The Brand Brain is too large for one request. Trim past posts or references and try again.',
   refused:'Claude declined this request. Adjust the brief and try again.',
@@ -1165,7 +1169,7 @@ function renderAll(){ if (LUMI.open) setTimeout(() => { const c = $('#lumi-ctx')
   renderDrawer();
 }
 let tT;
-function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tT); tT = setTimeout(() => t.classList.remove('on'), 2800); }
+function toast(m, ms){ const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tT); tT = setTimeout(() => t.classList.remove('on'), ms || Math.max(2800, Math.min(8000, str(m).length * 55))); }
 function copyText(txt){
   let p;
   try { p = navigator.clipboard.writeText(txt); } catch (e) { p = Promise.reject(e); }
@@ -3705,7 +3709,7 @@ function wrapLines(ctx, text, maxW, maxLines){ const ls = fitWords(ctx, str(text
 function cover(c, img, x, y, w, h){ const s = Math.max(w / img.width, h / img.height); const iw = img.width * s, ih = img.height * s; c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip(); c.drawImage(img, x + (w - iw) / 2, y + (h - ih) / 2, iw, ih); c.restore(); }
 const hexA = (hex, a) => { const h = hex.replace('#', ''); return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`; };
 const contrast = (a, b) => (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
-function inkFor(bgLum, col){ const dark = col.dark, light = '#FFFFFF'; return contrast(bgLum, lum(dark)) >= contrast(bgLum, 1) ? dark : light; }
+function inkFor(bgLum, col){ const dark = col.dark, light = '#FFFFFF'; const cw = contrast(bgLum, 1), cd = contrast(bgLum, lum(dark)); return cw >= 3 && cd < cw * 1.6 ? light : cd >= cw ? dark : light; }   // on mid-tone colours (brand blues, greens) white reads better, as a designer would choose
 function accentOn(bgLum, col, fg){ const light = fg ? lum(fg) > .5 : bgLum < .45; for (const c of col.byVivid){ if (fg && c.toLowerCase() === fg.toLowerCase()) continue; const L = lum(c); if (contrast(bgLum, L) >= 2.5 && (light ? L > bgLum + .1 : L < bgLum - .1) && sat(c) > .18) return c; } return null; }
 const sat = hex => { const h = hex.replace('#', ''); const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255); const mx = Math.max(r, g, b), mn = Math.min(r, g, b); return mx === 0 ? 0 : (mx - mn) / mx * (1 - Math.abs(mx + mn - 1) * .3); };
 async function logoLum(src){ try { const i = await loadImg(src); const s = document.createElement('canvas'); s.width = 40; s.height = 40; const c = s.getContext('2d', {willReadFrequently:true}); c.drawImage(i, 0, 0, 40, 40); const d = c.getImageData(0, 0, 40, 40).data; let n = 0, t = 0; for (let k = 0; k < d.length; k += 4){ if (d[k + 3] < 128) continue; n++; t += (.2126 * d[k] + .7152 * d[k + 1] + .0722 * d[k + 2]) / 255; } return {img:i, lum:n ? t / n : .5, opaque:n > 1500}; } catch (e){ return null; } }
@@ -3851,13 +3855,28 @@ async function finalizeCreative(pid, raw0, spec, o = {}){
   if (!o.keepSlides && p.format === 'Carousel' && p.crSlides === 'ai' && arr(p.slides).length > 1 && !o.noSlides) await genSlides(pid);
 }
 async function previews(p, b, list){ const {w, h} = creativeSize(p); const out = []; for (const o of list){ try { const img = await loadImg(sameOrigin(o.raw)); out.push({...o, preview:await composeCreative({img, p, b, w, h, spec:o.spec})}); } catch (e){} } return out; }
+// When AI photos can't be made (no paid credit, Google busy), design on a brand-colour background instead of failing.
+function brandBg(p, b, i = 0){
+  const {w, h} = creativeSize(p); const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d');
+  const bc = brandColors(b); const shade = (hex, f) => { const n = parseInt(hex.slice(1), 16); const ch = s => Math.max(0, Math.min(255, Math.round(((n >> s) & 255) * f))); return `rgb(${ch(16)},${ch(8)},${ch(0)})`; };
+  const g = x.createLinearGradient(0, 0, w * (i % 2 ? .3 : 1), h); const lt = lum(bc.bg) > .5; g.addColorStop(0, shade(bc.bg, lt ? 1.04 : 1)); g.addColorStop(1, shade(bc.bg, lt ? .86 : .62)); x.fillStyle = g; x.fillRect(0, 0, w, h);
+  const blob = (cx, cy, r, col, a) => { const rg = x.createRadialGradient(cx, cy, 0, cx, cy, r); rg.addColorStop(0, col); rg.addColorStop(1, 'transparent'); x.globalAlpha = a; x.fillStyle = rg; x.fillRect(0, 0, w, h); x.globalAlpha = 1; };
+  const spots = [[.85, .12], [.1, .2], [.9, .8], [.2, .9]]; const [ax, ay] = spots[i % spots.length];
+  blob(w * ax, h * ay, w * .5, bc.ac, .28); blob(w * (1 - ax), h * (1 - ay), w * .45, '#ffffff', .08);
+  for (let k = 0; k < 900; k++){ x.fillStyle = `rgba(255,255,255,${Math.random() * .035})`; x.fillRect(Math.random() * w, Math.random() * h, 2, 2); }   // fine grain so it doesn't look flat
+  return c.toDataURL('image/jpeg', .92);
+}
+const noPhotoWhy = e => e?.code === 'no_image_credit' || /credit|₹0|prepay/i.test(str(e?.message)) ? 'AI photos need paid credit (₹0 right now)' : e?.code === 'busy' || /busy|overloaded|high demand/i.test(str(e?.message)) ? "Google's image model is busy" : e?.code === 'rate_limited' ? 'the image limit is reached for now' : '';
 // n images, each generated for its own art-directed layout
 async function genCreative(pid, n, layout, keep){
   const p = D.posts[pid]; if (!p) return []; const b = D.brands[p.brandId]; if (!HOSTED) throw {message:'Creatives are generated on the hosted version.'};
   const pr = findProd(b, p.product); const refs = pr?.photo ? [await toB64(pr.photo)] : [];
   const specs = keep?.spec ? [keep.spec] : layout === 'none' ? Array.from({length:n}, () => ({layout:'none'})) : await artDirect(p, b, n, layout === 'auto' ? '' : layout);
   const res = await Promise.all(specs.map(sp => imgApi({action:'generate', prompt:imagePrompt(p, b, sp, {note:keep?.note}), aspect:creativeSize(p).aspect, n:1, refs, brandId:p.brandId}).then(j => arr(j.images)[0] ? {raw:`data:${j.images[0].mime};base64,${j.images[0].data}`, spec:sp} : null).catch(e => ({err:e}))));
-  const ok = res.filter(x => x && x.raw); if (!ok.length){ const e = res.find(x => x?.err)?.err; throw e || {message:'No image came back. Try again.'}; }
+  let ok = res.filter(x => x && x.raw);
+  if (!ok.length){ const e = res.find(x => x?.err)?.err; const why = noPhotoWhy(e); if (!why) throw e || {message:'No image came back. Try again.'};
+    ok = specs.map((sp, i) => ({raw:brandBg(p, b, i), spec:{...sp, fg:null, layout:['editorial', 'split', 'frame'].includes(sp.layout) ? 'poster' : sp.layout, visual:'graphic'}, noPhoto:true}));   // text colour is picked for contrast with the background
+    toast(`${why}, so Lumi designed on your brand colours instead. Press Regenerate later for a photo.`, 6000); return ok; }
   await patch('posts', pid, {creativeTries:(p.creativeTries || 0) + ok.length});
   return ok;
 }
@@ -4094,7 +4113,7 @@ function ceHTML(p, b){
     </div></div>`;
 }
 
-if (location.hostname === 'localhost') window.__cr = {composeCreative, cleanSpec, loadImg, artDirect, imgStats, LAYOUTS, defaultSpec};
+if (location.hostname === 'localhost') window.__cr = {composeCreative, cleanSpec, loadImg, artDirect, imgStats, LAYOUTS, defaultSpec, brandBg};
 
 /* ---------- AI post tools ---------- */
 const TOOL = {
@@ -4975,16 +4994,24 @@ function httpDB(){
 }
 const SIG_BRAND = new WeakMap();
 const aiBrand = () => ui.aiBrand || (ui.view === 'pitch' ? 'pitch' : ui.view === 'plan' ? D.plans[ui.planId]?.brandId : ui.view === 'brand' || ui.view === 'briefs' ? ui.brandId : (ui.postId && D.posts[ui.postId]?.brandId)) || 'other';
-const billMsg = e => /high demand|overloaded|UNAVAILABLE/i.test(str(e)) ? 'Google\'s AI is overloaded right now (on their side, not your limit). Wait a minute and try again.' : /Free key:/.test(str(e)) ? 'Lumi couldn\'t reach Gemini on either key. ' + str(e).replace(/Your prepayment credits are depleted[^·]*/g, 'paid credit is ₹0. ') + ' Admins: Team → Free key vs paid key → Test keys.' : /prepayment credits are depleted|credit balance|billing/i.test(str(e)) ? 'Gemini credit is ₹0. Ask the admin to top up in Google AI Studio → Billing (a new payment can take a while to show).' : '';
+const billMsg = e => /busy right now/i.test(str(e)) ? str(e) : /high demand|overloaded|UNAVAILABLE/i.test(str(e)) ? 'Google\'s AI is overloaded right now (on their side, not your limit). Wait a minute and try again.' : /Free key:/.test(str(e)) ? 'Lumi couldn\'t reach Gemini on either key. ' + str(e).replace(/Your prepayment credits are depleted[^·]*/g, 'paid credit is ₹0. ') + ' Admins: Team → Free key vs paid key → Test keys.' : /prepayment credits are depleted|credit balance|billing/i.test(str(e)) ? 'Gemini credit is ₹0. Ask the admin to top up in Google AI Studio → Billing (a new payment can take a while to show).' : '';
 const todayLine = () => { const d = new Date(); return `Today is ${d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone:'Asia/Kolkata'})}, ${d.toLocaleTimeString('en-IN', {hour:'numeric', minute:'2-digit', timeZone:'Asia/Kolkata'})} India time. Use this for any date, day, deadline or "this week/month" reasoning.`; };
 async function hostedCall(prompt, o={}){
   prompt = todayLine() + '\n' + prompt;
   let r;
   const brandId = o.brandId || (o.signal && SIG_BRAND.get(o.signal)) || aiBrand();
-  try { r = await fetch('/api/ai', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body:JSON.stringify({prompt, tier:o.modelTier || 'default', json:!!o.json, search:!!o.search, brandId, files:o.files || []}), signal:o.signal}); }
-  catch (e){ if (e?.name === 'AbortError') throw {code:'cancelled'}; throw {code:'upstream_error', message:'Network error'}; }
-  if (r.status === 401){ showLogin(); throw {code:'not_granted', message:'Sign in again'}; }
-  const j = await r.json().catch(() => ({}));
+  const body = JSON.stringify({prompt, tier:o.modelTier || 'default', json:!!o.json, search:!!o.search, brandId, files:o.files || []});
+  let j = {};
+  for (let tryN = 0; ; tryN++){   // quietly retry blips: dropped connection, gateway timeout, Google busy
+    try { r = await fetch('/api/ai', {method:'POST', credentials:'same-origin', headers:{'content-type':'application/json'}, body, signal:o.signal}); }
+    catch (e){ if (e?.name === 'AbortError') throw {code:'cancelled'}; if (tryN < 2){ await new Promise(res => setTimeout(res, 2500 * (tryN + 1))); continue; } throw {code:'upstream_error', message:'Lumi couldn\'t connect. Check your internet and try again.'}; }
+    if (r.status === 401){ showLogin(); throw {code:'not_granted', message:'Sign in again'}; }
+    j = await r.json().catch(() => ({}));
+    const blip = r.status === 504 || r.status === 500 && !j.code || (r.status === 503 && j.code === 'busy' && o.modelTier !== 'chat') || (r.status === 502 && !j.code);
+    if (!r.ok && blip && tryN < (r.status === 503 ? 1 : 2)){ await new Promise(res => setTimeout(res, r.status === 503 ? 8000 : 3000)); continue; }
+    break;
+  }
+  if (r.status === 504 || (r.status === 502 && !j.code)) throw {code:'upstream_error', message:'Lumi took too long to answer. Try again; for big plans, try fewer posts per run.'};
   if (!r.ok) throw {code:j.code || 'upstream_error', message:billMsg(j.error) || j.error || ('Lumi error ' + r.status)};
   return o.raw ? j : String(j.text || '');
 }
@@ -4997,7 +5024,7 @@ async function webJSON(prompt, signal){
   return {data:await ai(prompt, {signal}), sources:[]};
 }
 const hostedAI = async (prompt, o={}) => { const text = await hostedCall(prompt, o); if (!text.trim()) throw {code:'empty_completion'}; return {text, truncated:false}; };
-hostedAI.json = async (prompt, o={}) => { const t = await hostedCall(prompt, {...o, json:true}); const v = parseLoose(t); if (v === undefined) throw {code:'invalid_json', text:t}; return v; };
+hostedAI.json = async (prompt, o={}) => { for (let n = 0; ; n++){ const t = await hostedCall(prompt, {...o, json:true}); const v = parseLoose(t); if (v !== undefined) return v; if (n) throw {code:'invalid_json', text:t}; } };   // a garbled reply gets one silent retry
 const hostedDL = { save: async ({filename, data}) => { const blob = data instanceof Blob ? data : new Blob([data]); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000); return {status:'saved'}; } };
 let hostedDB = null;
 $('#loginForm').addEventListener('submit', async e => {
