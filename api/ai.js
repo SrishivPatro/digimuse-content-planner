@@ -69,7 +69,10 @@ const noCredit = (status, msg) => /prepayment|credits? (are )?depleted|credit ba
 const rateLimited = (status, msg) => status === 429 || /quota|RESOURCE_EXHAUSTED|rate limit|too many requests/i.test(msg || '');
 const badKey = (status, msg) => /API key not valid|API_KEY_INVALID|permission denied|has been disabled|leaked/i.test(msg || '') || status === 401 || status === 403;
 const transient = e => e && (e.busy || e.rate || e.empty || e.net);
-let paidDeadUntil = 0;   // paid balance was ₹0 recently: skip it for a while instead of failing on it every call
+let paidDeadUntil = 0;
+// Google's daily free quota resets at midnight US Pacific time; say when that is in India time.
+const resetIST = () => { const now = new Date(); const pt = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })); const next = new Date(now.getTime() + ((24 * 3600e3) - ((pt.getHours() * 3600 + pt.getMinutes() * 60 + pt.getSeconds()) * 1000)));
+  return next.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }); };   // paid balance was ₹0 recently: skip it for a while instead of failing on it every call
 const BUSY_MSG = "Google's AI is busy right now (on Google's side, not your limit). Lumi retried and switched models but couldn't get through. Try again in a minute.";
 async function geminiRouted(prompt, tier, json, search, files, freeMode){
   const paid = process.env.GEMINI_API_KEY, free = process.env.GEMINI_API_KEY_FREE;
@@ -100,7 +103,12 @@ async function geminiRouted(prompt, tier, json, search, files, freeMode){
   }
   if (!last) throw Object.assign(new Error('No Gemini key set. Add GEMINI_API_KEY in Vercel.'), { status: 500 });
   if (seen.some(e => e.busy || e.net || e.empty)) throw Object.assign(new Error(BUSY_MSG), { status: 503, code: 'busy' });
-  if (seen.some(e => e.rate)) throw Object.assign(new Error(paidDeadUntil > Date.now() ? "The free key is at Google's limit for the moment and paid credit is ₹0. Try again in a minute." : "Lumi hit Google's usage limit for the moment. Try again in a minute."), { status: 429, code: paidDeadUntil > Date.now() ? 'no_credit' : 'rate_limited' });
+  if (seen.some(e => e.rate)){
+    const daily = seen.filter(e => e.rate).every(e => e.daily), noPaid = paidDeadUntil > Date.now() || !paid;
+    const msg = daily ? `Today's free Gemini allowance is used up (Google resets it at ${resetIST()} India time).${noPaid ? ' Paid credit is ₹0, so Lumi can\'t write until then. Once the ₹1,000 credit is active, this won\'t stop you.' : ''}`
+      : `Too many Lumi requests this minute on the free key${noPaid ? ' and paid credit is ₹0' : ''}. Wait about a minute and try again.`;
+    throw Object.assign(new Error(msg), { status: 429, code: noPaid ? 'no_credit' : 'rate_limited' });
+  }
   if (errs.length > 1) last.message = errs.join(' · ');
   throw last;
 }
@@ -167,7 +175,7 @@ async function gemini(prompt, tier, json, search, files = [], key = process.env.
         fail = Object.assign(new Error(emsg), { status: 404, busy: true }); break;
       }
       if (rateLimited(r.status, emsg)){   // free-tier limits are per model, so a sibling model usually still has room
-        fail = Object.assign(new Error(emsg || 'Rate limited'), { status: 429, rate: true });
+        fail = Object.assign(new Error(emsg || 'Rate limited'), { status: 429, rate: true, daily: /per ?day|PerDay|per_day|daily/i.test(emsg) });
         if (kind === 'paid' && !waited++ && Date.now() + 15e3 < deadline){ const ra = +(r.headers.get('retry-after') || 0); await nap(Math.min(12, ra || 6) * 1000); continue; }
         break;
       }

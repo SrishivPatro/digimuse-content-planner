@@ -764,7 +764,7 @@ const ERR = {
   empty_completion:'Lumi returned nothing. Try again with a shorter brief.',
   cancelled:'Stopped.'
 };
-const errCopy = e => ERR[e?.code] || ('Something went wrong' + (e?.message ? ': ' + e.message : '') + '.');
+const errCopy = e => { const m = str(e?.message).trim(); if (m && ['busy', 'no_credit', 'rate_limited', 'upstream_error', 'bad_key', 'no_image_credit'].includes(e?.code) && m.length > 25) return m; return ERR[e?.code] || (m ? (/[.!?]$/.test(m) ? m : m + '.') : 'Lumi couldn\'t finish that. Try again.'); };   // the server already words these for people
 
 const PRE = `You are the lead social media strategist and senior copywriter at a top Indian digital marketing agency. Your work goes straight to clients, so it must be specific and brand-true.
 Rules:
@@ -4956,6 +4956,15 @@ function parseLoose(t){
   if (i >= 0 && j > i){ try { return JSON.parse(s.slice(i, j + 1)); } catch (e) {} }
   return undefined;
 }
+// A new version was deployed while this tab was open: reload quietly the next time it's safe (tab in background, or nothing being typed).
+let BUILD0 = null, reloadArmed = false;
+function newBuild(b){
+  if (!b) return; if (BUILD0 === null){ BUILD0 = b; return; } if (b === BUILD0 || reloadArmed) return; reloadArmed = true;
+  const busy = () => document.querySelector('.spin') || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '') || LUMI?.busy;
+  const tryReload = () => { if (!busy()) location.reload(); };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') tryReload(); });
+  setInterval(tryReload, 90e3);
+}
 function httpDB(){
   const subs = {}, last = {}; let ver = null, pending = 0, timer = null, warned = false;
   async function sync(force){
@@ -4967,6 +4976,7 @@ function httpDB(){
     const j = await r.json().catch(() => ({}));
     if (!r.ok){ if (!warned){ toast(j.error || 'Could not load data'); warned = true; } return; }
     warned = false; $('#login').hidden = true;
+    newBuild(j.build);
     if (j.same) return;
     ver = j.v;
     for (const col in subs){
